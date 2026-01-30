@@ -352,6 +352,54 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
 - Average Loss: {perf.get('average_loss_pct', 0):.2f}%
 """)
     
+    # Risk Management Status (industry-standard drawdown protection)
+    risk_metrics = analysis_input.get('risk_metrics', {})
+    if risk_metrics:
+        status = risk_metrics.get('risk_status', 'NORMAL')
+        metrics = risk_metrics.get('metrics', {})
+        rules = risk_metrics.get('rules', {})
+        recommendations = risk_metrics.get('recommendations', [])
+        reasons = risk_metrics.get('risk_reasons', [])
+        
+        status_emoji = {
+            'NORMAL': '🟢',
+            'CAUTION': '🟡', 
+            'DEFENSIVE': '🟠',
+            'CRITICAL': '🔴'
+        }.get(status, '⚪')
+        
+        sections.append(f"""
+## ⚠️ RISK MANAGEMENT STATUS: {status_emoji} {status}
+
+### Current Metrics
+- Portfolio Value: ${metrics.get('current_value', 100000):,.2f}
+- Peak Value: ${metrics.get('peak_value', 100000):,.2f}
+- Drawdown from Peak: {metrics.get('drawdown_pct', 0):.1f}%
+- Consecutive Losses: {metrics.get('consecutive_losses', 0)}
+- Win Rate: {metrics.get('win_rate_pct', 0):.1f}%
+- Alpha vs S&P 500: {metrics.get('alpha_vs_sp500', 0):+.1f}%
+""")
+        
+        if reasons:
+            sections.append("### Risk Triggers Active")
+            for reason in reasons:
+                sections.append(f"- ⚠️ {reason}")
+        
+        sections.append(f"""
+### MANDATORY RULES FOR {status} MODE
+- Maximum position size: {rules.get('max_position_size', 15)}%
+- Minimum cash allocation: {rules.get('min_cash', 5)}%
+- Aggressive positions allowed: {'Yes' if rules.get('aggressive_allowed', True) else 'NO'}
+- Speculative positions allowed: {'Yes' if rules.get('speculative_allowed', True) else 'NO'}
+- Maximum new positions this period: {rules.get('max_new_positions', 5)}
+
+### Required Actions
+""")
+        for rec in recommendations:
+            sections.append(f"- {rec}")
+        
+        sections.append("")  # Empty line
+    
     # Closed Positions (lessons learned)
     closed = analysis_input.get('closed_positions', [])
     if closed:

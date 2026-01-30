@@ -1,12 +1,15 @@
 # 📊 Stock Insight Agent
 
-AI-powered **bi-weekly** stock analysis with portfolio memory, politician trade tracking, and actionable recommendations.
+AI-powered **bi-weekly** stock analysis with portfolio memory, politician trade tracking, risk management, and actionable recommendations.
 
 ## Features
 
-- **Full Market Coverage**: All 11 S&P sectors, all market caps, international, metals, commodities
-- **Portfolio Memory**: Tracks recommendations over time, calculates performance
+- **Full Market Coverage**: All 11 S&P sectors, all market caps, international, metals, commodities (1000+ stocks screened)
+- **Portfolio Memory**: Tracks recommendations over time, calculates performance, learns from past trades
+- **Risk Management**: Industry-standard drawdown protection with automatic defensive modes
 - **Politician Tracking**: Monitors congressional trades from Capitol Trades (90-day lookback), flags suspicious timing
+- **News Sentiment**: AI-analyzed market sentiment via Alpha Vantage (optional)
+- **Earnings Calendar**: Tracks upcoming earnings for portfolio and watchlist stocks
 - **Diversification**: Enforces allocation rules across asset class, sector, style, horizon
 - **Actionable Output**: Clear BUY/SELL/HOLD with entry zones, targets, stop-losses
 - **Critical Analysis**: Contrarian, skeptical, admits mistakes
@@ -28,9 +31,10 @@ StockInsight/
 │   ├── main.py                   # Entry point
 │   ├── config.py                 # Configuration and constants
 │   ├── data_fetcher.py           # Market data via yfinance
-│   ├── market_scanner.py         # Full market screening logic
+│   ├── market_scanner.py         # Full market screening (1000+ stocks)
 │   ├── politician_tracker.py     # Capitol Trades scraper
-│   ├── history_manager.py        # Portfolio memory management
+│   ├── history_manager.py        # Portfolio memory & risk management
+│   ├── news_sentiment.py         # Alpha Vantage sentiment analysis
 │   ├── claude_analyzer.py        # Claude Opus 4.5 integration
 │   ├── email_builder.py          # Dark-mode HTML email builder
 │   └── email_sender.py           # Resend API integration
@@ -76,6 +80,7 @@ Go to your repo → Settings → Secrets and variables → Actions → New repos
 | `RESEND_FROM_EMAIL` | Your verified sender email (e.g., reports@yourdomain.com) |
 | `RECIPIENT_EMAIL` | Where to send the monthly report |
 | `QUIVER_API_KEY` | Optional: Quiver Quantitative API key |
+| `ALPHAVANTAGE_API_KEY` | Optional: Alpha Vantage API key for news sentiment |
 
 ### 4. Deploy
 
@@ -97,13 +102,16 @@ python src/main.py
 
 1. **Load Portfolio History** - Reads previous recommendations and performance
 2. **Fetch Market Data** - Gets current prices for all holdings and market indexes
-3. **Run Market Screens** - Executes momentum, fundamental, and technical screens on 394+ stocks
+3. **Run Market Screens** - Executes momentum, fundamental, and technical screens on 1000+ stocks
 4. **Fetch Politician Trades** - Scrapes Capitol Trades for recent congressional trading activity (90-day lookback)
-5. **Analyze with Claude** - AI analyzes data and generates recommendations
-6. **Update History** - Saves new portfolio state and performance metrics
-7. **Build Email** - Creates professional HTML report
-8. **Send Email** - Delivers via Resend
-9. **Commit Changes** - Updates portfolio_history.json in the repo
+5. **Fetch News Sentiment** - Gets AI-analyzed sentiment for top stock candidates (Alpha Vantage)
+6. **Check Earnings Calendar** - Identifies upcoming earnings catalysts
+7. **Calculate Risk Metrics** - Determines if defensive mode should be activated
+8. **Analyze with Claude** - AI analyzes data and generates recommendations (respects risk mode rules)
+9. **Update History** - Saves new portfolio state and performance metrics
+10. **Build Email** - Creates professional HTML report
+11. **Send Email** - Delivers via Resend
+12. **Commit Changes** - Updates portfolio_history.json in the repo
 
 ### Screens Included
 
@@ -149,6 +157,48 @@ The agent enforces strict allocation limits:
 - Value: 20-40%
 - Dividend: 10-30%
 - Speculative: 0-10%
+
+## 🛡️ Risk Management (Industry-Standard Drawdown Protection)
+
+The agent includes **automatic risk management** that adjusts strategy based on portfolio performance:
+
+### Risk Status Levels
+
+| Status | Trigger | Actions |
+|--------|---------|---------|
+| 🟢 **NORMAL** | Default state | Standard allocation rules apply |
+| 🟡 **CAUTION** | Drawdown ≥10% OR 3 consecutive losses OR win rate <40% | Reduce position sizes, avoid speculative plays, increase cash to 15%+ |
+| 🟠 **DEFENSIVE** | Drawdown ≥15% OR 4+ consecutive losses OR win rate <30% | Max 7% positions, 25%+ cash, conservative picks only, halt aggressive trades |
+| 🔴 **CRITICAL** | Drawdown ≥20% | Emergency mode: 40%+ cash, max 5% positions, treasuries/dividend aristocrats only |
+
+### Key Metrics Tracked
+
+- **Drawdown from Peak**: Measures decline from highest portfolio value
+- **Consecutive Losses**: Tracks losing streaks across periods
+- **Win Rate**: Success rate after 5+ trades
+- **Alpha vs S&P 500**: Performance relative to benchmark
+
+### How It Works
+
+Each run calculates risk metrics and Claude receives **mandatory rules** based on the current status:
+
+```
+⚠️ RISK MANAGEMENT STATUS: 🟠 DEFENSIVE
+
+Metrics:
+- Drawdown from Peak: -16.2%
+- Consecutive Losses: 4
+- Win Rate: 28.5%
+
+MANDATORY RULES FOR DEFENSIVE MODE:
+- Maximum position size: 7%
+- Minimum cash allocation: 25%
+- Aggressive positions allowed: NO
+- Speculative positions allowed: NO
+- Maximum new positions this period: 2
+```
+
+This ensures the AI automatically becomes more conservative when the portfolio is struggling, protecting against catastrophic losses.
 
 ## Cost Estimate
 

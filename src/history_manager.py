@@ -482,6 +482,187 @@ def _update_performance_summary(history: Dict) -> Dict:
     }
 
 
+def calculate_risk_metrics(history: Dict) -> Dict:
+    """
+    Calculate risk management metrics including drawdown and risk status.
+    
+    Industry-standard thresholds:
+    - Max Drawdown Warning: -10%
+    - Max Drawdown Defensive: -15%
+    - Win Rate Warning: <40% after 5+ trades
+    - Consecutive Losses Warning: 3+
+    - Losing Streak Defensive: 4+ consecutive losses
+    
+    Args:
+        history: Portfolio history dictionary
+    
+    Returns:
+        Dictionary with risk metrics and recommended mode
+    """
+    perf = history.get('performance_summary', {})
+    monthly = history.get('monthly_history', [])
+    closed = history.get('closed_positions', [])
+    
+    # Calculate drawdown from peak
+    peak_value = 100000  # Starting capital
+    current_value = 100000
+    
+    if monthly:
+        # Track running portfolio value and peak
+        running_value = 100000
+        for month in monthly:
+            month_return = month.get('portfolio_return_pct', 0)
+            running_value *= (1 + month_return / 100)
+            peak_value = max(peak_value, running_value)
+        current_value = running_value
+    
+    drawdown_pct = ((current_value - peak_value) / peak_value) * 100 if peak_value > 0 else 0
+    
+    # Count consecutive losses (most recent trades)
+    consecutive_losses = 0
+    if monthly:
+        for month in reversed(monthly):
+            if month.get('portfolio_return_pct', 0) < 0:
+                consecutive_losses += 1
+            else:
+                break
+    
+    # Also check recent closed positions for streak
+    recent_closed_losses = 0
+    for pos in reversed(closed[-5:]):  # Last 5 closed positions
+        if pos.get('return_pct', 0) < 0:
+            recent_closed_losses += 1
+        else:
+            break
+    
+    consecutive_losses = max(consecutive_losses, recent_closed_losses)
+    
+    # Get performance metrics
+    total_return = perf.get('total_return_pct', 0)
+    win_rate = perf.get('win_rate_pct', 0)
+    total_trades = perf.get('win_count', 0) + perf.get('loss_count', 0)
+    alpha = perf.get('total_alpha_pct', 0)
+    
+    # Determine risk status based on industry-standard thresholds
+    risk_status = "NORMAL"
+    risk_reasons = []
+    
+    # Drawdown checks (industry standard: -10% caution, -15% defensive, -20% critical)
+    if drawdown_pct <= -20:
+        risk_status = "CRITICAL"
+        risk_reasons.append(f"Severe drawdown: {drawdown_pct:.1f}% from peak")
+    elif drawdown_pct <= -15:
+        risk_status = "DEFENSIVE"
+        risk_reasons.append(f"Significant drawdown: {drawdown_pct:.1f}% from peak")
+    elif drawdown_pct <= -10:
+        risk_status = "CAUTION"
+        risk_reasons.append(f"Elevated drawdown: {drawdown_pct:.1f}% from peak")
+    
+    # Win rate checks (only after sufficient trades)
+    if total_trades >= 5:
+        if win_rate < 30:
+            risk_status = max(risk_status, "DEFENSIVE", key=lambda x: ["NORMAL", "CAUTION", "DEFENSIVE", "CRITICAL"].index(x))
+            risk_reasons.append(f"Poor win rate: {win_rate:.1f}% ({total_trades} trades)")
+        elif win_rate < 40:
+            if risk_status == "NORMAL":
+                risk_status = "CAUTION"
+            risk_reasons.append(f"Below-average win rate: {win_rate:.1f}%")
+    
+    # Consecutive loss checks
+    if consecutive_losses >= 4:
+        risk_status = max(risk_status, "DEFENSIVE", key=lambda x: ["NORMAL", "CAUTION", "DEFENSIVE", "CRITICAL"].index(x))
+        risk_reasons.append(f"Losing streak: {consecutive_losses} consecutive losses")
+    elif consecutive_losses >= 3:
+        if risk_status == "NORMAL":
+            risk_status = "CAUTION"
+        risk_reasons.append(f"Loss streak building: {consecutive_losses} consecutive losses")
+    
+    # Significant underperformance vs benchmark
+    if total_trades >= 3 and alpha < -10:
+        risk_status = max(risk_status, "CAUTION", key=lambda x: ["NORMAL", "CAUTION", "DEFENSIVE", "CRITICAL"].index(x))
+        risk_reasons.append(f"Significant underperformance vs S&P 500: {alpha:.1f}%")
+    
+    # Define mode-specific rules
+    mode_rules = {
+        "NORMAL": {
+            "max_position_size": 15,
+            "min_cash": 5,
+            "aggressive_allowed": True,
+            "speculative_allowed": True,
+            "max_new_positions": 5
+        },
+        "CAUTION": {
+            "max_position_size": 10,
+            "min_cash": 15,
+            "aggressive_allowed": True,
+            "speculative_allowed": False,
+            "max_new_positions": 3
+        },
+        "DEFENSIVE": {
+            "max_position_size": 7,
+            "min_cash": 25,
+            "aggressive_allowed": False,
+            "speculative_allowed": False,
+            "max_new_positions": 2
+        },
+        "CRITICAL": {
+            "max_position_size": 5,
+            "min_cash": 40,
+            "aggressive_allowed": False,
+            "speculative_allowed": False,
+            "max_new_positions": 1
+        }
+    }
+    
+    return {
+        "risk_status": risk_status,
+        "risk_reasons": risk_reasons,
+        "metrics": {
+            "current_value": round(current_value, 2),
+            "peak_value": round(peak_value, 2),
+            "drawdown_pct": round(drawdown_pct, 2),
+            "consecutive_losses": consecutive_losses,
+            "win_rate_pct": win_rate,
+            "total_trades": total_trades,
+            "alpha_vs_sp500": round(alpha, 2)
+        },
+        "rules": mode_rules[risk_status],
+        "recommendations": _get_risk_recommendations(risk_status, risk_reasons)
+    }
+
+
+def _get_risk_recommendations(status: str, reasons: List[str]) -> List[str]:
+    """Generate specific recommendations based on risk status."""
+    recommendations = []
+    
+    if status == "NORMAL":
+        recommendations.append("Continue with standard investment approach")
+        recommendations.append("Maintain diversification across sectors and styles")
+    
+    elif status == "CAUTION":
+        recommendations.append("Reduce position sizes on new investments")
+        recommendations.append("Avoid speculative plays until performance improves")
+        recommendations.append("Consider trimming underperforming positions")
+        recommendations.append("Increase cash buffer to 15%+")
+    
+    elif status == "DEFENSIVE":
+        recommendations.append("HALT new aggressive/speculative positions")
+        recommendations.append("Reduce all position sizes to max 7%")
+        recommendations.append("Increase cash to 25%+ (safety cushion)")
+        recommendations.append("Focus only on high-conviction, conservative ideas")
+        recommendations.append("Review and potentially exit all losing positions")
+        recommendations.append("Consider defensive sectors: utilities, healthcare, staples")
+    
+    elif status == "CRITICAL":
+        recommendations.append("⚠️ EMERGENCY: Consider moving to 40%+ cash")
+        recommendations.append("Exit all speculative and high-beta positions")
+        recommendations.append("Max 5% position sizes only")
+        recommendations.append("Only ultra-conservative investments (treasuries, dividend aristocrats)")
+        recommendations.append("Review entire strategy before committing new capital")
+    
+    return recommendations
+
+
 def get_portfolio_summary(history: Dict) -> str:
     """
     Generate a text summary of current portfolio state.

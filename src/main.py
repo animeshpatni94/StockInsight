@@ -21,7 +21,7 @@ from market_scanner import run_all_screens
 from politician_tracker import fetch_recent_trades, analyze_committee_correlation
 from history_manager import (
     load_history, save_history, calculate_performance,
-    update_history_with_month, get_portfolio_summary
+    update_history_with_month, get_portfolio_summary, calculate_risk_metrics
 )
 from claude_analyzer import analyze_with_claude, SYSTEM_PROMPT
 from email_builder import build_email_html
@@ -159,6 +159,23 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         upcoming_str = ', '.join([f"{e.get('ticker')} ({e.get('earnings_date', 'TBD')})" for e in upcoming])
         print(f"    Upcoming: {upcoming_str}")
     
+    # Step 5d: Calculate risk metrics (drawdown protection)
+    print("  Calculating risk metrics...")
+    risk_metrics = calculate_risk_metrics(history)
+    risk_status = risk_metrics.get('risk_status', 'NORMAL')
+    status_emoji = {'NORMAL': '🟢', 'CAUTION': '🟡', 'DEFENSIVE': '🟠', 'CRITICAL': '🔴'}.get(risk_status, '⚪')
+    print(f"    {status_emoji} Risk Status: {risk_status}")
+    
+    if risk_metrics.get('risk_reasons'):
+        for reason in risk_metrics['risk_reasons']:
+            print(f"    ⚠️ {reason}")
+    
+    metrics = risk_metrics.get('metrics', {})
+    print(f"    Drawdown: {metrics.get('drawdown_pct', 0):.1f}% | Consecutive Losses: {metrics.get('consecutive_losses', 0)}")
+    
+    rules = risk_metrics.get('rules', {})
+    print(f"    Mode Rules: Max position {rules.get('max_position_size', 15)}%, Min cash {rules.get('min_cash', 5)}%")
+    
     # Step 6: Prepare analysis input
     print("\n[6/10] Preparing analysis input...")
     analysis_input = {
@@ -166,6 +183,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         "portfolio_history": history.get('monthly_history', []),
         "closed_positions": history.get('closed_positions', []),
         "performance_summary": history.get('performance_summary', {}),
+        "risk_metrics": risk_metrics,
         "market_data": market_data,
         "screen_results": screen_results,
         "politician_trades": politician_trades,
