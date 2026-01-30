@@ -644,6 +644,16 @@ def _build_horizon_section(title: str, recs: List[Dict]) -> str:
         risk = (r.get('risk_level', 'moderate') or 'moderate').lower()
         risk_bg = '#238636' if risk == 'conservative' else '#d29922' if risk == 'moderate' else '#f85149'
         
+        # Sentiment badge (fetched AFTER Claude's selection - no bias)
+        sentiment_html = ''
+        sentiment_data = r.get('sentiment', {})
+        if sentiment_data:
+            sentiment_label = sentiment_data.get('label', 'NEUTRAL')
+            sentiment_emoji = sentiment_data.get('emoji', '⚪')
+            sentiment_pct = sentiment_data.get('bullish_pct', 50)
+            sentiment_bg = '#238636' if sentiment_label == 'BULLISH' else '#f85149' if sentiment_label == 'BEARISH' else '#6e7681'
+            sentiment_html = f'<span style="background: {sentiment_bg}; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 8px;">{sentiment_emoji} {sentiment_label} ({sentiment_pct:.0f}%)</span>'
+        
         # Email-compatible table-based card layout
         cards.append(f'''
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #21262d; border: 1px solid #30363d; border-radius: 16px; margin-bottom: 20px;">
@@ -666,7 +676,8 @@ def _build_horizon_section(title: str, recs: List[Dict]) -> str:
                         <div style="margin-bottom: 20px;">
                             <span style="background: #30363d; color: #e6edf3; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; margin-right: 8px; margin-bottom: 8px;">{r.get('sector', '') or ''}</span>
                             <span style="background: #30363d; color: #e6edf3; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; margin-right: 8px; margin-bottom: 8px;">{(r.get('investment_style', '') or '').title()}</span>
-                            <span style="background: {risk_bg}; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 8px;">{risk.title()} Risk</span>
+                            <span style="background: {risk_bg}; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; margin-right: 8px; margin-bottom: 8px;">{risk.title()} Risk</span>
+                            {sentiment_html}
                         </div>
                         
                         <!-- Price metrics table -->
