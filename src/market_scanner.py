@@ -11,11 +11,11 @@ from typing import Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config import (
-    SECTORS, STOCK_UNIVERSE, TECHNICAL_PARAMS, FUNDAMENTAL_PARAMS
+    SECTORS, TECHNICAL_PARAMS, FUNDAMENTAL_PARAMS
 )
 from data_fetcher import (
     fetch_ticker_data, fetch_ticker_info, fetch_multiple_ticker_info,
-    calculate_technical_indicators, get_current_prices
+    calculate_technical_indicators, get_current_prices, get_dynamic_stock_universe
 )
 
 
@@ -25,11 +25,15 @@ class MarketScanner:
     def __init__(self):
         self.stock_data = {}
         self.stock_info = []
+        self.stock_universe = None
         
     def load_universe(self, max_stocks: int = 200):
         """Load stock universe data for screening."""
+        # Dynamically fetch stock universe from ETF holdings
+        self.stock_universe = get_dynamic_stock_universe()
+        
         all_tickers = []
-        for cap_category, tickers in STOCK_UNIVERSE.items():
+        for cap_category, tickers in self.stock_universe.items():
             all_tickers.extend(tickers)
         all_tickers = list(set(all_tickers))[:max_stocks]
         
@@ -645,7 +649,7 @@ def run_all_screens() -> Dict:
     """
     print("  Initializing market scanner...")
     scanner = MarketScanner()
-    scanner.load_universe(max_stocks=150)
+    scanner.load_universe(max_stocks=300)  # Analyze more of our 374 stock universe
     
     results = {
         'timestamp': datetime.now().isoformat(),

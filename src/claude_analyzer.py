@@ -157,9 +157,34 @@ Structure your response as JSON with these sections:
     "oil": {"stance": "neutral", "rationale": "..."}
   },
   "politician_trade_analysis": {
-    "notable_trades": [...],
-    "suspicious_patterns": [...],
-    "overlap_with_portfolio": [...]
+    "summary": "Brief 1-2 sentence overview of congressional trading patterns this month",
+    "notable_trades": [
+      {
+        "politician": "Nancy Pelosi",
+        "party": "D",
+        "ticker": "NVDA",
+        "transaction_type": "Purchase",
+        "amount": "$1M-$5M",
+        "insight": "Bought ahead of AI chip legislation vote"
+      }
+    ],
+    "suspicious_patterns": [
+      {
+        "politician": "Name",
+        "party": "R or D",
+        "ticker": "SYMBOL",
+        "transaction_type": "Purchase/Sale",
+        "company": "Company Name",
+        "reason": "Why this is suspicious - committee connection, timing, etc."
+      }
+    ],
+    "overlap_with_portfolio": [
+      {
+        "ticker": "AAPL",
+        "politician": "Multiple members bought",
+        "implication": "Bullish signal - insiders see value"
+      }
+    ]
   },
   "allocation_summary": {
     "by_asset_class": {...},
@@ -395,10 +420,18 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
     flagged = analysis_input.get('flagged_trades', [])
     
     if pol_trades:
-        sections.append(f"\n## POLITICIAN TRADES ({len(pol_trades)} total)")
+        sections.append(f"\n## POLITICIAN TRADES ({len(pol_trades)} recent trades)")
+        
+        # Show all trades to Claude
+        sections.append("Recent congressional stock transactions:")
+        for t in pol_trades[:20]:  # Show up to 20 trades
+            sections.append(f"""
+- {t.get('politician', 'Unknown')} ({t.get('party', 'Unknown')}, {t.get('chamber', 'Unknown')})
+  {t.get('transaction_type', 'Unknown')} {t.get('ticker', 'N/A')} ({t.get('company', 'N/A')})
+  Amount: {t.get('amount', 'N/A')} | Date: {t.get('trade_date', 'N/A')}""")
         
         if flagged:
-            sections.append(f"⚠️ SUSPICIOUS TRADES ({len(flagged)} flagged for committee correlation):")
+            sections.append(f"\n⚠️ SUSPICIOUS TRADES ({len(flagged)} flagged for committee correlation):")
             for f in flagged[:5]:
                 sections.append(f"""
 - {f.get('politician')} ({f.get('party')})

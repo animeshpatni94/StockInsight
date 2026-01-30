@@ -2,26 +2,381 @@
   "metadata": {
     "created": "2026-01-29",
     "last_updated": "2026-01-29",
-    "total_months": 0,
+    "total_months": 1,
     "starting_capital": 100000
   },
-  "current_portfolio": [],
+  "current_portfolio": [
+    {
+      "ticker": "GLD",
+      "company_name": "SPDR Gold Shares ETF",
+      "asset_class": "commodity_etf",
+      "sector": "Metals",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "hedge",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 7,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 480,
+      "entry_zone": {
+        "low": 480,
+        "high": 500
+      },
+      "price_target": 580,
+      "stop_loss": 430,
+      "thesis": "Gold is the canonical inflation hedge and we're in a confirmed inflationary regime. Yes, it's up 24% in a month - that's not chasing, that's acknowledging reality. Dollar weakness supports further upside. Central banks globally are accumulating.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "XLE",
+      "company_name": "Energy Select Sector SPDR ETF",
+      "asset_class": "etf",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 92,
+      "entry_zone": {
+        "low": 92,
+        "high": 98
+      },
+      "price_target": 115,
+      "stop_loss": 82,
+      "thesis": "Energy sector is leading at +13.2% 1mo with the strongest relative strength (+13.37). Oil prices firming. Energy stocks still trade at value multiples despite outperformance. In inflation, you want real assets that generate cash flow.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "BHP",
+      "company_name": "BHP Group Ltd",
+      "asset_class": "international_stock",
+      "sector": "Materials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 54,
+      "entry_zone": {
+        "low": 54,
+        "high": 58
+      },
+      "price_target": 72,
+      "stop_loss": 47,
+      "thesis": "Diversified mining giant with copper, iron ore, and other base metals exposure. Copper is essential for electrification and is up 32% in a month. BHP gives international diversification and commodity exposure. Strong dividend history. Australian dollar weakness could be a tailwind.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "QCOM",
+      "company_name": "Qualcomm Inc",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 7,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 145,
+      "entry_zone": {
+        "low": 145,
+        "high": 158
+      },
+      "price_target": 195,
+      "stop_loss": 128,
+      "thesis": "RSI at 10.1 is EXTREME oversold territory - this is washed out. QCOM is a quality semiconductor company with strong IP, reasonable valuation, and diversification beyond smartphones into automotive and IoT. When quality gets this technically beaten up, contrarians get interested. This is a tactical mean-reversion play.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "LLY",
+      "company_name": "Eli Lilly & Co",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 740,
+      "entry_zone": {
+        "low": 740,
+        "high": 785
+      },
+      "price_target": 950,
+      "stop_loss": 650,
+      "thesis": "Obesity drug market leader with Mounjaro/Zepbound. Senator Angus King just bought shares - politicians often have better timing than us. Healthcare sector has relative strength (+4.90) despite absolute underperformance. Defensive growth with massive TAM in obesity, diabetes, Alzheimer's pipeline.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "GOOGL",
+      "company_name": "Alphabet Inc",
+      "asset_class": "us_stock",
+      "sector": "Communication Services",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 185,
+      "entry_zone": {
+        "low": 185,
+        "high": 198
+      },
+      "price_target": 240,
+      "stop_loss": 165,
+      "thesis": "Pelosi sold $1M-5M then bought back $750K-1.5M in January. That's not tax-loss harvesting - that's repositioning. Love her or hate her, her trades deserve attention. GOOGL trades at reasonable multiples for big tech, has AI optionality through DeepMind/Gemini, and Search is still a cash machine. Anti-trust risk is priced in.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "V",
+      "company_name": "Visa Inc",
+      "asset_class": "us_stock",
+      "sector": "Financials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "conservative",
+      "time_horizon": "medium_term",
+      "allocation_pct": 7,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 315,
+      "entry_zone": {
+        "low": 315,
+        "high": 335
+      },
+      "price_target": 385,
+      "stop_loss": 280,
+      "thesis": "Senator Katie Britt rotated out of big tech INTO Visa - interesting signal. Visa is a toll-road on global consumer spending with 50%+ operating margins. It benefits from inflation (higher nominal spending = higher fees). Financial sector weak (-3.2%) but Visa isn't a bank - it's a tech company dressed as a financial.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "AMGN",
+      "company_name": "Amgen Inc",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 275,
+      "entry_zone": {
+        "low": 275,
+        "high": 295
+      },
+      "price_target": 345,
+      "stop_loss": 245,
+      "thesis": "Defensive biotech with established franchises, strong cash flow, and 3%+ dividend yield. MariTide obesity drug in development could be a major catalyst. In an inflationary environment with uncertain growth, defensive quality with income is valuable portfolio ballast.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "VNQ",
+      "company_name": "Vanguard Real Estate ETF",
+      "asset_class": "reit",
+      "sector": "Real Estate",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 5,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 88,
+      "entry_zone": {
+        "low": 88,
+        "high": 94
+      },
+      "price_target": 108,
+      "stop_loss": 79,
+      "thesis": "REITs are real assets that historically provide inflation protection. Sector showing positive RS (+0.49). The ETF provides diversified exposure across data centers, logistics, cell towers - not just office space. Current yields around 4% provide income while waiting.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    },
+    {
+      "ticker": "SGOV",
+      "company_name": "iShares 0-3 Month Treasury Bond ETF",
+      "asset_class": "bond_etf",
+      "sector": "Fixed Income",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "conservative",
+      "risk_level": "conservative",
+      "time_horizon": "short_term",
+      "allocation_pct": 12,
+      "shares": 0,
+      "recommended_date": "2026-01-29",
+      "recommended_price": 100.2,
+      "entry_zone": {
+        "low": 100.2,
+        "high": 100.5
+      },
+      "price_target": 100.5,
+      "stop_loss": null,
+      "thesis": "Short-term treasuries earning ~4-5% yield with zero duration risk. In an inflationary regime, long bonds get crushed. Keep dry powder in short-duration instruments that preserve optionality. This is NOT lazy cash - it's strategic defense.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-29"
+    }
+  ],
   "cash": {
-    "allocation_pct": 100.0,
+    "allocation_pct": 18,
     "vehicle": "SGOV",
     "yield_pct": 5.1
   },
-  "monthly_history": [],
+  "monthly_history": [
+    {
+      "month": "2026-01",
+      "starting_value": 100000,
+      "ending_value": 100000.0,
+      "portfolio_return_pct": 0.0,
+      "sp500_return_pct": 0.9,
+      "alpha_pct": -0.9,
+      "recommendations_made": [
+        {
+          "ticker": "GLD",
+          "action": "BUY",
+          "allocation": 7
+        },
+        {
+          "ticker": "XLE",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "BHP",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "QCOM",
+          "action": "BUY",
+          "allocation": 7
+        },
+        {
+          "ticker": "LLY",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "GOOGL",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "V",
+          "action": "BUY",
+          "allocation": 7
+        },
+        {
+          "ticker": "AMGN",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "VNQ",
+          "action": "BUY",
+          "allocation": 5
+        },
+        {
+          "ticker": "SGOV",
+          "action": "BUY",
+          "allocation": 12
+        }
+      ],
+      "sells_executed": [],
+      "notable_politician_trades": [
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "GOOGL",
+          "transaction_type": "Sale then Purchase",
+          "amount": "Sold $1M-$5M, Bought back $750K-$1.5M",
+          "insight": "Repositioned rather than exited. She has historically been early on tech moves. Suggests conviction in GOOGL despite initial large sale."
+        },
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "LPAB",
+          "transaction_type": "Purchase",
+          "amount": "$1M-$5M",
+          "insight": "AllianceBernstein Holding - asset management firm. Interesting pivot to financials. Could indicate expectation of market volatility (good for asset managers) or insider knowledge of regulatory changes."
+        },
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "AAPL",
+          "transaction_type": "Sale",
+          "amount": "$5M-$25M",
+          "insight": "MASSIVE Apple exit. This is her largest disclosed trade. Apple has China exposure and regulatory concerns. Worth noting she's reducing tech concentration significantly."
+        },
+        {
+          "politician": "Katie Britt",
+          "party": "R",
+          "ticker": "Multiple",
+          "transaction_type": "Sales and Purchases",
+          "amount": "$1K-$15K each",
+          "insight": "Sold NVDA, AAPL, GOOGL, AMZN. Bought V, UPS. Clear rotation from growth to value/dividend. Either tax optimization or genuine sector rotation call."
+        },
+        {
+          "politician": "Angus King",
+          "party": "I",
+          "ticker": "LLY",
+          "transaction_type": "Purchase",
+          "amount": "$1K-$15K",
+          "insight": "Independent senator buying obesity drug leader. King on Budget Committee could have insight into Medicare coverage decisions for GLP-1 drugs."
+        }
+      ]
+    }
+  ],
   "closed_positions": [],
   "performance_summary": {
     "total_return_pct": 0.0,
-    "sp500_total_return_pct": 0.0,
-    "total_alpha_pct": 0.0,
+    "sp500_total_return_pct": 0.9,
+    "total_alpha_pct": -0.9,
     "win_count": 0,
     "loss_count": 0,
-    "win_rate_pct": 0.0,
-    "average_win_pct": 0.0,
-    "average_loss_pct": 0.0,
+    "win_rate_pct": 0,
+    "average_win_pct": 0,
+    "average_loss_pct": 0,
     "best_trade": null,
     "worst_trade": null
   }

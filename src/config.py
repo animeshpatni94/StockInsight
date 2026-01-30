@@ -3,19 +3,18 @@ Configuration and constants for the Stock Insight Agent.
 """
 
 # API Configuration
-CLAUDE_MODEL = "claude-opus-4-5-20250514"
+CLAUDE_MODEL = "claude-opus-4-5-20251101"  # Claude Opus 4.5 - maximum intelligence
 CLAUDE_MAX_TOKENS = 16000
 CLAUDE_THINKING_BUDGET = 10000  # Extended thinking budget for deeper analysis
 
-# Market Indexes to Track
+# Market Indexes to Track (using ETFs for better data availability)
 INDEXES = {
-    "S&P 500": "^GSPC",
-    "Nasdaq 100": "^NDX",
-    "Dow Jones": "^DJI",
-    "Russell 2000": "^RUT",
-    "Russell 1000": "^RUI",
-    "S&P 400 Mid Cap": "^MID",
-    "S&P 600 Small Cap": "^SML"
+    "S&P 500": "SPY",
+    "Nasdaq 100": "QQQ",
+    "Dow Jones": "DIA",
+    "Russell 2000": "IWM",
+    "S&P 400 Mid Cap": "MDY",
+    "S&P 600 Small Cap": "IJR"
 }
 
 # All 11 GICS Sectors with ETF proxies
@@ -117,36 +116,9 @@ COMMITTEE_SECTOR_MAP = {
     "Appropriations": ["All Sectors"]
 }
 
-# Major Stock Universe - Used for screening
-# Top holdings from major indexes
-STOCK_UNIVERSE = {
-    "mega_cap": [
-        "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "NVDA", "META", "TSLA", "BRK-B",
-        "UNH", "JNJ", "V", "XOM", "JPM", "MA", "PG", "HD", "CVX", "MRK", "ABBV",
-        "LLY", "PEP", "KO", "COST", "AVGO", "ORCL", "TMO", "WMT", "MCD", "CSCO",
-        "ACN", "DHR", "ABT", "ADBE", "CRM", "TXN", "NKE", "LIN", "QCOM", "NEE"
-    ],
-    "large_cap": [
-        "AMD", "INTC", "IBM", "NOW", "AMAT", "ADI", "LRCX", "MU", "KLAC", "MRVL",
-        "NFLX", "DIS", "CMCSA", "T", "VZ", "TMUS", "ATVI", "EA", "WBD", "PARA",
-        "PFE", "BMY", "AMGN", "GILD", "REGN", "VRTX", "ISRG", "SYK", "BSX", "MDT",
-        "BAC", "WFC", "GS", "MS", "SCHW", "AXP", "BLK", "C", "USB", "PNC",
-        "COP", "SLB", "EOG", "MPC", "PSX", "VLO", "OKE", "WMB", "KMI", "ET",
-        "CAT", "GE", "HON", "UPS", "RTX", "BA", "LMT", "NOC", "GD", "DE"
-    ],
-    "mid_cap": [
-        "CRWD", "PANW", "FTNT", "ZS", "NET", "OKTA", "DDOG", "MDB", "SNOW", "PATH",
-        "VEEV", "HUBS", "WDAY", "SSNC", "CDNS", "SNPS", "ANSS", "KEYS", "ZBRA", "TDY",
-        "MRNA", "BIIB", "ILMN", "DXCM", "ALGN", "HOLX", "IDXX", "MTD", "WST", "IQV",
-        "TFC", "FITB", "RF", "HBAN", "KEY", "CFG", "MTB", "CMA", "ZION", "FRC",
-        "DVN", "FANG", "APA", "HAL", "BKR", "NOV", "CTRA", "OVV", "RRC", "AR"
-    ],
-    "small_cap": [
-        "SMCI", "UPST", "AFRM", "SOFI", "HOOD", "COIN", "RBLX", "U", "DKNG", "PENN",
-        "PLUG", "FCEL", "BE", "ENPH", "SEDG", "RUN", "NOVA", "ARRY", "STEM", "CHPT",
-        "PLTR", "AI", "BBAI", "PRCT", "BIGC", "DOCN", "S", "GTLB", "CFLT", "ESTC"
-    ]
-}
+# Stock Universe is now fetched DYNAMICALLY from ETF holdings
+# See data_fetcher.get_dynamic_stock_universe() for implementation
+# This ensures we always have current, valid tickers without manual updates
 
 # Risk Levels for Position Sizing
 RISK_LEVELS = {

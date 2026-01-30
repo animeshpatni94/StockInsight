@@ -81,9 +81,9 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"       Found {len(momentum.get('top_gainers', []))} top gainers")
     print(f"       Found {len(momentum.get('unusual_volume', []))} volume spikes")
     
-    # Step 5: Fetch politician trades
+    # Step 5: Fetch politician trades (90 days to get more data for bi-weekly reports)
     print("\n[5/10] Fetching politician trades...")
-    politician_trades = fetch_recent_trades(days=45)
+    politician_trades = fetch_recent_trades(days=90)
     flagged_trades = analyze_committee_correlation(politician_trades)
     print(f"       Found {len(politician_trades)} recent trades")
     print(f"       Flagged {len(flagged_trades)} suspicious trades")
@@ -180,10 +180,12 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     
     trims = [r for r in analysis_result.get('portfolio_review', []) if r.get('action') == 'TRIM']
     if trims:
-        print(f"   🟡 TRIM: {', '.join(f\"{t.get('ticker')} → {t.get('new_allocation_pct'):.0f}%\" for t in trims)}")
+        trim_strs = [f"{t.get('ticker')} → {t.get('new_allocation_pct', 0):.0f}%" for t in trims]
+        print(f"   🟡 TRIM: {', '.join(trim_strs)}")
     
     if new_recs:
-        print(f"   🟢 BUY:  {', '.join(f\"{r.get('ticker')} ({r.get('allocation_pct'):.0f}%)\" for r in new_recs)}")
+        buy_strs = [f"{r.get('ticker')} ({r.get('allocation_pct', 0):.0f}%)" for r in new_recs]
+        print(f"   🟢 BUY:  {', '.join(buy_strs)}")
     
     cash_pct = updated_history.get('cash', {}).get('allocation_pct', 0)
     print(f"   💵 CASH: {cash_pct:.1f}%")
