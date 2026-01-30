@@ -273,9 +273,13 @@ def analyze_with_claude(analysis_input: Dict,
     user_message = _format_analysis_prompt(analysis_input)
     
     try:
-        print(f"  Sending request to {model} with extended thinking enabled...")
+        print(f"  Sending request to {model} with extended thinking enabled (streaming)...")
         
-        response = client.messages.create(
+        # Use streaming for long requests with extended thinking
+        response_text = ""
+        thinking_text = ""
+        
+        with client.messages.stream(
             model=model,
             max_tokens=max_tokens,
             thinking={
@@ -285,14 +289,25 @@ def analyze_with_claude(analysis_input: Dict,
             messages=[
                 {"role": "user", "content": system_prompt + "\n\n" + user_message}
             ]
-        )
+        ) as stream:
+            for event in stream:
+                # Handle different event types
+                if hasattr(event, 'type'):
+                    if event.type == 'content_block_start':
+                        if hasattr(event, 'content_block'):
+                            if event.content_block.type == 'thinking':
+                                print("  Claude is thinking...")
+                            elif event.content_block.type == 'text':
+                                print("  Claude is writing response...")
+                    elif event.type == 'content_block_delta':
+                        if hasattr(event, 'delta'):
+                            if hasattr(event.delta, 'thinking'):
+                                thinking_text += event.delta.thinking
+                            elif hasattr(event.delta, 'text'):
+                                response_text += event.delta.text
         
-        # Extract text content (skip thinking blocks, get the actual text response)
-        response_text = ""
-        for block in response.content:
-            if block.type == "text":
-                response_text = block.text
-                break
+        print(f"  Thinking complete ({len(thinking_text)} chars)")
+        print(f"  Response received ({len(response_text)} chars)")
         
         # Parse JSON from response
         analysis_result = _parse_claude_response(response_text)
