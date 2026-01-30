@@ -630,9 +630,12 @@ def _build_horizon_section(title: str, recs: List[Dict]) -> str:
         price_target = _safe_float(r.get('price_target'))
         stop_loss = _safe_float(r.get('stop_loss'))
         allocation = _safe_float(r.get('allocation_pct'))
+        current_market_price = _safe_float(r.get('current_market_price'))  # Real price from yfinance
         
-        # Calculate upside potential
-        if entry_low > 0 and price_target > 0:
+        # Calculate upside potential from current price if available, otherwise from entry zone
+        if current_market_price > 0 and price_target > 0:
+            upside = ((price_target - current_market_price) / current_market_price) * 100
+        elif entry_low > 0 and price_target > 0:
             upside = ((price_target - entry_low) / entry_low) * 100
         else:
             upside = 0
@@ -672,8 +675,12 @@ def _build_horizon_section(title: str, recs: List[Dict]) -> str:
                                 <td style="padding: 20px;">
                                     <table cellpadding="0" cellspacing="0" border="0" width="100%">
                                         <tr>
-                                            <td style="font-size: 12px; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; padding-bottom: 14px; border-bottom: 1px solid #30363d;">Buy Zone</td>
-                                            <td style="font-size: 20px; font-weight: 700; color: #e6edf3; text-align: right; padding-bottom: 14px; border-bottom: 1px solid #30363d;">${entry_low:.0f} – ${entry_high:.0f}</td>
+                                            <td style="font-size: 12px; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; padding-bottom: 14px; border-bottom: 1px solid #30363d;">Current Price</td>
+                                            <td style="font-size: 20px; font-weight: 700; color: #58a6ff; text-align: right; padding-bottom: 14px; border-bottom: 1px solid #30363d;">${current_market_price:.2f}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-size: 12px; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; padding: 14px 0; border-bottom: 1px solid #30363d;">Buy Zone</td>
+                                            <td style="font-size: 20px; font-weight: 700; color: #e6edf3; text-align: right; padding: 14px 0; border-bottom: 1px solid #30363d;">${entry_low:.0f} – ${entry_high:.0f}</td>
                                         </tr>
                                         <tr>
                                             <td style="font-size: 12px; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; padding: 14px 0; border-bottom: 1px solid #30363d;">Target</td>

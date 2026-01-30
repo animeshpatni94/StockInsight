@@ -150,12 +150,19 @@ def fetch_multiple_sentiments(tickers: List[str], max_tickers: int = 20) -> Dict
     
     # Alpha Vantage NEWS_SENTIMENT can take comma-separated tickers
     # But to get better results, we'll query in small batches
+    # Free tier: 5 calls/minute, 500/day - so we add delays between batches
     batch_size = 5  # Query 5 tickers at a time
-    max_api_calls = 20  # Hard cap to stay well under 25/day free tier limit
+    max_api_calls = 4  # 4 batches × 5 tickers = 20 tickers max, stays under rate limit
     batches = [tickers_to_fetch[i:i + batch_size] for i in range(0, len(tickers_to_fetch), batch_size)]
     batches = batches[:max_api_calls]  # Never exceed max API calls
     
-    for batch in batches:
+    for i, batch in enumerate(batches):
+        # Rate limit: 5 calls/min = 1 call per 12 seconds
+        # Add delay between batches (skip first batch)
+        if i > 0:
+            print(f"    Waiting 15s for rate limit... ({i+1}/{len(batches)} batches)")
+            time.sleep(15)
+        
         try:
             batch_str = ','.join(batch)
             params = {
@@ -171,11 +178,15 @@ def fetch_multiple_sentiments(tickers: List[str], max_tickers: int = 20) -> Dict
             data = response.json()
             
             # Check for rate limit
-            if 'Note' in data or 'Information' in data:
-                print(f"    ⚠️ API rate limit reached, got sentiment for {len(results)} stocks")
+            if 'Note' in data:
+                print(f"    ⚠️ API rate limit: {data['Note'][:80]}...")
+                break
+            if 'Information' in data:
+                print(f"    ⚠️ API message: {data['Information'][:80]}...")
                 break
             
             if 'feed' not in data:
+                print(f"    ⚠️ No feed in response for batch {i+1}")
                 continue
             
             feed = data['feed']
@@ -233,9 +244,11 @@ def fetch_multiple_sentiments(tickers: List[str], max_tickers: int = 20) -> Dict
             # Small delay between batches to be respectful of rate limits
             time.sleep(0.5)
             
-        except requests.exceptions.RequestException:
+        except requests.exceptions.RequestException as e:
+            print(f"    ⚠️ Request error for batch {i+1}: {e}")
             continue
-        except Exception:
+        except Exception as e:
+            print(f"    ⚠️ Error for batch {i+1}: {e}")
             continue
     
     if results:

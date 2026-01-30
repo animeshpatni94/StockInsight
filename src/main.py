@@ -211,6 +211,47 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"       Generated {len(new_recs)} new recommendations")
     print(f"       Generated {len(sells)} sell signals")
     
+    # Step 7b: Inject real current prices into recommendations
+    # Claude doesn't know current prices, so we fetch and add them
+    if new_recs:
+        rec_tickers = [r.get('ticker') for r in new_recs if r.get('ticker')]
+        if rec_tickers:
+            print(f"       Fetching real prices for {len(rec_tickers)} recommended tickers...")
+            from data_fetcher import get_current_prices
+            real_prices = get_current_prices(rec_tickers)
+            
+            for rec in new_recs:
+                ticker = rec.get('ticker')
+                if ticker and ticker in real_prices:
+                    real_price = real_prices[ticker]
+                    rec['current_market_price'] = round(real_price, 2)
+                    
+                    # Update entry_zone if Claude's prices are way off (>30% different)
+                    entry = rec.get('entry_zone', {})
+                    if entry:
+                        entry_mid = (entry.get('low', 0) + entry.get('high', 0)) / 2
+                        if entry_mid > 0:
+                            diff_pct = abs(real_price - entry_mid) / entry_mid * 100
+                            if diff_pct > 30:
+                                # Claude's price is stale, adjust to realistic zone
+                                print(f"       ⚠️ {ticker}: Adjusting entry zone from ${entry_mid:.0f} to ${real_price:.0f} (was {diff_pct:.0f}% off)")
+                                rec['entry_zone'] = {
+                                    'low': round(real_price * 0.97, 2),  # -3% from current
+                                    'high': round(real_price * 1.02, 2)  # +2% from current
+                                }
+                                # Also adjust price target proportionally if it exists
+                                old_target = rec.get('price_target', 0)
+                                if old_target > 0 and entry_mid > 0:
+                                    target_upside = (old_target / entry_mid) - 1  # Original upside %
+                                    rec['price_target'] = round(real_price * (1 + target_upside), 2)
+                                # Adjust stop loss
+                                old_stop = rec.get('stop_loss', 0)
+                                if old_stop > 0 and entry_mid > 0:
+                                    stop_downside = 1 - (old_stop / entry_mid)  # Original downside %
+                                    rec['stop_loss'] = round(real_price * (1 - stop_downside), 2)
+            
+            print(f"       ✓ Prices validated for {len(real_prices)} tickers")
+    
     # Step 8: Update portfolio history
     print("\n[8/10] Updating portfolio history...")
     if not dry_run:
