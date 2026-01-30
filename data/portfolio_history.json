@@ -2,23 +2,373 @@
   "metadata": {
     "created_at": "2026-01-30",
     "last_updated": "2026-01-30",
-    "total_months": 0,
+    "total_months": 1,
     "starting_capital": 100000
   },
-  "current_portfolio": [],
+  "current_portfolio": [
+    {
+      "ticker": "GLD",
+      "company_name": "SPDR Gold Shares",
+      "asset_class": "commodity_etf",
+      "sector": "Metals",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "hedge",
+      "risk_level": "moderate",
+      "time_horizon": "short_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 485,
+      "entry_zone": {
+        "low": 485,
+        "high": 505
+      },
+      "price_target": 575,
+      "stop_loss": 440,
+      "thesis": "Textbook inflationary regime setup: dollar weakness, real rates potentially negative, central bank buying continues. Yes, +24% in a month is a big move, but this isn't momentum chasing - it's regime alignment. Gold is insurance against monetary debasement.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "SLV",
+      "company_name": "iShares Silver Trust",
+      "asset_class": "commodity_etf",
+      "sector": "Metals",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "short_term",
+      "allocation_pct": 5,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 100,
+      "entry_zone": {
+        "low": 100,
+        "high": 110
+      },
+      "price_target": 130,
+      "stop_loss": 88,
+      "thesis": "Silver is gold on steroids - monetary metal with industrial demand from solar/EVs. +60% in a month is parabolic and dangerous, but I'm keeping allocation small. Silver historically overshoots gold in precious metals bull markets. Industrial demand thesis adds floor.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "XLE",
+      "company_name": "Energy Select Sector SPDR",
+      "asset_class": "etf",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 88,
+      "entry_zone": {
+        "low": 88,
+        "high": 95
+      },
+      "price_target": 110,
+      "stop_loss": 80,
+      "thesis": "Energy is the leading sector by a mile (+13.2% 1-month). Oil at $79 with supply constraints, refinery margins healthy. Inflationary regimes historically favor energy. Sector still cheap on FCF yield versus tech darlings. XLE diversifies single-stock risk.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "XOM",
+      "company_name": "Exxon Mobil Corporation",
+      "asset_class": "us_stock",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 108,
+      "entry_zone": {
+        "low": 108,
+        "high": 118
+      },
+      "price_target": 135,
+      "stop_loss": 98,
+      "thesis": "Best-in-class integrated major with strongest balance sheet. 3%+ dividend yield with buybacks on top. Guyana production ramping provides growth while Permian generates cash. Unlike pure-play E&Ps, integrated model provides downstream buffer.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "AMGN",
+      "company_name": "Amgen Inc.",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 280,
+      "entry_zone": {
+        "low": 280,
+        "high": 300
+      },
+      "price_target": 350,
+      "stop_loss": 252,
+      "thesis": "Healthcare is underperforming (-1.28% 1-month) which makes this contrarian. AMGN trades cheap relative to peers with fortress balance sheet and established biosimilar/specialty pharma business. Obesity drug MariTide is wildcard upside. Defensive play that pays you 3%+ dividend to wait.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "SCHD",
+      "company_name": "Schwab US Dividend Equity ETF",
+      "asset_class": "etf",
+      "sector": "Diversified",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 80,
+      "entry_zone": {
+        "low": 80,
+        "high": 86
+      },
+      "price_target": 95,
+      "stop_loss": 72,
+      "thesis": "Quality dividend payers with strong fundamentals. SCHD screens for profitability, FCF, and dividend sustainability. In inflationary regime, dividends provide income that grows with pricing power. Less volatile than growth, better yield than cash.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "VWO",
+      "company_name": "Vanguard FTSE Emerging Markets ETF",
+      "asset_class": "international_stock",
+      "sector": "Diversified EM",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 44,
+      "entry_zone": {
+        "low": 44,
+        "high": 48
+      },
+      "price_target": 56,
+      "stop_loss": 40,
+      "thesis": "Commodity exporting EMs benefit from commodity supercycle + dollar weakness. Brazil, South Africa, Indonesia all levered to this theme. Valuations cheap relative to US. China weakness is actually an opportunity if stimulus arrives. Diversification benefit real.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "GOOGL",
+      "company_name": "Alphabet Inc.",
+      "asset_class": "us_stock",
+      "sector": "Communication Services",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 185,
+      "entry_zone": {
+        "low": 185,
+        "high": 200
+      },
+      "price_target": 240,
+      "stop_loss": 165,
+      "thesis": "Pelosi repositioning here (sold $1-5M, rebought $750K-1.5M) suggests she sees value post-DOJ uncertainty. Tech is underperforming (Relative Strength -5.66) which is contrarian opportunity. GOOGL trades at ~20x forward with cloud growing 30%+ and AI integration. Search moat intact despite OpenAI fears.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "TIP",
+      "company_name": "iShares TIPS Bond ETF",
+      "asset_class": "bond_etf",
+      "sector": "Fixed Income",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "hedge",
+      "risk_level": "conservative",
+      "time_horizon": "medium_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 105,
+      "entry_zone": {
+        "low": 105,
+        "high": 112
+      },
+      "price_target": 120,
+      "stop_loss": 98,
+      "thesis": "Explicit inflation protection through Treasury Inflation-Protected Securities. If my inflationary regime thesis is correct, TIPS outperform nominal bonds. Breakeven inflation rates suggest market is underpricing inflation risk. Conservative anchor for portfolio.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "HON",
+      "company_name": "Honeywell International Inc.",
+      "asset_class": "us_stock",
+      "sector": "Industrials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "garp",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 210,
+      "entry_zone": {
+        "low": 210,
+        "high": 225
+      },
+      "price_target": 260,
+      "stop_loss": 190,
+      "thesis": "Angus King just bought HON. Industrials sector up 5.73% with momentum. HON is quality industrial with aerospace exposure (Boeing recovery), building automation (energy efficiency), and process automation. Inflationary regime favors real economy companies that can pass through costs.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    }
+  ],
   "closed_positions": [],
-  "monthly_history": [],
+  "monthly_history": [
+    {
+      "month": "2026-01",
+      "starting_value": 100000,
+      "ending_value": 100000.0,
+      "portfolio_return_pct": 0.0,
+      "sp500_return_pct": 0.9,
+      "alpha_pct": -0.9,
+      "recommendations_made": [
+        {
+          "ticker": "GLD",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "SLV",
+          "action": "BUY",
+          "allocation": 5
+        },
+        {
+          "ticker": "XLE",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "XOM",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "AMGN",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "SCHD",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "VWO",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "GOOGL",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "TIP",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "HON",
+          "action": "BUY",
+          "allocation": 8
+        }
+      ],
+      "sells_executed": [],
+      "notable_politician_trades": [
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "LPAB",
+          "transaction_type": "Purchase",
+          "amount": "$1M-$5M",
+          "insight": "AllianceBernstein is asset management. Pelosi betting on financial services? Or just diversifying away from tech? Unusual pick - worth watching."
+        },
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "GOOGL",
+          "transaction_type": "Net buyer (sold $1-5M, bought $750K-1.5M)",
+          "amount": "Net ~$3M reduction",
+          "insight": "Repositioning, not exiting. Likely rolling options positions. Still has conviction but reducing size. I'm following with 10% allocation."
+        },
+        {
+          "politician": "Angus King",
+          "party": "I",
+          "ticker": "LLY",
+          "transaction_type": "Purchase",
+          "amount": "$1K-15K",
+          "insight": "GLP-1 thesis still attracting smart money. King also bought HON - I like industrials here too."
+        },
+        {
+          "politician": "Steve Cohen (not the hedge fund billionaire)",
+          "party": "D",
+          "ticker": "NOC",
+          "transaction_type": "Sale",
+          "amount": "$15K-50K",
+          "insight": "Defense contractor sales. Does House Armed Services know something about budget cuts? Or just profit-taking after defense rally?"
+        }
+      ]
+    }
+  ],
   "performance_summary": {
-    "total_return_pct": 0,
-    "total_alpha_pct": 0,
+    "total_return_pct": 0.0,
+    "sp500_total_return_pct": 0.9,
+    "total_alpha_pct": -0.9,
+    "win_count": 0,
+    "loss_count": 0,
     "win_rate_pct": 0,
     "average_win_pct": 0,
     "average_loss_pct": 0,
-    "max_drawdown_pct": 0,
-    "sharpe_ratio": 0
+    "best_trade": null,
+    "worst_trade": null
   },
   "cash": {
-    "allocation_pct": 100,
+    "allocation_pct": 13,
     "vehicle": "SGOV"
   }
 }
