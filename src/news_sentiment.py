@@ -179,10 +179,16 @@ def fetch_multiple_sentiments(tickers: List[str], max_tickers: int = 20) -> Dict
             
             # Check for rate limit
             if 'Note' in data:
-                print(f"    ⚠️ API rate limit: {data['Note'][:80]}...")
+                print(f"    ⚠️ API rate limit hit: {data['Note'][:100]}...")
+                print(f"    → Alpha Vantage free tier: 25 calls/day. Try again tomorrow or upgrade.")
                 break
             if 'Information' in data:
-                print(f"    ⚠️ API message: {data['Information'][:80]}...")
+                msg = data['Information']
+                if 'rate limit' in msg.lower() or 'API rate' in msg.lower():
+                    print(f"    ⚠️ API rate limit hit - free tier exhausted for today")
+                    print(f"    → Alpha Vantage free tier: 25 calls/day. Try again tomorrow or upgrade.")
+                else:
+                    print(f"    ⚠️ API message: {msg[:100]}...")
                 break
             
             if 'feed' not in data:
@@ -190,6 +196,7 @@ def fetch_multiple_sentiments(tickers: List[str], max_tickers: int = 20) -> Dict
                 continue
             
             feed = data['feed']
+            print(f"    Batch {i+1}: Got {len(feed)} articles for {batch_str}")
             
             # Aggregate sentiments per ticker
             ticker_scores = {t.upper(): [] for t in batch}
@@ -206,6 +213,11 @@ def fetch_multiple_sentiments(tickers: List[str], max_tickers: int = 20) -> Dict
                                 ticker_scores[t].append(score * relevance)
                         except (ValueError, TypeError):
                             pass
+            
+            # Log how many scores we found per ticker
+            for t, scores in ticker_scores.items():
+                if not scores:
+                    print(f"    {t}: No relevant articles found")
             
             # Build results for this batch
             for t, scores in ticker_scores.items():
