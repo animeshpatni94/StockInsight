@@ -402,9 +402,9 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
     cash_alloc = 100 - sum(h.get('allocation_pct', 0) for h in new_portfolio)
     history['cash']['allocation_pct'] = max(0, cash_alloc)
     
-    # Add month to history
+    # Add month to history - calculate return from OLD portfolio (what we held this month)
     sp500_return = market_data.get('indexes', {}).get('S&P 500', {}).get('returns', {}).get('1mo', 0)
-    portfolio_return = _calculate_portfolio_return(old_portfolio, new_portfolio)
+    portfolio_return = _calculate_portfolio_return(old_portfolio)
     
     month_record = {
         'month': current_month,
@@ -443,19 +443,44 @@ def _calculate_hold_days(buy_date_str: str) -> int:
         return 0
 
 
-def _calculate_portfolio_return(old_portfolio: List[Dict], 
-                                new_portfolio: List[Dict]) -> float:
-    """Calculate approximate portfolio return for the month."""
-    if not old_portfolio:
+def _calculate_portfolio_return(portfolio: List[Dict]) -> float:
+    """
+    Calculate portfolio return based on recommended prices vs current prices.
+    
+    Args:
+        portfolio: List of holdings with recommended_price and allocation_pct
+    
+    Returns:
+        Weighted portfolio return percentage
+    """
+    if not portfolio:
         return 0.0
     
-    total_weighted_return = 0
-    total_weight = 0
+    # Get current prices for all holdings
+    tickers = [h['ticker'] for h in portfolio if h.get('ticker')]
+    if not tickers:
+        return 0.0
     
-    for holding in old_portfolio:
+    current_prices = get_current_prices(tickers)
+    
+    total_weighted_return = 0.0
+    total_weight = 0.0
+    
+    for holding in portfolio:
+        ticker = holding.get('ticker')
         weight = holding.get('allocation_pct', 0)
-        gain = holding.get('gain_loss_pct', 0)
-        total_weighted_return += weight * gain
+        rec_price = holding.get('recommended_price', 0)
+        
+        if not ticker or weight <= 0 or rec_price <= 0:
+            continue
+        
+        current_price = current_prices.get(ticker, rec_price)
+        
+        # Calculate return for this position
+        position_return = ((current_price / rec_price) - 1) * 100
+        
+        # Add weighted contribution
+        total_weighted_return += weight * position_return
         total_weight += weight
     
     if total_weight > 0:
