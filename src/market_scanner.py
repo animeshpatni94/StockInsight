@@ -6,6 +6,7 @@ Implements momentum, fundamental, and technical screens across all sectors.
 import yfinance as yf
 import pandas as pd
 import numpy as np
+import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -26,8 +27,9 @@ class MarketScanner:
         self.stock_data = {}
         self.stock_info = []
         self.stock_universe = None
+        self._price_cache = {}  # Cache for historical prices
         
-    def load_universe(self, max_stocks: int = 200):
+    def load_universe(self, max_stocks: int = 1000):
         """Load stock universe data for screening."""
         # Dynamically fetch stock universe from ETF holdings
         self.stock_universe = get_dynamic_stock_universe()
@@ -38,8 +40,63 @@ class MarketScanner:
         all_tickers = list(set(all_tickers))[:max_stocks]
         
         print(f"    Loading {len(all_tickers)} stocks...")
-        self.stock_info = fetch_multiple_ticker_info(all_tickers, max_workers=15)
+        # Use rate-limited fetching with very conservative settings to fetch all 1000+ stocks
+        self.stock_info = fetch_multiple_ticker_info(all_tickers, max_workers=2, batch_size=20, delay_between_batches=3.0)
         print(f"    Loaded info for {len(self.stock_info)} stocks")
+        
+    def _bulk_download_prices(self, tickers: List[str], period: str = "3mo") -> pd.DataFrame:
+        """
+        Download historical prices for multiple tickers in bulk.
+        Uses yf.download() which is much more efficient than individual calls.
+        Rate limited with batches to avoid Yahoo Finance blocks.
+        
+        Args:
+            tickers: List of stock symbols
+            period: Time period for historical data
+            
+        Returns:
+            DataFrame with price data (multi-level columns if multiple tickers)
+        """
+        if not tickers:
+            return pd.DataFrame()
+        
+        # Cache key
+        cache_key = f"{','.join(sorted(tickers[:10]))}_{period}"
+        if cache_key in self._price_cache:
+            return self._price_cache[cache_key]
+        
+        # Batch download to avoid rate limits (50 tickers per batch for safety)
+        batch_size = 50
+        all_data = []
+        
+        for i in range(0, len(tickers), batch_size):
+            batch = tickers[i:i + batch_size]
+            batch_num = (i // batch_size) + 1
+            total_batches = (len(tickers) + batch_size - 1) // batch_size
+            print(f"        Downloading batch {batch_num}/{total_batches} ({len(batch)} tickers)...")
+            try:
+                data = yf.download(
+                    batch, 
+                    period=period, 
+                    progress=False, 
+                    threads=True,
+                    group_by='ticker'
+                )
+                if not data.empty:
+                    all_data.append(data)
+            except Exception as e:
+                print(f"        Batch {batch_num} error: {e}")
+            
+            # Rate limit: 2 second delay between batches
+            if i + batch_size < len(tickers):
+                time.sleep(2.0)
+        
+        if all_data:
+            result = pd.concat(all_data, axis=1) if len(all_data) > 1 else all_data[0]
+            self._price_cache[cache_key] = result
+            return result
+        
+        return pd.DataFrame()
         
     # ==================== MOMENTUM SCREENS ====================
     
@@ -47,6 +104,7 @@ class MarketScanner:
                         period: str = "1mo") -> List[Dict]:
         """
         Get top performing stocks in the past period.
+        Uses bulk download for efficiency and rate limit compliance.
         
         Args:
             sector: Filter by sector (None for all)
@@ -60,31 +118,52 @@ class MarketScanner:
         if sector:
             stocks = [s for s in stocks if s.get('sector') == sector]
         
-        # Calculate returns
+        # Get tickers list
         tickers = [s['ticker'] for s in stocks if s.get('ticker')]
+        if not tickers:
+            return []
         
-        results = []
+        # Build ticker info lookup
+        ticker_info = {s['ticker']: s for s in stocks if s.get('ticker')}
+        
         days_map = {'1w': 5, '1mo': 21, '3mo': 63, '6mo': 126}
         days = days_map.get(period, 21)
         
-        for stock in stocks:
-            ticker = stock.get('ticker')
-            if not ticker:
-                continue
+        # Bulk download prices (much more efficient!)
+        print(f"      Downloading prices for {len(tickers)} tickers...")
+        price_data = self._bulk_download_prices(tickers, period="3mo")
+        
+        if price_data.empty:
+            return []
+        
+        results = []
+        for ticker in tickers:
             try:
-                data = yf.Ticker(ticker).history(period="3mo")
-                if len(data) > days:
-                    current = data['Close'].iloc[-1]
-                    past = data['Close'].iloc[-days-1]
+                # Handle both single and multi-ticker DataFrame structures
+                if len(tickers) == 1:
+                    close_prices = price_data['Close']
+                else:
+                    if ticker in price_data.columns.get_level_values(0):
+                        close_prices = price_data[ticker]['Close']
+                    else:
+                        continue
+                
+                # Drop NaN values
+                close_prices = close_prices.dropna()
+                
+                if len(close_prices) > days:
+                    current = close_prices.iloc[-1]
+                    past = close_prices.iloc[-days-1] if len(close_prices) > days else close_prices.iloc[0]
                     return_pct = ((current / past) - 1) * 100
                     
+                    info = ticker_info.get(ticker, {})
                     results.append({
                         'ticker': ticker,
-                        'name': stock.get('name', ticker),
-                        'sector': stock.get('sector', 'Unknown'),
+                        'name': info.get('name', ticker),
+                        'sector': info.get('sector', 'Unknown'),
                         'return_pct': round(return_pct, 2),
-                        'current_price': round(current, 2),
-                        'market_cap': stock.get('market_cap', 0)
+                        'current_price': round(float(current), 2),
+                        'market_cap': info.get('market_cap', 0)
                     })
             except Exception:
                 continue
@@ -174,6 +253,7 @@ class MarketScanner:
     def get_unusual_volume(self, threshold: float = 3.0) -> List[Dict]:
         """
         Find stocks with unusual volume spikes.
+        Uses bulk download for efficiency.
         
         Args:
             threshold: Multiple of average volume (3.0 = 3x average)
@@ -181,34 +261,58 @@ class MarketScanner:
         Returns:
             List of stocks with volume spikes
         """
-        results = []
+        tickers = [s['ticker'] for s in self.stock_info if s.get('ticker')]
+        if not tickers:
+            return []
         
-        for stock in self.stock_info:
-            ticker = stock.get('ticker')
-            if not ticker:
-                continue
-            
+        # Build ticker info lookup
+        ticker_info = {s['ticker']: s for s in self.stock_info if s.get('ticker')}
+        
+        # Bulk download prices with volume
+        print(f"      Checking volume for {len(tickers)} tickers...")
+        price_data = self._bulk_download_prices(tickers, period="1mo")
+        
+        if price_data.empty:
+            return []
+        
+        results = []
+        for ticker in tickers:
             try:
-                data = yf.Ticker(ticker).history(period="1mo")
-                if len(data) < 5:
+                # Handle both single and multi-ticker DataFrame structures
+                if len(tickers) == 1:
+                    volume_data = price_data['Volume']
+                    close_data = price_data['Close']
+                else:
+                    if ticker not in price_data.columns.get_level_values(0):
+                        continue
+                    volume_data = price_data[ticker]['Volume']
+                    close_data = price_data[ticker]['Close']
+                
+                volume_data = volume_data.dropna()
+                close_data = close_data.dropna()
+                
+                if len(volume_data) < 5:
                     continue
                 
-                current_volume = data['Volume'].iloc[-1]
-                avg_volume = data['Volume'].iloc[:-1].mean()
+                current_volume = volume_data.iloc[-1]
+                avg_volume = volume_data.iloc[:-1].mean()
                 
                 if avg_volume > 0:
                     volume_ratio = current_volume / avg_volume
                     if volume_ratio >= threshold:
+                        info = ticker_info.get(ticker, {})
+                        price_change_pct = 0
+                        if len(close_data) >= 2:
+                            price_change_pct = ((close_data.iloc[-1] / close_data.iloc[-2]) - 1) * 100
+                        
                         results.append({
                             'ticker': ticker,
-                            'name': stock.get('name'),
-                            'sector': stock.get('sector'),
+                            'name': info.get('name'),
+                            'sector': info.get('sector'),
                             'current_volume': int(current_volume),
                             'avg_volume': int(avg_volume),
                             'volume_ratio': round(volume_ratio, 2),
-                            'price_change_pct': round(
-                                ((data['Close'].iloc[-1] / data['Close'].iloc[-2]) - 1) * 100, 2
-                            )
+                            'price_change_pct': round(price_change_pct, 2)
                         })
             except Exception:
                 continue
@@ -429,9 +533,53 @@ class MarketScanner:
         
         return results
     
+    def _calculate_rsi_bulk(self, price_data: pd.DataFrame, tickers: List[str], window: int = 14) -> Dict[str, float]:
+        """
+        Calculate RSI for multiple tickers from bulk price data.
+        
+        Args:
+            price_data: DataFrame with price data from bulk download
+            tickers: List of tickers
+            window: RSI window period
+            
+        Returns:
+            Dictionary mapping ticker to RSI value
+        """
+        rsi_values = {}
+        
+        for ticker in tickers:
+            try:
+                # Handle both single and multi-ticker DataFrame structures
+                if len(tickers) == 1:
+                    close_data = price_data['Close']
+                else:
+                    if ticker not in price_data.columns.get_level_values(0):
+                        continue
+                    close_data = price_data[ticker]['Close']
+                
+                close_data = close_data.dropna()
+                
+                if len(close_data) < window:
+                    continue
+                
+                # Calculate RSI
+                delta = close_data.diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+                
+                if loss.iloc[-1] != 0:
+                    rs = gain.iloc[-1] / loss.iloc[-1]
+                    rsi = 100 - (100 / (1 + rs))
+                    rsi_values[ticker] = rsi
+            except Exception:
+                continue
+        
+        return rsi_values
+    
     def get_oversold_stocks(self, rsi_threshold: int = 30) -> List[Dict]:
         """
         Find stocks with RSI below threshold (oversold).
+        Uses bulk download for efficiency.
         
         Args:
             rsi_threshold: RSI level below which stock is considered oversold
@@ -439,38 +587,45 @@ class MarketScanner:
         Returns:
             List of oversold stocks
         """
-        results = []
+        tickers = [s['ticker'] for s in self.stock_info if s.get('ticker')]
+        if not tickers:
+            return []
         
-        for stock in self.stock_info:
-            ticker = stock.get('ticker')
-            if not ticker:
-                continue
-            
-            try:
-                data = yf.Ticker(ticker).history(period="1mo")
-                if len(data) < 14:
-                    continue
-                
-                # Calculate RSI
-                delta = data['Close'].diff()
-                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-                
-                if loss.iloc[-1] != 0:
-                    rs = gain.iloc[-1] / loss.iloc[-1]
-                    rsi = 100 - (100 / (1 + rs))
-                    
-                    if rsi < rsi_threshold:
-                        results.append({
-                            'ticker': ticker,
-                            'name': stock.get('name'),
-                            'sector': stock.get('sector'),
-                            'current_price': stock.get('current_price'),
-                            'rsi': round(rsi, 2),
-                            'signal': 'Oversold'
-                        })
-            except Exception:
-                continue
+        # Build ticker info lookup
+        ticker_info = {s['ticker']: s for s in self.stock_info if s.get('ticker')}
+        
+        # Bulk download prices
+        print(f"      Calculating RSI for {len(tickers)} tickers...")
+        price_data = self._bulk_download_prices(tickers, period="1mo")
+        
+        if price_data.empty:
+            return []
+        
+        # Calculate RSI for all tickers
+        rsi_values = self._calculate_rsi_bulk(price_data, tickers)
+        
+        # Log RSI calculation results
+        rsi_success_count = len(rsi_values)
+        rsi_failed_count = len(tickers) - rsi_success_count
+        print(f"      ✓ RSI calculated for {rsi_success_count}/{len(tickers)} stocks ({rsi_failed_count} failed/skipped)")
+        
+        results = []
+        for ticker, rsi in rsi_values.items():
+            if rsi < rsi_threshold:
+                info = ticker_info.get(ticker, {})
+                results.append({
+                    'ticker': ticker,
+                    'name': info.get('name'),
+                    'sector': info.get('sector'),
+                    'current_price': info.get('current_price'),
+                    'rsi': round(rsi, 2),
+                    'signal': 'Oversold'
+                })
+        
+        print(f"      ✓ Found {len(results)} oversold stocks (RSI < {rsi_threshold})")
+        if results:
+            top_oversold = [f"{r['ticker']}({r['rsi']})" for r in results[:5]]
+            print(f"        Top oversold: {', '.join(top_oversold)}")
         
         results.sort(key=lambda x: x['rsi'])
         return results
@@ -478,6 +633,7 @@ class MarketScanner:
     def get_overbought_stocks(self, rsi_threshold: int = 70) -> List[Dict]:
         """
         Find stocks with RSI above threshold (overbought).
+        Uses bulk download for efficiency.
         
         Args:
             rsi_threshold: RSI level above which stock is considered overbought
@@ -485,38 +641,42 @@ class MarketScanner:
         Returns:
             List of overbought stocks
         """
-        results = []
+        tickers = [s['ticker'] for s in self.stock_info if s.get('ticker')]
+        if not tickers:
+            return []
         
-        for stock in self.stock_info:
-            ticker = stock.get('ticker')
-            if not ticker:
-                continue
-            
-            try:
-                data = yf.Ticker(ticker).history(period="1mo")
-                if len(data) < 14:
-                    continue
-                
-                # Calculate RSI
-                delta = data['Close'].diff()
-                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-                
-                if loss.iloc[-1] != 0:
-                    rs = gain.iloc[-1] / loss.iloc[-1]
-                    rsi = 100 - (100 / (1 + rs))
-                    
-                    if rsi > rsi_threshold:
-                        results.append({
-                            'ticker': ticker,
-                            'name': stock.get('name'),
-                            'sector': stock.get('sector'),
-                            'current_price': stock.get('current_price'),
-                            'rsi': round(rsi, 2),
-                            'signal': 'Overbought'
-                        })
-            except Exception:
-                continue
+        # Build ticker info lookup
+        ticker_info = {s['ticker']: s for s in self.stock_info if s.get('ticker')}
+        
+        # Bulk download prices (reuses cache from oversold if already run)
+        price_data = self._bulk_download_prices(tickers, period="1mo")
+        
+        if price_data.empty:
+            return []
+        
+        # Calculate RSI for all tickers
+        rsi_values = self._calculate_rsi_bulk(price_data, tickers)
+        
+        # Log RSI calculation results (only if not already logged by oversold)
+        rsi_success_count = len(rsi_values)
+        
+        results = []
+        for ticker, rsi in rsi_values.items():
+            if rsi > rsi_threshold:
+                info = ticker_info.get(ticker, {})
+                results.append({
+                    'ticker': ticker,
+                    'name': info.get('name'),
+                    'sector': info.get('sector'),
+                    'current_price': info.get('current_price'),
+                    'rsi': round(rsi, 2),
+                    'signal': 'Overbought'
+                })
+        
+        print(f"      ✓ Found {len(results)} overbought stocks (RSI > {rsi_threshold})")
+        if results:
+            top_overbought = [f"{r['ticker']}({r['rsi']})" for r in results[:5]]
+            print(f"        Top overbought: {', '.join(top_overbought)}")
         
         results.sort(key=lambda x: x['rsi'], reverse=True)
         return results
@@ -526,6 +686,7 @@ class MarketScanner:
     def get_sector_performance(self, periods: List[str] = None) -> Dict[str, Dict]:
         """
         Get sector performance across multiple time periods.
+        Uses bulk download for efficiency.
         
         Args:
             periods: List of periods to analyze
@@ -536,23 +697,37 @@ class MarketScanner:
         if periods is None:
             periods = ['1mo', '3mo', '6mo']
         
+        # Collect all sector ETFs
+        etfs = [config['etf'] for sector, config in SECTORS.items()]
+        
+        # Bulk download all ETF data at once
+        try:
+            etf_data = yf.download(etfs, period="1y", progress=False, threads=True, group_by='ticker')
+            if etf_data.empty:
+                return {}
+        except Exception:
+            return {}
+        
         sector_perf = {}
+        days_map = {'1mo': 21, '3mo': 63, '6mo': 126, '1y': 252}
         
         for sector, config in SECTORS.items():
             etf = config['etf']
             try:
-                data = yf.Ticker(etf).history(period="1y")
-                if data.empty:
+                if etf not in etf_data.columns.get_level_values(0):
                     continue
                 
-                current = data['Close'].iloc[-1]
-                perf = {'etf': etf, 'current_price': round(current, 2)}
+                close_data = etf_data[etf]['Close'].dropna()
+                if len(close_data) < 2:
+                    continue
                 
-                days_map = {'1mo': 21, '3mo': 63, '6mo': 126, '1y': 252}
+                current = close_data.iloc[-1]
+                perf = {'etf': etf, 'current_price': round(float(current), 2)}
+                
                 for period in periods:
                     days = days_map.get(period, 21)
-                    if len(data) > days:
-                        past = data['Close'].iloc[-days-1]
+                    if len(close_data) > days:
+                        past = close_data.iloc[-days-1]
                         perf[f'{period}_return'] = round(((current / past) - 1) * 100, 2)
                 
                 sector_perf[sector] = perf
@@ -600,16 +775,28 @@ class MarketScanner:
     def get_sector_vs_spy(self) -> List[Dict]:
         """
         Calculate sector relative strength vs S&P 500.
+        Uses bulk download for efficiency.
         
         Returns:
             List of sectors with relative strength metrics
         """
-        # Get SPY performance
+        # Collect all ETFs including SPY
+        etfs = ['SPY'] + [config['etf'] for sector, config in SECTORS.items()]
+        
+        # Bulk download all ETF data at once
         try:
-            spy_data = yf.Ticker('SPY').history(period="3mo")
-            if spy_data.empty:
+            etf_data = yf.download(etfs, period="3mo", progress=False, threads=True, group_by='ticker')
+            if etf_data.empty:
                 return []
-            spy_return = ((spy_data['Close'].iloc[-1] / spy_data['Close'].iloc[0]) - 1) * 100
+        except Exception:
+            return []
+        
+        # Get SPY return
+        try:
+            spy_close = etf_data['SPY']['Close'].dropna()
+            if len(spy_close) < 2:
+                return []
+            spy_return = ((spy_close.iloc[-1] / spy_close.iloc[0]) - 1) * 100
         except Exception:
             return []
         
@@ -617,11 +804,14 @@ class MarketScanner:
         for sector, config in SECTORS.items():
             etf = config['etf']
             try:
-                data = yf.Ticker(etf).history(period="3mo")
-                if data.empty:
+                if etf not in etf_data.columns.get_level_values(0):
                     continue
                 
-                sector_return = ((data['Close'].iloc[-1] / data['Close'].iloc[0]) - 1) * 100
+                close_data = etf_data[etf]['Close'].dropna()
+                if len(close_data) < 2:
+                    continue
+                
+                sector_return = ((close_data.iloc[-1] / close_data.iloc[0]) - 1) * 100
                 relative_strength = sector_return - spy_return
                 
                 results.append({
@@ -649,7 +839,7 @@ def run_all_screens() -> Dict:
     """
     print("  Initializing market scanner...")
     scanner = MarketScanner()
-    scanner.load_universe(max_stocks=300)  # Analyze more of our 374 stock universe
+    scanner.load_universe(max_stocks=1000)  # Analyze full 1000 stock universe
     
     results = {
         'timestamp': datetime.now().isoformat(),

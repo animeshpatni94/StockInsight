@@ -8,6 +8,7 @@ import yfinance as yf
 from yfinance import EquityQuery
 import pandas as pd
 import numpy as np
+import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -45,20 +46,24 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
         "sector_realestate": [],   # Real Estate sector
         "sector_communication": [],# Communication Services sector
         "mega_cap": [],            # > $500B market cap (AAPL, MSFT, NVDA, etc.)
+        "micro_cap": [],           # $500M - $2B market cap
     }
     
     all_tickers: Set[str] = set()
     
     # Market cap based screening (US exchanges only)
+    # Expanded to get ~1200+ stocks (compensating for data dropouts)
     cap_screens = [
         # Mega cap > $500B (includes AAPL, MSFT, NVDA, GOOGL, AMZN, META, etc.)
-        ("mega_cap", 500_000_000_000, 20_000_000_000_000, 50),
+        ("mega_cap", 500_000_000_000, 20_000_000_000_000, 60),
         # Large cap $50B - $500B
-        ("large_cap", 50_000_000_000, 500_000_000_000, 100),
+        ("large_cap", 50_000_000_000, 500_000_000_000, 200),
         # Mid cap $10B - $50B  
-        ("mid_cap", 10_000_000_000, 50_000_000_000, 75),
+        ("mid_cap", 10_000_000_000, 50_000_000_000, 250),
         # Small cap $2B - $10B
-        ("small_cap", 2_000_000_000, 10_000_000_000, 50),
+        ("small_cap", 2_000_000_000, 10_000_000_000, 200),
+        # Micro cap $500M - $2B (added for broader coverage)
+        ("micro_cap", 500_000_000, 2_000_000_000, 150),
     ]
     
     for category, min_cap, max_cap, count in cap_screens:
@@ -68,19 +73,19 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
             all_tickers.update(tickers)
             print(f"    {category}: {len(tickers)} stocks")
     
-    # Sector based screening (large/mid caps per sector)
+    # Sector based screening - expanded counts per sector
     sector_screens = [
-        ("sector_tech", "Technology", 40),
-        ("sector_healthcare", "Healthcare", 35),
-        ("sector_financials", "Financial Services", 35),
-        ("sector_energy", "Energy", 25),
-        ("sector_consumer_disc", "Consumer Cyclical", 30),
-        ("sector_consumer_staples", "Consumer Defensive", 25),
-        ("sector_industrials", "Industrials", 30),
-        ("sector_materials", "Basic Materials", 20),
-        ("sector_utilities", "Utilities", 20),
-        ("sector_realestate", "Real Estate", 20),
-        ("sector_communication", "Communication Services", 25),
+        ("sector_tech", "Technology", 100),
+        ("sector_healthcare", "Healthcare", 90),
+        ("sector_financials", "Financial Services", 90),
+        ("sector_energy", "Energy", 70),
+        ("sector_consumer_disc", "Consumer Cyclical", 80),
+        ("sector_consumer_staples", "Consumer Defensive", 60),
+        ("sector_industrials", "Industrials", 80),
+        ("sector_materials", "Basic Materials", 50),
+        ("sector_utilities", "Utilities", 50),
+        ("sector_realestate", "Real Estate", 50),
+        ("sector_communication", "Communication Services", 60),
     ]
     
     for category, sector, count in sector_screens:
@@ -333,31 +338,58 @@ def fetch_multiple_tickers(tickers: List[str], period: str = "1y",
 
 
 def fetch_multiple_ticker_info(tickers: List[str], 
-                               max_workers: int = 10) -> List[Dict]:
+                               max_workers: int = 2,
+                               batch_size: int = 20,
+                               delay_between_batches: float = 3.0) -> List[Dict]:
     """
-    Fetch info for multiple tickers in parallel.
+    Fetch info for multiple tickers with rate limiting to avoid Yahoo Finance blocks.
     
     Args:
         tickers: List of stock symbols
-        max_workers: Maximum parallel threads
+        max_workers: Maximum parallel threads (2 for safety with 1000+ stocks)
+        batch_size: Number of tickers to process per batch (20 = very safe)
+        delay_between_batches: Seconds to wait between batches (3s for 1000+ stocks)
     
     Returns:
         List of ticker info dictionaries
     """
     results = []
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_ticker = {
-            executor.submit(fetch_ticker_info, ticker): ticker 
-            for ticker in tickers
-        }
-        for future in as_completed(future_to_ticker):
-            ticker = future_to_ticker[future]
-            try:
-                info = future.result()
-                if info is not None:
-                    results.append(info)
-            except Exception as e:
-                print(f"Error processing info for {ticker}: {str(e)}")
+    total_batches = (len(tickers) + batch_size - 1) // batch_size
+    failed_count = 0
+    
+    for batch_num in range(total_batches):
+        start_idx = batch_num * batch_size
+        end_idx = min(start_idx + batch_size, len(tickers))
+        batch_tickers = tickers[start_idx:end_idx]
+        
+        # Process batch with limited parallelism
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_ticker = {
+                executor.submit(fetch_ticker_info, ticker): ticker 
+                for ticker in batch_tickers
+            }
+            for future in as_completed(future_to_ticker):
+                ticker = future_to_ticker[future]
+                try:
+                    info = future.result()
+                    if info is not None:
+                        results.append(info)
+                    else:
+                        failed_count += 1
+                except Exception as e:
+                    failed_count += 1
+                    # Only print first few errors to avoid spam
+                    if failed_count <= 5:
+                        print(f"      Error fetching {ticker}: {str(e)[:50]}")
+        
+        # Rate limiting: pause between batches (except after last batch)
+        if batch_num < total_batches - 1:
+            time.sleep(delay_between_batches)
+            # Progress indicator every 3 batches
+            if (batch_num + 1) % 3 == 0:
+                print(f"      Processed {end_idx}/{len(tickers)} stocks ({len(results)} success, {failed_count} failed)...")
+    
+    print(f"      Final: {len(results)} loaded, {failed_count} failed")
     return results
 
 
@@ -449,47 +481,71 @@ def fetch_index_data() -> Dict[str, Dict]:
 def fetch_sector_performance() -> Dict[str, Dict]:
     """
     Fetch performance data for all sectors using ETF proxies.
+    Uses bulk download for efficiency.
     
     Returns:
         Dictionary with sector performance metrics
     """
+    # Collect all sector ETFs + SPY for relative strength
+    sector_etfs = [config['etf'] for sector, config in SECTORS.items()]
+    all_tickers = sector_etfs + ['SPY']
+    
+    # Bulk download
+    try:
+        hist_data = yf.download(all_tickers, period="1y", progress=False, threads=True, group_by='ticker')
+        if hist_data.empty:
+            return {}
+    except Exception as e:
+        print(f"Error bulk downloading sector data: {e}")
+        return {}
+    
+    # Get SPY data for relative strength calculation
+    spy_close = None
+    spy_return_3mo = 0
+    try:
+        if 'SPY' in hist_data.columns.get_level_values(0):
+            spy_close = hist_data['SPY']['Close'].dropna()
+            if len(spy_close) >= 63:
+                spy_return_3mo = (spy_close.iloc[-1] / spy_close.iloc[-63]) - 1
+    except Exception:
+        pass
+    
     sector_data = {}
     for sector, config in SECTORS.items():
         etf = config['etf']
         try:
-            ticker = yf.Ticker(etf)
-            hist = ticker.history(period="1y")
-            
-            if hist.empty:
+            if etf not in hist_data.columns.get_level_values(0):
                 continue
             
-            current = hist['Close'].iloc[-1]
+            close_data = hist_data[etf]['Close'].dropna()
+            if len(close_data) < 2:
+                continue
+            
+            current = close_data.iloc[-1]
             
             # Calculate returns
             returns = {}
             for period_name, days in [('1mo', 21), ('3mo', 63), ('6mo', 126), ('1y', 252)]:
-                if len(hist) > days:
-                    past_price = hist['Close'].iloc[-days-1]
+                if len(close_data) > days:
+                    past_price = close_data.iloc[-days-1]
                     returns[period_name] = (current / past_price - 1) * 100
             
             # Calculate relative strength vs SPY
-            spy = yf.Ticker('SPY')
-            spy_hist = spy.history(period="3mo")
-            if not spy_hist.empty and len(hist) >= 63:
-                sector_return = (current / hist['Close'].iloc[-63]) - 1
-                spy_return = (spy_hist['Close'].iloc[-1] / spy_hist['Close'].iloc[0]) - 1
-                relative_strength = (sector_return - spy_return) * 100
-            else:
-                relative_strength = 0
+            relative_strength = 0
+            if spy_close is not None and len(close_data) >= 63:
+                sector_return = (current / close_data.iloc[-63]) - 1
+                relative_strength = (sector_return - spy_return_3mo) * 100
             
             sector_data[sector] = {
                 'etf': etf,
-                'current': round(current, 2),
+                'current': round(float(current), 2),
                 'returns': {k: round(v, 2) for k, v in returns.items()},
                 'relative_strength_3mo': round(relative_strength, 2)
             }
         except Exception as e:
-            print(f"Error fetching sector {sector}: {str(e)}")
+            print(f"Error processing sector {sector}: {str(e)}")
+    
+    return sector_data
     
     return sector_data
 
@@ -650,26 +706,58 @@ def fetch_dollar_index() -> Dict:
 
 def fetch_vix() -> Dict:
     """
-    Fetch VIX (volatility index) data.
+    Fetch VIX (volatility index) data with historical context.
     
     Returns:
-        Dictionary with VIX data
+        Dictionary with VIX data including historical perspective
     """
     try:
         ticker = yf.Ticker('^VIX')
-        hist = ticker.history(period="3mo")
+        hist = ticker.history(period="1y")  # Get 1 year for historical context
         
         if hist.empty:
             return {}
         
         current = hist['Close'].iloc[-1]
         avg_30d = hist['Close'].tail(21).mean()
+        avg_1y = hist['Close'].mean()  # Historical average
+        high_1y = hist['Close'].max()
+        low_1y = hist['Close'].min()
+        
+        # Determine alert level
+        if current >= 30:
+            alert_level = "HIGH_FEAR"
+            alert_emoji = "🔴"
+            recommendation = "Defensive mode - increase cash, avoid new aggressive positions"
+        elif current >= 25:
+            alert_level = "ELEVATED"
+            alert_emoji = "🟡"
+            recommendation = "Caution - reduce position sizes, tighten stop-losses"
+        elif current >= 20:
+            alert_level = "NORMAL"
+            alert_emoji = "🟢"
+            recommendation = "Normal conditions - proceed with standard risk management"
+        else:
+            alert_level = "LOW"
+            alert_emoji = "🟢"
+            recommendation = "Low fear - favorable for risk-on positions, but complacency risk"
         
         return {
             'current': round(current, 2),
+            'level': round(current, 2),  # Numeric value for email display
             'avg_30d': round(avg_30d, 2),
-            'level': 'low' if current < 15 else 'elevated' if current < 25 else 'high',
-            'vs_average': 'above' if current > avg_30d else 'below'
+            'avg_1y': round(avg_1y, 2),
+            'historical_avg': round(avg_1y, 2),  # Alias for clarity
+            'high_1y': round(high_1y, 2),
+            'low_1y': round(low_1y, 2),
+            'warning_level': 'extreme' if current >= 30 else 'elevated' if current >= 25 else 'normal',
+            'status': 'low' if current < 15 else 'elevated' if current < 25 else 'high',
+            'vs_average': 'above' if current > avg_30d else 'below',
+            'alert_level': alert_level,
+            'alert_emoji': alert_emoji,
+            'recommendation': recommendation,
+            'percentile': round((current - low_1y) / (high_1y - low_1y) * 100, 1) if high_1y != low_1y else 50,
+            'change_pct': round((current - avg_30d) / avg_30d * 100, 1) if avg_30d > 0 else 0
         }
     except Exception as e:
         print(f"Error fetching VIX: {str(e)}")
@@ -788,13 +876,190 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def get_stock_universe_data(max_stocks: int = 200) -> List[Dict]:
+def fetch_historical_context() -> Dict:
+    """
+    Fetch 5-year historical context to reduce recency bias.
+    Includes sector performance, P/E ranges, and market cycle indicators.
+    Uses bulk download for efficiency.
+    
+    Returns:
+        Dictionary with historical perspective data
+    """
+    print("  Fetching 5-year historical context...")
+    context = {
+        'sector_5yr_performance': {},
+        'sp500_pe_context': {},
+        'market_cycle_indicators': {},
+        'historical_vix': {}
+    }
+    
+    try:
+        # Collect all tickers needed
+        sector_etfs = [config['etf'] for sector, config in SECTORS.items()]
+        all_tickers = sector_etfs + ['SPY', 'SHY', 'IEF', '^VIX']
+        
+        # Bulk download 5 years of data
+        print("    Downloading 5-year historical data...")
+        hist_data = yf.download(all_tickers, period="5y", progress=False, threads=True, group_by='ticker')
+        
+        if hist_data.empty:
+            return context
+        
+        # 5-year sector performance
+        for sector, config in SECTORS.items():
+            etf = config['etf']
+            try:
+                if etf not in hist_data.columns.get_level_values(0):
+                    continue
+                
+                close_data = hist_data[etf]['Close'].dropna()
+                if len(close_data) > 252:  # Need at least 1 year
+                    current = close_data.iloc[-1]
+                    year_1_ago = close_data.iloc[-252] if len(close_data) > 252 else close_data.iloc[0]
+                    year_3_ago = close_data.iloc[-756] if len(close_data) > 756 else close_data.iloc[0]
+                    year_5_ago = close_data.iloc[0]
+                    
+                    context['sector_5yr_performance'][sector] = {
+                        'return_1y': round((current / year_1_ago - 1) * 100, 2),
+                        'return_3y': round((current / year_3_ago - 1) * 100, 2),
+                        'return_5y': round((current / year_5_ago - 1) * 100, 2),
+                        'avg_annual_5y': round(((current / year_5_ago) ** (1/5) - 1) * 100, 2)
+                    }
+            except Exception:
+                pass
+        
+        # S&P 500 P/E context (need individual call for info)
+        try:
+            spy = yf.Ticker('SPY')
+            spy_info = spy.info
+            current_pe = spy_info.get('trailingPE', 0)
+            
+            # Historical P/E ranges (approximate market averages)
+            context['sp500_pe_context'] = {
+                'current_pe': round(current_pe, 2) if current_pe else 0,
+                'historical_avg': 17.0,  # Long-term S&P 500 average
+                'historical_low': 10.0,   # Crisis lows
+                'historical_high': 30.0,  # Bubble highs
+                'assessment': 'expensive' if current_pe and current_pe > 22 else 'fair' if current_pe and current_pe > 15 else 'cheap' if current_pe else 'unknown',
+                'deviation_from_avg': round(((current_pe / 17.0) - 1) * 100, 1) if current_pe else 0
+            }
+        except Exception:
+            context['sp500_pe_context'] = {'current_pe': 0, 'assessment': 'unknown'}
+        
+        # Market cycle indicators from bulk data
+        try:
+            if 'SHY' in hist_data.columns.get_level_values(0) and 'IEF' in hist_data.columns.get_level_values(0):
+                shy_close = hist_data['SHY']['Close'].dropna()
+                ief_close = hist_data['IEF']['Close'].dropna()
+                
+                # Use last year of data
+                if len(shy_close) > 252 and len(ief_close) > 252:
+                    shy_return = (shy_close.iloc[-1] / shy_close.iloc[-252] - 1) * 100
+                    ief_return = (ief_close.iloc[-1] / ief_close.iloc[-252] - 1) * 100
+                    
+                    context['market_cycle_indicators'] = {
+                        'yield_curve_signal': 'steepening' if ief_return > shy_return else 'flattening',
+                        'bond_market_sentiment': 'risk-off' if ief_return > shy_return + 2 else 'risk-on' if shy_return > ief_return + 2 else 'neutral'
+                    }
+        except Exception:
+            context['market_cycle_indicators'] = {'yield_curve_signal': 'unknown'}
+        
+        # Historical VIX context from bulk data
+        try:
+            if '^VIX' in hist_data.columns.get_level_values(0):
+                vix_close = hist_data['^VIX']['Close'].dropna()
+                if len(vix_close) > 0:
+                    context['historical_vix'] = {
+                        'avg_5y': round(vix_close.mean(), 2),
+                        'max_5y': round(vix_close.max(), 2),
+                        'min_5y': round(vix_close.min(), 2),
+                        'current_vs_5y_avg': round((vix_close.iloc[-1] / vix_close.mean() - 1) * 100, 1)
+                    }
+        except Exception:
+            pass
+        
+    except Exception as e:
+        print(f"Error fetching historical context: {str(e)}")
+    
+    return context
+
+
+def get_earnings_calendar(tickers: List[str], days_ahead: int = 14) -> Dict[str, Dict]:
+    """
+    Get upcoming earnings dates for a list of tickers.
+    Flags stocks with earnings within the specified window.
+    
+    Args:
+        tickers: List of stock symbols to check
+        days_ahead: Number of days to look ahead for earnings (default 14)
+    
+    Returns:
+        Dictionary mapping ticker to earnings info
+    """
+    print(f"  Checking earnings calendar ({days_ahead} days ahead)...")
+    earnings_data = {}
+    today = datetime.now()
+    cutoff_date = today + timedelta(days=days_ahead)
+    
+    for ticker in tickers:
+        try:
+            stock = yf.Ticker(ticker)
+            calendar = stock.calendar
+            
+            if calendar is not None and not calendar.empty:
+                # Handle different calendar formats
+                earnings_date = None
+                
+                if 'Earnings Date' in calendar.index:
+                    dates = calendar.loc['Earnings Date']
+                    if isinstance(dates, pd.Series):
+                        earnings_date = dates.iloc[0]
+                    else:
+                        earnings_date = dates
+                elif isinstance(calendar, dict) and 'Earnings Date' in calendar:
+                    dates = calendar['Earnings Date']
+                    if isinstance(dates, list) and len(dates) > 0:
+                        earnings_date = dates[0]
+                
+                if earnings_date is not None:
+                    # Convert to datetime if needed
+                    if isinstance(earnings_date, pd.Timestamp):
+                        earnings_dt = earnings_date.to_pydatetime()
+                    elif isinstance(earnings_date, datetime):
+                        earnings_dt = earnings_date
+                    else:
+                        continue
+                    
+                    # Remove timezone info for comparison
+                    if earnings_dt.tzinfo is not None:
+                        earnings_dt = earnings_dt.replace(tzinfo=None)
+                    
+                    days_until = (earnings_dt - today).days
+                    
+                    if 0 <= days_until <= days_ahead:
+                        earnings_data[ticker] = {
+                            'earnings_date': earnings_dt.strftime('%Y-%m-%d'),
+                            'days_until': days_until,
+                            'warning': True,
+                            'warning_text': f"⚠️ Earnings in {days_until} days ({earnings_dt.strftime('%b %d')})"
+                        }
+        except Exception as e:
+            # Silently skip stocks where we can't get earnings data
+            pass
+    
+    if earnings_data:
+        print(f"    Found {len(earnings_data)} stocks with upcoming earnings")
+    
+    return earnings_data
+
+
+def get_stock_universe_data(max_stocks: int = 1000) -> List[Dict]:
     """
     Fetch fundamental data for the stock universe.
     Uses dynamic ETF holdings for current, valid tickers.
     
     Args:
-        max_stocks: Maximum number of stocks to fetch
+        max_stocks: Maximum number of stocks to fetch (default 1000)
     
     Returns:
         List of stock info dictionaries

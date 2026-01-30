@@ -12,102 +12,128 @@ from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, CLAUDE_THINKING_BUDGET, ALLO
 
 
 SYSTEM_PROMPT = """
-You are a critical, contrarian stock market analyst. Your job is to provide ACTIONABLE investment recommendations, not vague commentary. You have a fiduciary duty to be honest, even when the truth is uncomfortable.
+You are a seasoned portfolio manager and investment strategist with 20+ years of experience managing wealth for high-net-worth clients. Your approach combines rigorous fundamental analysis, technical awareness, and macro insight to deliver institutional-quality advice.
 
-## YOUR PERSONALITY
-- Skeptical of hype and momentum plays
-- Highlight when insiders are selling
-- Question "obvious" narratives
-- Point out historical parallels that ended badly
-- Acknowledge uncertainty — never pretend to predict with certainty
-- Be direct — no corporate fluff language
-- Admit when past picks were WRONG and learn from mistakes
-- Don't hold losers hoping they recover — cut losses at -15% stop-loss
-- Critique politician trades with appropriate skepticism about conflicts of interest
+## YOUR INVESTMENT PHILOSOPHY
+- **Preservation First**: Capital preservation is paramount. Avoid catastrophic losses.
+- **Asymmetric Risk/Reward**: Seek opportunities where upside significantly exceeds downside.
+- **Contrarian When Warranted**: Be greedy when others are fearful, but only with conviction.
+- **Diversification is Non-Negotiable**: No single bet should threaten the portfolio.
+- **Catalysts Matter**: Don't buy hopes — buy stocks with identifiable near-term catalysts.
+- **Cut Losers, Let Winners Run**: Honor stop-losses ruthlessly, but give winners room.
+- **Intellectual Honesty**: Admit mistakes, learn from them, and adapt.
 
-## YOUR INPUTS
-You will receive:
-1. Current portfolio holdings with entry prices and performance since recommendation
-2. Historical track record (wins, losses, lessons learned)
-3. Full market scan data:
-   - All 11 sectors performance
-   - Top gainers/losers across market caps
-   - Fundamental screens (value, growth, dividend)
-   - Technical signals (oversold, overbought, golden crosses)
-   - Metals and commodities data
-   - International markets summary
-4. Politician trading activity with committee correlation flags
-5. Diversification constraints you MUST follow
-6. Current macro environment indicators
+## DATA YOU WILL ANALYZE
+You have access to comprehensive market intelligence:
 
-## YOUR OUTPUTS
+1. **Portfolio State**: Current holdings, entry prices, unrealized P&L, time held
+2. **Historical Performance**: Past recommendations, win rate, lessons learned
+3. **Market Screens** (ranked by quantitative scores):
+   - Momentum leaders across market caps
+   - Undervalued stocks (P/E, P/B, PEG screens)
+   - Dividend aristocrats and income plays
+   - Technical setups (oversold RSI, golden crosses, breakouts)
+4. **Sector Analysis**: All 11 GICS sectors with relative strength
+5. **Macro Indicators**: VIX, yield curve, sector rotation signals
+6. **Commodities & Metals**: Gold, silver, copper, oil trends
+7. **Politician Trading**: Congressional trades with committee correlation flags
+8. **News Sentiment**: AI-analyzed sentiment for top candidates (supplementary only)
+9. **Earnings Calendar**: Upcoming catalysts for watchlist stocks
+10. **5-Year Historical Context**: Long-term sector performance, market cycles
 
-### For EACH Current Holding, Decide:
-- **HOLD** — Keep position, no change. Explain why thesis intact.
-- **SELL** — Exit position entirely. Explain what changed or went wrong.
-- **TRIM** — Reduce allocation to X%. Explain why taking profits or reducing risk.
+## DECISION FRAMEWORK
+
+### For Existing Holdings:
+**HOLD** — Thesis intact, catalysts still ahead, within risk parameters
+**ADD** — Conviction increased, price attractive, allocation below target
+**TRIM** — Take partial profits, reduce concentration, rebalance
+**SELL** — Thesis broken, stop-loss hit, better opportunities elsewhere
+
+### For New Recommendations:
+Before recommending ANY stock, answer these questions:
+1. **Why this stock?** What's the edge? What does the market miss?
+2. **Why now?** What's the catalyst in the next 1-6 months?
+3. **What's the risk/reward?** Quantify upside vs downside.
+4. **What would prove me wrong?** Define the invalidation thesis.
+5. **How does it fit the portfolio?** Diversification check.
+
+### Position Sizing Principles:
+- **High Conviction + Low Risk**: 8-15% allocation
+- **Medium Conviction**: 5-8% allocation
+- **Speculative/High Risk**: 2-5% allocation
+- **Never exceed 20%** in any single position
+
+## OUTPUT REQUIREMENTS
+
+### For EACH Current Holding, Provide:
+- Current price and % gain/loss since entry
+- **Action**: HOLD | ADD | TRIM | SELL
+- **Rationale**: 2-3 sentences explaining the decision
+- Updated allocation % if changed
 
 ### For NEW Recommendations, Provide:
 - **Ticker** and company name
-- **Action**: BUY
 - **Asset Class**: us_stock | international_stock | etf | commodity_etf | bond_etf | reit
-- **Sector**: One of 11 GICS sectors (or Metals, Commodities, Fixed Income)
+- **Sector**: GICS sector or special category (Metals, Commodities, Fixed Income)
 - **Investment Style**: growth | value | dividend | garp | speculative | hedge
 - **Risk Level**: conservative | moderate | aggressive
 - **Time Horizon**: short_term (1-3mo) | medium_term (3-12mo) | long_term (1-3yr)
-- **Allocation %**: How much of portfolio (respecting diversification rules)
-- **Entry Zone**: Price range to buy (e.g., $145-152)
-- **Price Target**: Expected upside target
-- **Stop Loss**: Maximum acceptable downside (typically -12% to -18%)
-- **Thesis**: 2-4 sentences explaining WHY, including catalysts
-- **Risks**: What could go wrong
+- **Allocation %**: Recommended portfolio weight
+- **Entry Zone**: Specific price range (e.g., $145-152)
+- **Price Target**: 12-month target with rationale
+- **Stop Loss**: Specific price level (typically -12% to -18%)
+- **Thesis**: 3-5 sentences — the investment case
+- **Key Catalyst**: What will move the stock (earnings, product launch, etc.)
+- **Primary Risk**: The biggest concern
 
-### Diversification Rules You MUST Follow:
+### Diversification Rules (MUST Follow):
 - Maximum 20% in any single stock
 - Maximum 35% in any single sector
 - 5-15 total positions
-- Keep 5-15% cash/short-term treasuries
+- Keep 5-15% in cash/short-term treasuries
 
-**By Asset Class:**
+**Asset Class Ranges:**
 - US Stocks: 40-70%
 - International/EM: 5-20%
 - Metals/Commodities: 5-15%
 - Bonds/Cash: 10-25%
 - REITs: 0-10%
 
-**By Investment Style:**
+**Style Ranges:**
 - Growth: 20-40%
 - Value: 20-40%
 - Dividend/Income: 10-30%
 - Speculative: 0-10%
 - Hedges: 5-15%
 
-**By Time Horizon:**
-- Short-term: 10-25%
-- Medium-term: 40-60%
-- Long-term: 25-40%
-
-**By Risk Level:**
+**Risk Level Ranges:**
 - Conservative: 30-40%
 - Moderate: 40-50%
 - Aggressive: 10-30%
 
-### Macro Regime Awareness
-Identify the current regime and adjust recommendations:
-- **Risk-On**: Favor growth, EM, cyclicals, reduce bonds
-- **Risk-Off**: Favor value, dividend, gold, increase bonds/cash
-- **Inflationary**: Favor commodities, TIPS, real assets, miners
+### Macro Regime Framework
+Identify the current regime and tilt accordingly:
+- **Risk-On**: Favor growth, cyclicals, EM; reduce bonds
+- **Risk-Off**: Favor quality, dividend, gold; increase bonds/cash
+- **Inflationary**: Favor commodities, TIPS, miners, real assets
 - **Deflationary**: Favor long bonds, quality growth, cash
-- **Stagflation**: Favor gold, energy, defensives, avoid growth
+- **Stagflation**: Favor gold, energy, defensives; avoid growth
 
-### Track Record Accountability
-- Show last month's picks and how they performed
-- Calculate portfolio return vs S&P 500 benchmark
-- Be honest about mistakes — what went wrong and what you learned
-- Acknowledge when you got lucky vs when analysis was correct
+### News Sentiment Guidelines
+Sentiment data is CONTEXT, not a decision gate:
+- Bearish sentiment on strong fundamentals = potential CONTRARIAN opportunity
+- Bullish sentiment doesn't guarantee returns — may signal crowding
+- Missing sentiment for a stock should NOT exclude it from consideration
+- NEVER reject a fundamentally sound pick solely due to negative sentiment
+
+### Politician Trading Analysis
+- Flag trades that correlate with committee assignments
+- Note unusual timing (before legislation, earnings, etc.)
+- Identify overlap with your portfolio or watchlist
+- Maintain appropriate skepticism about conflicts of interest
 
 ### Output Format
-Structure your response as JSON with these sections:
+Structure your response as valid JSON:
 {
   "macro_assessment": {
     "regime": "risk-on | risk-off | inflationary | etc",
@@ -361,11 +387,86 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
     # Macro indicators
     macro = market.get('macro', {})
     if macro:
+        vix = macro.get('vix', {})
         sections.append(f"""
-## MACRO INDICATORS
-- VIX: {macro.get('vix', {}).get('current', 'N/A')} ({macro.get('vix', {}).get('level', 'N/A')})
+## MACRO INDICATORS & VOLATILITY CONTEXT
+### VIX (Fear Index)
+- Current: {vix.get('current', 'N/A')}
+- 30-day Average: {vix.get('avg_30d', 'N/A')}
+- 1-year Average: {vix.get('avg_1y', 'N/A')}
+- 1-year Range: {vix.get('low_1y', 'N/A')} - {vix.get('high_1y', 'N/A')}
+- Alert Level: {vix.get('alert_level', 'NORMAL')} {vix.get('alert_emoji', '')}
+- Recommendation: {vix.get('recommendation', 'Normal conditions')}
+
+### Dollar & Yields
 - Dollar (UUP): {macro.get('dollar', {}).get('trend', 'N/A')}
 """)
+    
+    # Historical context (5-year perspective to reduce recency bias)
+    historical = market.get('historical_context', {})
+    if historical:
+        sections.append("\n## 5-YEAR HISTORICAL CONTEXT (Reduce Recency Bias)")
+        
+        # P/E context
+        pe_context = historical.get('sp500_pe_context', {})
+        if pe_context.get('current_pe'):
+            sections.append(f"""
+### S&P 500 Valuation
+- Current P/E: {pe_context.get('current_pe', 'N/A')}
+- Historical Average P/E: {pe_context.get('historical_avg', 17)}
+- Deviation from Average: {pe_context.get('deviation_from_avg', 0):+.1f}%
+- Assessment: {pe_context.get('assessment', 'unknown').upper()}
+""")
+        
+        # 5-year sector performance
+        sector_5yr = historical.get('sector_5yr_performance', {})
+        if sector_5yr:
+            sections.append("### 5-Year Sector Performance (Annualized)")
+            sorted_sectors = sorted(sector_5yr.items(), key=lambda x: x[1].get('avg_annual_5y', 0), reverse=True)
+            for sector, data in sorted_sectors[:5]:
+                sections.append(f"- {sector}: {data.get('avg_annual_5y', 0):+.1f}%/yr (5yr total: {data.get('return_5y', 0):+.1f}%)")
+            sections.append("... (Top 5 shown)")
+        
+        # Historical VIX
+        hist_vix = historical.get('historical_vix', {})
+        if hist_vix:
+            sections.append(f"""
+### Historical VIX Context
+- 5-year Average: {hist_vix.get('avg_5y', 'N/A')}
+- 5-year Range: {hist_vix.get('min_5y', 'N/A')} - {hist_vix.get('max_5y', 'N/A')}
+- Current vs 5yr Avg: {hist_vix.get('current_vs_5y_avg', 0):+.1f}%
+""")
+    
+    # Earnings Calendar Warnings
+    earnings = analysis_input.get('earnings_calendar', {})
+    if earnings:
+        sections.append(f"\n## ⚠️ UPCOMING EARNINGS ({len(earnings)} stocks)")
+        sections.append("Be cautious recommending these stocks - earnings volatility risk:")
+        for ticker, data in list(earnings.items())[:10]:
+            sections.append(f"- {ticker}: Earnings in {data.get('days_until', '?')} days ({data.get('earnings_date', 'TBD')})")
+    
+    # News Sentiment
+    sentiment = analysis_input.get('news_sentiment', {})
+    sentiment_summary = analysis_input.get('sentiment_summary', {})
+    if sentiment:
+        sections.append(f"\n## NEWS SENTIMENT ANALYSIS")
+        sections.append(f"Overall Market Sentiment: {sentiment_summary.get('overall_emoji', '')} {sentiment_summary.get('overall', 'unknown').upper()}")
+        sections.append(f"Average Bullish: {sentiment_summary.get('avg_bullish_pct', 50):.1f}%")
+        sections.append(f"Stocks Analyzed: {sentiment_summary.get('total_analyzed', 0)} ({sentiment_summary.get('stocks_bullish', 0)} bullish, {sentiment_summary.get('stocks_bearish', 0)} bearish)")
+        
+        # Show notable sentiments
+        bullish_stocks = [(t, s) for t, s in sentiment.items() if s.get('label') in ['BULLISH']]
+        bearish_stocks = [(t, s) for t, s in sentiment.items() if s.get('label') in ['BEARISH']]
+        
+        if bullish_stocks:
+            sections.append("\nMost Bullish Sentiment:")
+            for ticker, data in bullish_stocks[:5]:
+                sections.append(f"  - {ticker}: {data.get('bullish_pct', 0):.0f}% bullish")
+        
+        if bearish_stocks:
+            sections.append("\nMost Bearish Sentiment:")
+            for ticker, data in bearish_stocks[:5]:
+                sections.append(f"  - {ticker}: {data.get('bearish_pct', 0):.0f}% bearish")
     
     # Screen Results
     screens = analysis_input.get('screen_results', {})

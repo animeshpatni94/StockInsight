@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 
 from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, PATHS
-from data_fetcher import fetch_all_market_data
+from data_fetcher import fetch_all_market_data, fetch_historical_context, get_earnings_calendar
 from market_scanner import run_all_screens
 from politician_tracker import fetch_recent_trades, analyze_committee_correlation
 from history_manager import (
@@ -26,6 +26,7 @@ from history_manager import (
 from claude_analyzer import analyze_with_claude, SYSTEM_PROMPT
 from email_builder import build_email_html
 from email_sender import send_email, validate_email_config
+from news_sentiment import fetch_multiple_sentiments, get_market_sentiment_summary, is_alphavantage_configured
 
 
 def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False):
@@ -61,6 +62,16 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"       Fetched data for {len(market_data.get('indexes', {}))} indexes")
     print(f"       Fetched data for {len(market_data.get('sectors', {}))} sectors")
     
+    # Step 2b: Fetch historical context (5-year data for reduced recency bias)
+    historical_context = fetch_historical_context()
+    market_data['historical_context'] = historical_context
+    
+    # Display VIX alert if elevated
+    vix_data = market_data.get('macro', {}).get('vix', {})
+    if vix_data.get('alert_level') in ['ELEVATED', 'HIGH_FEAR']:
+        print(f"       {vix_data.get('alert_emoji', '⚠️')} VIX ALERT: {vix_data.get('current', 'N/A')} ({vix_data.get('alert_level')})")
+        print(f"       → {vix_data.get('recommendation', '')}")
+    
     # Step 3: Calculate portfolio performance
     print("\n[3/10] Calculating portfolio performance...")
     portfolio_performance = calculate_performance(current_portfolio, market_data)
@@ -88,6 +99,66 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"       Found {len(politician_trades)} recent trades")
     print(f"       Flagged {len(flagged_trades)} suspicious trades")
     
+    # Step 5b: Fetch news sentiment (if Alpha Vantage configured)
+    print("  Fetching news sentiment...")
+    news_sentiment = {}
+    sentiment_summary = {}
+    if is_alphavantage_configured():
+        # Get tickers from screens - prioritize TOP performers from each screen type
+        # This ensures sentiment aligns with stocks most likely to be recommended
+        screen_tickers = []
+        
+        # Take top stocks from each screen type proportionally
+        for screen_type in ['momentum', 'fundamental', 'technical']:
+            screen_data = screen_results.get(screen_type, {})
+            type_tickers = []
+            for key, items in screen_data.items():
+                if isinstance(items, list):
+                    # Take top 3 from each sub-screen (these are ranked by score)
+                    type_tickers.extend([item.get('ticker') for item in items[:3] if item.get('ticker')])
+            screen_tickers.extend(type_tickers[:7])  # Max 7 per screen type = 21 total
+        
+        # Dedupe while preserving order (top performers first)
+        seen = set()
+        unique_tickers = []
+        for t in screen_tickers:
+            if t not in seen:
+                seen.add(t)
+                unique_tickers.append(t)
+        screen_tickers = unique_tickers[:20]  # Cap at 20 for API limits
+        
+        if screen_tickers:
+            print(f"    Fetching sentiment for {len(screen_tickers)} tickers: {', '.join(screen_tickers[:5])}...")
+            news_sentiment = fetch_multiple_sentiments(screen_tickers)
+            sentiment_summary = get_market_sentiment_summary(news_sentiment)
+            print(f"    ✓ Got sentiment for {len(news_sentiment)} stocks")
+            if sentiment_summary:
+                print(f"    Market mood: {sentiment_summary.get('overall_sentiment', 'N/A')} (Bullish: {len(sentiment_summary.get('bullish_tickers', []))}, Bearish: {len(sentiment_summary.get('bearish_tickers', []))})")
+        else:
+            print("    No tickers available for sentiment analysis")
+    else:
+        print("    ⚠ Alpha Vantage API not configured - skipping sentiment")
+    
+    # Step 5c: Get earnings calendar for portfolio and potential picks
+    print("  Fetching earnings calendar...")
+    all_tickers = [h.get('ticker') for h in current_portfolio if h.get('ticker')]
+    # Add tickers from top screens
+    for screen_type in ['momentum', 'fundamental']:
+        screen_data = screen_results.get(screen_type, {})
+        for key, items in screen_data.items():
+            if isinstance(items, list):
+                all_tickers.extend([item.get('ticker') for item in items[:10] if item.get('ticker')])
+    all_tickers = list(set(all_tickers))
+    
+    print(f"    Checking earnings for {len(all_tickers)} tickers...")
+    earnings_calendar = get_earnings_calendar(all_tickers, days_ahead=14)
+    upcoming_count = len(earnings_calendar.get('upcoming', []))
+    print(f"    ✓ Found {upcoming_count} stocks with earnings in next 14 days")
+    if upcoming_count > 0:
+        upcoming = earnings_calendar.get('upcoming', [])[:5]
+        upcoming_str = ', '.join([f"{e.get('ticker')} ({e.get('earnings_date', 'TBD')})" for e in upcoming])
+        print(f"    Upcoming: {upcoming_str}")
+    
     # Step 6: Prepare analysis input
     print("\n[6/10] Preparing analysis input...")
     analysis_input = {
@@ -99,6 +170,9 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         "screen_results": screen_results,
         "politician_trades": politician_trades,
         "flagged_trades": flagged_trades,
+        "news_sentiment": news_sentiment,
+        "sentiment_summary": sentiment_summary,
+        "earnings_calendar": earnings_calendar,
         "current_date": datetime.now().isoformat()
     }
     
@@ -131,7 +205,17 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     
     # Step 9: Build email report
     print("\n[9/10] Building email report...")
-    email_html = build_email_html(analysis_result, updated_history)
+    
+    # Pass additional context for email badges
+    email_context = {
+        'vix_data': vix_data,
+        'earnings_calendar': earnings_calendar,
+        'news_sentiment': news_sentiment,
+        'sentiment_summary': sentiment_summary,
+        'historical_context': historical_context
+    }
+    
+    email_html = build_email_html(analysis_result, updated_history, email_context)
     
     # Save report locally regardless
     output_dir = Path(__file__).parent.parent / 'output'
@@ -149,7 +233,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     else:
         recipient = os.getenv('RECIPIENT_EMAIL')
         if recipient:
-            subject = f"📊 Monthly Stock Recommendations - {datetime.now().strftime('%B %Y')}"
+            subject = f"📊 Stock Insight Report - {datetime.now().strftime('%B %d, %Y')}"
             success = send_email(
                 to_email=recipient,
                 subject=subject,
