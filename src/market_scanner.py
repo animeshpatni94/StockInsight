@@ -851,27 +851,27 @@ def run_all_screens() -> Dict:
     
     print("  Running momentum screens...")
     results['momentum'] = {
-        'top_gainers': scanner.get_top_gainers(n=15),
-        'top_losers': scanner.get_top_losers(n=15),
-        '52w_high_breakouts': scanner.get_52week_high_breakouts()[:15],
-        '52w_low_bounces': scanner.get_52week_low_bounces()[:15],
-        'unusual_volume': scanner.get_unusual_volume()[:15]
+        'top_gainers': scanner.get_top_gainers(n=75),
+        'top_losers': scanner.get_top_losers(n=75),
+        '52w_high_breakouts': scanner.get_52week_high_breakouts()[:60],
+        '52w_low_bounces': scanner.get_52week_low_bounces()[:60],
+        'unusual_volume': scanner.get_unusual_volume()[:60]
     }
     
     print("  Running fundamental screens...")
     results['fundamental'] = {
-        'value_stocks': scanner.get_value_stocks()[:15],
-        'growth_stocks': scanner.get_growth_stocks()[:15],
-        'dividend_stocks': scanner.get_dividend_stocks()[:15],
-        'insider_buying': scanner.get_insider_buying_clusters()[:10]
+        'value_stocks': scanner.get_value_stocks()[:75],
+        'growth_stocks': scanner.get_growth_stocks()[:75],
+        'dividend_stocks': scanner.get_dividend_stocks()[:60],
+        'insider_buying': scanner.get_insider_buying_clusters()[:40]
     }
     
     print("  Running technical screens...")
     results['technical'] = {
-        'golden_crosses': scanner.get_golden_crosses()[:10],
-        'death_crosses': scanner.get_death_crosses()[:10],
-        'oversold': scanner.get_oversold_stocks()[:15],
-        'overbought': scanner.get_overbought_stocks()[:15]
+        'golden_crosses': scanner.get_golden_crosses()[:50],
+        'death_crosses': scanner.get_death_crosses()[:50],
+        'oversold': scanner.get_oversold_stocks()[:60],
+        'overbought': scanner.get_overbought_stocks()[:60]
     }
     
     print("  Running sector analysis...")

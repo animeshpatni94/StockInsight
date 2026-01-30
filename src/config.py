@@ -5,7 +5,7 @@ Configuration and constants for the Stock Insight Agent.
 # API Configuration
 CLAUDE_MODEL = "claude-opus-4-5-20251101"  # Claude Opus 4.5 - maximum intelligence
 CLAUDE_MAX_TOKENS = 16000
-CLAUDE_THINKING_BUDGET = 10000  # Extended thinking budget for deeper analysis
+CLAUDE_THINKING_BUDGET = 20000  # Extended thinking budget for deeper analysis of 500+ stocks
 
 # Market Indexes to Track (using ETFs for better data availability)
 INDEXES = {

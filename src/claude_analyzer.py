@@ -506,28 +506,35 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
     if screens.get('momentum'):
         sections.append("\n## MOMENTUM SCREENS")
         
-        gainers = screens['momentum'].get('top_gainers', [])[:5]
+        gainers = screens['momentum'].get('top_gainers', [])[:50]
         if gainers:
             sections.append("Top Gainers (1mo):")
             for g in gainers:
                 price = g.get('current_price', 0)
                 sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Return: {g.get('return_pct', 0):+.2f}%")
         
-        losers = screens['momentum'].get('top_losers', [])[:5]
+        losers = screens['momentum'].get('top_losers', [])[:50]
         if losers:
             sections.append("Top Losers (potential value):")
             for l in losers:
                 price = l.get('current_price', 0)
                 sections.append(f"  - {l.get('ticker')}: ${price:.2f} | Return: {l.get('return_pct', 0):+.2f}%")
         
-        breakouts = screens['momentum'].get('52w_high_breakouts', [])[:5]
+        breakouts = screens['momentum'].get('52w_high_breakouts', [])[:45]
         if breakouts:
             sections.append("52-Week High Breakouts:")
             for b in breakouts:
                 price = b.get('current_price', 0)
                 sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
         
-        volume = screens['momentum'].get('unusual_volume', [])[:5]
+        bounces = screens['momentum'].get('52w_low_bounces', [])[:45]
+        if bounces:
+            sections.append("52-Week Low Bounces:")
+            for b in bounces:
+                price = b.get('current_price', 0)
+                sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
+        
+        volume = screens['momentum'].get('unusual_volume', [])[:45]
         if volume:
             sections.append("Unusual Volume:")
             for v in volume:
@@ -537,21 +544,21 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
     if screens.get('fundamental'):
         sections.append("\n## FUNDAMENTAL SCREENS")
         
-        value = screens['fundamental'].get('value_stocks', [])[:5]
+        value = screens['fundamental'].get('value_stocks', [])[:50]
         if value:
             sections.append("Value Stocks (P/E<15, EPS growth>10%):")
             for v in value:
                 price = v.get('current_price', 0)
                 sections.append(f"  - {v.get('ticker')}: ${price:.2f} | P/E {v.get('pe_ratio', 0):.1f}, EPS growth {v.get('earnings_growth', 0):.1f}%")
         
-        growth = screens['fundamental'].get('growth_stocks', [])[:5]
+        growth = screens['fundamental'].get('growth_stocks', [])[:50]
         if growth:
             sections.append("Growth Stocks:")
             for g in growth:
                 price = g.get('current_price', 0)
                 sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Revenue growth {g.get('revenue_growth', 0):.1f}%")
         
-        dividend = screens['fundamental'].get('dividend_stocks', [])[:5]
+        dividend = screens['fundamental'].get('dividend_stocks', [])[:45]
         if dividend:
             sections.append("Dividend Stocks (>3% yield):")
             for d in dividend:
@@ -561,26 +568,33 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
     if screens.get('technical'):
         sections.append("\n## TECHNICAL SCREENS")
         
-        oversold = screens['technical'].get('oversold', [])[:5]
+        oversold = screens['technical'].get('oversold', [])[:45]
         if oversold:
             sections.append("Oversold (RSI < 30):")
             for o in oversold:
                 price = o.get('current_price', 0)
                 sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {o.get('rsi', 0):.1f}")
         
-        overbought = screens['technical'].get('overbought', [])[:5]
+        overbought = screens['technical'].get('overbought', [])[:45]
         if overbought:
             sections.append("Overbought (RSI > 70):")
             for o in overbought:
                 price = o.get('current_price', 0)
                 sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {o.get('rsi', 0):.1f}")
         
-        golden = screens['technical'].get('golden_crosses', [])[:5]
+        golden = screens['technical'].get('golden_crosses', [])[:35]
         if golden:
             sections.append("Golden Crosses:")
             for g in golden:
                 price = g.get('current_price', 0)
                 sections.append(f"  - {g.get('ticker')}: ${price:.2f}")
+        
+        death = screens['technical'].get('death_crosses', [])[:35]
+        if death:
+            sections.append("Death Crosses (avoid or short):")
+            for d in death:
+                price = d.get('current_price', 0)
+                sections.append(f"  - {d.get('ticker')}: ${price:.2f}")
     
     # Politician Trades
     pol_trades = analysis_input.get('politician_trades', [])
