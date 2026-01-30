@@ -31,28 +31,29 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
     print("  Fetching dynamic stock universe using Yahoo Finance Screener...")
     
     universe = {
-        "large_cap": [],           # > $10B market cap
-        "mid_cap": [],             # $2B - $10B market cap  
-        "small_cap": [],           # $300M - $2B market cap
+        "mega_cap": [],            # > $500B market cap (AAPL, MSFT, NVDA, etc.)
+        "large_cap": [],           # $50B - $500B market cap
+        "mid_cap": [],             # $10B - $50B market cap  
+        "small_cap": [],           # $2B - $10B market cap
+        "micro_cap": [],           # $500M - $2B market cap
+        "nano_cap": [],            # $100M - $500M market cap (emerging companies)
         "sector_tech": [],         # Technology sector
-        "sector_healthcare": [],   # Healthcare sector
+        "sector_healthcare": [],   # Healthcare sector (includes biotech)
         "sector_financials": [],   # Financial Services sector
         "sector_energy": [],       # Energy sector
         "sector_consumer_disc": [],# Consumer Cyclical sector
         "sector_consumer_staples": [], # Consumer Defensive sector
-        "sector_industrials": [],  # Industrials sector
-        "sector_materials": [],    # Basic Materials sector
+        "sector_industrials": [],  # Industrials sector (includes aerospace/space)
+        "sector_materials": [],    # Basic Materials sector (includes mining)
         "sector_utilities": [],    # Utilities sector
         "sector_realestate": [],   # Real Estate sector
-        "sector_communication": [],# Communication Services sector
-        "mega_cap": [],            # > $500B market cap (AAPL, MSFT, NVDA, etc.)
-        "micro_cap": [],           # $500M - $2B market cap
+        "sector_communication": [],# Communication Services sector (includes satellites)
     }
     
     all_tickers: Set[str] = set()
     
     # Market cap based screening (US exchanges only)
-    # Expanded to get ~1200+ stocks (compensating for data dropouts)
+    # Expanded to get ~1500+ stocks with lower floor for emerging companies
     cap_screens = [
         # Mega cap > $500B (includes AAPL, MSFT, NVDA, GOOGL, AMZN, META, etc.)
         ("mega_cap", 500_000_000_000, 20_000_000_000_000, 60),
@@ -61,9 +62,11 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
         # Mid cap $10B - $50B  
         ("mid_cap", 10_000_000_000, 50_000_000_000, 250),
         # Small cap $2B - $10B
-        ("small_cap", 2_000_000_000, 10_000_000_000, 200),
-        # Micro cap $500M - $2B (added for broader coverage)
-        ("micro_cap", 500_000_000, 2_000_000_000, 150),
+        ("small_cap", 2_000_000_000, 10_000_000_000, 250),
+        # Micro cap $500M - $2B (space, biotech, mining emerging companies)
+        ("micro_cap", 500_000_000, 2_000_000_000, 200),
+        # Nano cap $100M - $500M (early stage, high growth potential)
+        ("nano_cap", 100_000_000, 500_000_000, 100),
     ]
     
     for category, min_cap, max_cap, count in cap_screens:
@@ -73,23 +76,25 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
             all_tickers.update(tickers)
             print(f"    {category}: {len(tickers)} stocks")
     
-    # Sector based screening - expanded counts per sector
+    # Sector based screening - lower market cap floor ($500M) to catch emerging companies
+    # This covers: Mining (Materials), Space (Industrials), Biotech (Healthcare), etc.
     sector_screens = [
-        ("sector_tech", "Technology", 100),
-        ("sector_healthcare", "Healthcare", 90),
-        ("sector_financials", "Financial Services", 90),
-        ("sector_energy", "Energy", 70),
-        ("sector_consumer_disc", "Consumer Cyclical", 80),
-        ("sector_consumer_staples", "Consumer Defensive", 60),
-        ("sector_industrials", "Industrials", 80),
-        ("sector_materials", "Basic Materials", 50),
-        ("sector_utilities", "Utilities", 50),
-        ("sector_realestate", "Real Estate", 50),
-        ("sector_communication", "Communication Services", 60),
+        # (category, sector_name, count, min_market_cap)
+        ("sector_tech", "Technology", 120, 500_000_000),
+        ("sector_healthcare", "Healthcare", 100, 300_000_000),  # Lower for biotech
+        ("sector_financials", "Financial Services", 100, 500_000_000),
+        ("sector_energy", "Energy", 80, 300_000_000),
+        ("sector_consumer_disc", "Consumer Cyclical", 90, 500_000_000),
+        ("sector_consumer_staples", "Consumer Defensive", 70, 500_000_000),
+        ("sector_industrials", "Industrials", 100, 300_000_000),  # Lower for aerospace/space
+        ("sector_materials", "Basic Materials", 80, 200_000_000),  # Lower for mining
+        ("sector_utilities", "Utilities", 60, 500_000_000),
+        ("sector_realestate", "Real Estate", 70, 500_000_000),
+        ("sector_communication", "Communication Services", 80, 300_000_000),  # Lower for satellites
     ]
     
-    for category, sector, count in sector_screens:
-        tickers = _screen_by_sector(sector, count)
+    for category, sector, count, min_cap in sector_screens:
+        tickers = _screen_by_sector(sector, count, min_cap)
         if tickers:
             universe[category].extend(tickers)
             all_tickers.update(tickers)
@@ -149,16 +154,21 @@ def _screen_by_market_cap(min_cap: int, max_cap: int, count: int = 50) -> List[s
         return []
 
 
-def _screen_by_sector(sector: str, count: int = 30) -> List[str]:
+def _screen_by_sector(sector: str, count: int = 30, min_market_cap: int = 500_000_000) -> List[str]:
     """
-    Screen stocks by sector on US exchanges with significant market cap.
+    Screen stocks by sector on US exchanges.
     Uses pagination to get more than 25 results.
+    
+    Args:
+        sector: Yahoo Finance sector name
+        count: Maximum number of stocks to return
+        min_market_cap: Minimum market cap filter (default $500M for broader coverage)
     """
     try:
         query = EquityQuery('AND', [
             EquityQuery('EQ', ['sector', sector]),
             EquityQuery('IS-IN', ['exchange', 'NMS', 'NYQ']),  # NASDAQ, NYSE
-            EquityQuery('GT', ['intradaymarketcap', 5_000_000_000])  # > $5B
+            EquityQuery('GT', ['intradaymarketcap', min_market_cap])
         ])
         
         all_symbols = []
@@ -183,6 +193,44 @@ def _screen_by_sector(sector: str, count: int = 30) -> List[str]:
         return all_symbols[:count]
     except Exception as e:
         print(f"    Screen by sector {sector} failed: {e}")
+        return []
+
+
+def _screen_by_industry(industry: str, count: int = 30, min_cap: int = 100_000_000) -> List[str]:
+    """
+    Screen stocks by industry (sub-sector) on US exchanges.
+    Industry is more specific than sector (e.g., "Aerospace & Defense" under "Industrials").
+    Uses lower market cap threshold to catch smaller space/tech companies.
+    """
+    try:
+        query = EquityQuery('AND', [
+            EquityQuery('EQ', ['industry', industry]),
+            EquityQuery('IS-IN', ['exchange', 'NMS', 'NYQ']),  # NASDAQ, NYSE
+            EquityQuery('GT', ['intradaymarketcap', min_cap])
+        ])
+        
+        all_symbols = []
+        offset = 0
+        page_size = 25
+        
+        while len(all_symbols) < count:
+            result = yf.screen(query, count=page_size, offset=offset)
+            quotes = result.get('quotes', [])
+            if not quotes:
+                break
+            
+            for q in quotes:
+                ticker = _clean_ticker(q.get('symbol'))
+                if ticker and ticker not in all_symbols:
+                    all_symbols.append(ticker)
+            
+            offset += page_size
+            if offset >= result.get('total', 0):
+                break
+        
+        return all_symbols[:count]
+    except Exception as e:
+        print(f"    Screen by industry {industry} failed: {e}")
         return []
 
 
