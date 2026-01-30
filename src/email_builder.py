@@ -475,8 +475,9 @@ def _build_vix_banner(vix_data: Dict) -> str:
 
 def _build_holdings_table(holdings: List[Dict], reviews: List[Dict], earnings_calendar: Dict = None, news_sentiment: Dict = None) -> str:
     """Build HTML table for current holdings with earnings and sentiment badges."""
-    # Filter out new BUY recommendations - only show existing positions
-    existing_holdings = [h for h in holdings if h.get('status', '').upper() != 'BUY']
+    # Show all holdings in current_portfolio - they are existing positions
+    # The 'status' field indicates Claude's recommended action (HOLD/BUY/SELL), not whether it's new
+    existing_holdings = holdings
     earnings_calendar = earnings_calendar or {}
     news_sentiment = news_sentiment or {}
     

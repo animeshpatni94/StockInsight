@@ -342,12 +342,15 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
     
     # Build new portfolio from review + new recommendations
     new_portfolio = []
+    sold_tickers = [s.get('ticker') for s in sells]
+    reviewed_tickers = set()
     
     # Process portfolio review (holds and trims)
     portfolio_review = analysis_result.get('portfolio_review', [])
     for review in portfolio_review:
-        if review.get('action') in ['HOLD', 'TRIM']:
+        if review.get('action') in ['HOLD', 'TRIM', 'ADD']:
             ticker = review.get('ticker')
+            reviewed_tickers.add(ticker)
             original = next((h for h in old_portfolio if h['ticker'] == ticker), None)
             if original:
                 updated = {**original}
@@ -355,6 +358,15 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
                 updated['status'] = review.get('action')
                 updated['last_reviewed'] = datetime.now().strftime('%Y-%m-%d')
                 new_portfolio.append(updated)
+    
+    # Keep existing holdings that weren't explicitly reviewed or sold (default to HOLD)
+    for holding in old_portfolio:
+        ticker = holding.get('ticker')
+        if ticker not in reviewed_tickers and ticker not in sold_tickers:
+            updated = {**holding}
+            updated['status'] = 'HOLD'  # Default to HOLD if not reviewed
+            updated['last_reviewed'] = datetime.now().strftime('%Y-%m-%d')
+            new_portfolio.append(updated)
     
     # Add new recommendations
     new_recs = analysis_result.get('new_recommendations', [])
