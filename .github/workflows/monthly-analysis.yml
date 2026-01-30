@@ -1,0 +1,116 @@
+name: Bi-Weekly Stock Analysis
+
+on:
+  schedule:
+    # Runs at 9:00 AM UTC on the 1st and 15th of every month
+    - cron: '0 9 1,15 * *'
+  workflow_dispatch:
+    # Allows manual trigger for testing
+    inputs:
+      dry_run:
+        description: 'Run without saving changes or sending email'
+        required: false
+        default: 'false'
+        type: boolean
+      skip_email:
+        description: 'Skip sending email (still generates report)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_SENDER: ${{ secrets.RESEND_SENDER }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          QUIVER_API_KEY: ${{ secrets.QUIVER_API_KEY }}
+        run: |
+          cd ${{ github.workspace }}
+          
+          # Build command with optional flags
+          CMD="python src/main.py"
+          
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            CMD="$CMD --dry-run"
+          fi
+          
+          if [ "${{ inputs.skip_email }}" = "true" ]; then
+            CMD="$CMD --skip-email"
+          fi
+          
+          echo "Running: $CMD"
+          $CMD
+      
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monthly-report-${{ github.run_number }}
+          path: output/
+          retention-days: 90
+      
+      - name: Commit updated portfolio history
+        if: ${{ inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "Stock Insight Bot"
+          git config user.email "bot@stockinsight.local"
+          
+          # Add portfolio history
+          git add data/portfolio_history.json
+          
+          # Check if there are changes to commit
+          if git diff --quiet --cached; then
+            echo "No changes to commit"
+          else
+            git commit -m "📊 Update portfolio - $(date +%Y-%m)"
+            git push
+            echo "Changes committed and pushed"
+          fi
+      
+      - name: Summary
+        run: |
+          echo "## 📊 Monthly Analysis Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date**: $(date '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run**: #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run**: ${{ inputs.dry_run || 'false' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Email Sent**: ${{ inputs.skip_email != 'true' && inputs.dry_run != 'true' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Report artifact available for download above." >> $GITHUB_STEP_SUMMARY
+
+  # Optional: Health check job that runs weekly
+  health-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    needs: analyze
+    
+    steps:
+      - name: Check job status
+        run: |
+          echo "Monthly analysis completed successfully"
+          echo "Next run scheduled for 1st of next month at 9:00 AM UTC"

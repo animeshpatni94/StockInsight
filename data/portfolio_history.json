@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "created": "2026-01-29",
+    "last_updated": "2026-01-29",
+    "total_months": 0,
+    "starting_capital": 100000
+  },
+  "current_portfolio": [],
+  "cash": {
+    "allocation_pct": 100.0,
+    "vehicle": "SGOV",
+    "yield_pct": 5.1
+  },
+  "monthly_history": [],
+  "closed_positions": [],
+  "performance_summary": {
+    "total_return_pct": 0.0,
+    "sp500_total_return_pct": 0.0,
+    "total_alpha_pct": 0.0,
+    "win_count": 0,
+    "loss_count": 0,
+    "win_rate_pct": 0.0,
+    "average_win_pct": 0.0,
+    "average_loss_pct": 0.0,
+    "best_trade": null,
+    "worst_trade": null
+  }
+}

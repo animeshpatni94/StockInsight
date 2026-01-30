@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title | default('Monthly Stock Analysis Report') }}</title>
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* Section styles */
+        .section {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section:last-of-type {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title .icon {
+            font-size: 24px;
+        }
+        
+        /* Scorecard grid */
+        .scorecard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .score-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border-left: 4px solid #1e3a5f;
+        }
+        
+        .score-box.positive {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+        
+        .score-box.negative {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+        
+        .score-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        
+        .score-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #666;
+        }
+        
+        /* Action badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-buy {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .badge-sell {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .badge-hold {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .badge-trim {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        /* Recommendation cards */
+        .rec-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #1e3a5f;
+        }
+        
+        .rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .rec-ticker {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        
+        .rec-company {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .rec-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .meta-tag {
+            background: #e0e0e0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #424242;
+        }
+        
+        .rec-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .detail-item {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .detail-label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e3a5f;
+        }
+        
+        .rec-thesis {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .rec-risks {
+            font-size: 13px;
+            color: #c62828;
+        }
+        
+        /* Allocation bars */
+        .allocation-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .allocation-bar {
+            height: 24px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .allocation-fill {
+            height: 100%;
+            background: #1e3a5f;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        /* Alert boxes */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+        }
+        
+        .alert-danger {
+            background: #ffebee;
+            border: 1px solid #ef5350;
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            border: 1px solid #81c784;
+        }
+        
+        /* Action summary */
+        .action-summary {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 25px;
+        }
+        
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .action-row:last-child {
+            border-bottom: none;
+        }
+        
+        /* Footer */
+        .footer {
+            background: #f5f5f5;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .disclaimer {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            border-radius: 4px;
+            padding: 15px;
+            font-size: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Utility classes */
+        .text-success {
+            color: #4caf50;
+        }
+        
+        .text-danger {
+            color: #f44336;
+        }
+        
+        .text-warning {
+            color: #ff9800;
+        }
+        
+        .font-bold {
+            font-weight: 600;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .scorecard {
+                grid-template-columns: 1fr;
+            }
+            
+            .rec-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 {{ title | default('Monthly Stock Analysis') }}</h1>
+            <div class="subtitle">{{ subtitle | default('Generated by Stock Insight Agent') }}</div>
+        </div>
+        
+        <!-- Content will be injected here -->
+        {% block content %}
+        <div class="section">
+            <p>Report content will be generated dynamically.</p>
+        </div>
+        {% endblock %}
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="disclaimer">
+                ⚠️ <strong>DISCLAIMER:</strong> This is not financial advice. This report is for educational 
+                and informational purposes only. Past performance does not guarantee future results. 
+                Always do your own research and consult with a licensed financial advisor before making 
+                investment decisions.
+            </div>
+            <p class="footer-text">
+                {{ footer_text | default('Generated by Stock Insight Agent') }}<br>
+                Next report: {{ next_report_date | default('1st of next month') }}
+            </p>
+        </div>
+    </div>
+</body>
+</html>
