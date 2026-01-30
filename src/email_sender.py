@@ -29,7 +29,7 @@ def send_email(to_email: str, subject: str, html_content: str,
         True if sent successfully, False otherwise
     """
     api_key = os.getenv('RESEND_API_KEY')
-    sender_address = os.getenv('RESEND_FROM_EMAIL', 'Stock Insight <onboarding@resend.dev>')
+    sender_address = os.getenv('RESEND_FROM_EMAIL', 'Stock Insight <noreply@patnilabs.com>')
     
     if not api_key:
         print("  Warning: RESEND_API_KEY not configured")
@@ -45,42 +45,54 @@ def send_email(to_email: str, subject: str, html_content: str,
     max_retries = EMAIL_CONFIG.get('max_retries', 3)
     retry_delay = EMAIL_CONFIG.get('retry_delay_seconds', 5)
     
-    for attempt in range(max_retries):
-        try:
-            print(f"  Sending email to {', '.join(recipients)}...")
-            
-            # Build email parameters
-            params: resend.Emails.SendParams = {
-                "from": sender_address,
-                "to": recipients,
-                "subject": subject,
-                "html": html_content
-            }
-            
-            # Add CC recipients if provided
-            if cc_emails:
-                params["cc"] = cc_emails
-            
-            # Send email via Resend
-            response = resend.Emails.send(params)
-            
-            if response and response.get('id'):
-                print(f"  ✓ Email sent successfully! Message ID: {response.get('id')}")
-                return True
-            else:
-                print(f"  Unexpected response: {response}")
-                    
-        except Exception as e:
-            print(f"  Attempt {attempt + 1}/{max_retries} failed: {str(e)}")
-            
-            if attempt < max_retries - 1:
-                print(f"  Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                print("  All retry attempts exhausted")
-                return _save_email_locally(to_email, subject, html_content)
+    # Send individual emails to each recipient for better deliverability
+    # (Sending to multiple recipients in one call can cause delivery issues)
+    success_count = 0
     
-    return False
+    for recipient in recipients:
+        for attempt in range(max_retries):
+            try:
+                print(f"  Sending email to {recipient}...")
+                
+                # Build email parameters - send to ONE recipient at a time
+                params: resend.Emails.SendParams = {
+                    "from": sender_address,
+                    "to": [recipient],
+                    "subject": subject,
+                    "html": html_content
+                }
+                
+                # Send email via Resend
+                response = resend.Emails.send(params)
+                
+                if response and response.get('id'):
+                    print(f"  ✓ Email sent to {recipient}! Message ID: {response.get('id')}")
+                    success_count += 1
+                    # Small delay between sends to avoid rate limiting
+                    if len(recipients) > 1:
+                        time.sleep(1)
+                    break  # Success, move to next recipient
+                else:
+                    print(f"  Unexpected response for {recipient}: {response}")
+                        
+            except Exception as e:
+                print(f"  Attempt {attempt + 1}/{max_retries} failed for {recipient}: {str(e)}")
+                
+                if attempt < max_retries - 1:
+                    print(f"  Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    print(f"  All retry attempts exhausted for {recipient}")
+    
+    if success_count == len(recipients):
+        print(f"  ✓ All {success_count} emails sent successfully!")
+        return True
+    elif success_count > 0:
+        print(f"  ⚠ Partial success: {success_count}/{len(recipients)} emails sent")
+        return True
+    else:
+        print("  ✗ All email sends failed")
+        return _save_email_locally(to_email, subject, html_content)
 
 
 def _save_email_locally(to_email: str, subject: str, html_content: str) -> bool:
