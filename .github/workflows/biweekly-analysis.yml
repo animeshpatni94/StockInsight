@@ -35,8 +35,9 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          PYTHONUNBUFFERED: "1"
         run: |
-          python src/main.py
+          python -u src/main.py
       
       - name: Commit updated portfolio history
         run: |
