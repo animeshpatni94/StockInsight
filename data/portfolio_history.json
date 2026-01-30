@@ -1,232 +1,27 @@
-{
+﻿{
   "metadata": {
     "created": "2026-01-30",
     "last_updated": "2026-01-30",
-    "total_months": 1,
+    "total_months": 0,
     "starting_capital": 100000
   },
-  "current_portfolio": [
-    {
-      "ticker": "XOM",
-      "company_name": "Exxon Mobil Corporation",
-      "asset_class": "us_stock",
-      "sector": "Energy",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "dividend",
-      "risk_level": "conservative",
-      "time_horizon": "medium_term",
-      "allocation_pct": 15,
-      "shares": 0,
-      "recommended_date": "2026-01-30",
-      "recommended_price": 105,
-      "entry_zone": {
-        "low": 105,
-        "high": 112
-      },
-      "price_target": 130,
-      "stop_loss": 94,
-      "thesis": "Energy is the strongest sector at +12% monthly momentum, and XOM is the highest-quality name in the space. Integrated major with disciplined capital allocation, 3.3% dividend yield, and fortress balance sheet. In an inflationary regime with oil at $79 and rising, XOM benefits from both upstream production and refining margins. Management committed to returning $20B+ annually to shareholders.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-30"
-    },
-    {
-      "ticker": "GLD",
-      "company_name": "SPDR Gold Trust",
-      "asset_class": "commodity_etf",
-      "sector": "Metals",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "hedge",
-      "risk_level": "moderate",
-      "time_horizon": "medium_term",
-      "allocation_pct": 12,
-      "shares": 0,
-      "recommended_date": "2026-01-30",
-      "recommended_price": 268,
-      "entry_zone": {
-        "low": 268,
-        "high": 278
-      },
-      "price_target": 310,
-      "stop_loss": 245,
-      "thesis": "Gold has broken out decisively (+13% monthly) as the classic inflation hedge works in textbook fashion. Dollar weakness (UUP declining), negative real rates, and geopolitical uncertainty all support the bull case. With equities at historically extreme valuations, gold provides portfolio insurance that actually has positive momentum. Central bank buying remains robust globally.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-30"
-    },
-    {
-      "ticker": "AMGN",
-      "company_name": "Amgen Inc.",
-      "asset_class": "us_stock",
-      "sector": "Healthcare",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "value",
-      "risk_level": "conservative",
-      "time_horizon": "long_term",
-      "allocation_pct": 12,
-      "shares": 0,
-      "recommended_date": "2026-01-30",
-      "recommended_price": 285,
-      "entry_zone": {
-        "low": 285,
-        "high": 298
-      },
-      "price_target": 345,
-      "stop_loss": 258,
-      "thesis": "Healthcare is underperforming (-1.25% monthly) but AMGN offers a compelling contrarian entry. Trading at ~14x forward earnings with 3%+ FCF yield, this is value in a market starved for it. The obesity drug MariTide represents significant pipeline optionality against Lilly/Novo incumbents. Defensive cash flows from established immunology franchise provide downside protection. Senator King recently purchased LLY, suggesting continued political support for pharma innovation.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-30"
-    },
-    {
-      "ticker": "VEA",
-      "company_name": "Vanguard FTSE Developed Markets ETF",
-      "asset_class": "international_etf",
-      "sector": "International Developed",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "value",
-      "risk_level": "moderate",
-      "time_horizon": "medium_term",
-      "allocation_pct": 12,
-      "shares": 0,
-      "recommended_date": "2026-01-30",
-      "recommended_price": 48,
-      "entry_zone": {
-        "low": 48,
-        "high": 51
-      },
-      "price_target": 57,
-      "stop_loss": 43,
-      "thesis": "International developed markets remain significantly underowned by US investors after a decade of underperformance. Dollar weakness provides a tailwind for USD-based returns. European and Japanese equities trade at meaningful discounts to US markets (14-15x vs 28x P/E). Required diversification that actually has fundamental support as the valuation gap is historically extreme.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-30"
-    },
-    {
-      "ticker": "GOOGL",
-      "company_name": "Alphabet Inc.",
-      "asset_class": "us_stock",
-      "sector": "Technology",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "garp",
-      "risk_level": "moderate",
-      "time_horizon": "medium_term",
-      "allocation_pct": 12,
-      "shares": 0,
-      "recommended_date": "2026-01-30",
-      "recommended_price": 180,
-      "entry_zone": {
-        "low": 180,
-        "high": 192
-      },
-      "price_target": 235,
-      "stop_loss": 162,
-      "thesis": "Among mega-cap tech, GOOGL offers the best risk/reward at ~20x forward earnings with AI optionality underappreciated. Gemini integration across Search, Cloud, and Android creates monetization opportunities. Nancy Pelosi accumulated $750K-$1M in GOOGL in January alone\u2014while not a primary signal, it aligns with fundamentals. Tech sector flat on the month (-0.56%) provides entry point. YouTube and Cloud both accelerating.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-30"
-    }
-  ],
+  "current_portfolio": [],
   "cash": {
-    "allocation_pct": 37,
+    "allocation_pct": 100.0,
     "vehicle": "SGOV",
     "yield_pct": 5.1
   },
-  "monthly_history": [
-    {
-      "month": "2026-01",
-      "starting_value": 100000,
-      "ending_value": 100000.0,
-      "portfolio_return_pct": 0.0,
-      "sp500_return_pct": 0.34,
-      "alpha_pct": -0.34,
-      "recommendations_made": [
-        {
-          "ticker": "XOM",
-          "action": "BUY",
-          "allocation": 15
-        },
-        {
-          "ticker": "GLD",
-          "action": "BUY",
-          "allocation": 12
-        },
-        {
-          "ticker": "AMGN",
-          "action": "BUY",
-          "allocation": 12
-        },
-        {
-          "ticker": "VEA",
-          "action": "BUY",
-          "allocation": 12
-        },
-        {
-          "ticker": "GOOGL",
-          "action": "BUY",
-          "allocation": 12
-        }
-      ],
-      "sells_executed": [],
-      "notable_politician_trades": [
-        {
-          "politician": "Nancy Pelosi",
-          "party": "D",
-          "ticker": "GOOGL",
-          "transaction_type": "Purchase",
-          "amount": "$750K-$1.5M combined",
-          "insight": "Accumulated across multiple tranches in Dec-Jan despite already holding significant position. Former Speaker has notable track record. Aligns with our GOOGL recommendation."
-        },
-        {
-          "politician": "Nancy Pelosi",
-          "party": "D",
-          "ticker": "AMZN",
-          "transaction_type": "Purchase",
-          "amount": "$600K-$1.25M combined",
-          "insight": "Similar accumulation pattern to GOOGL. Large options-based positions suggest conviction in near-term upside."
-        },
-        {
-          "politician": "Nancy Pelosi",
-          "party": "D",
-          "ticker": "LPAB",
-          "transaction_type": "Purchase",
-          "amount": "$1M-$5M",
-          "insight": "AllianceBernstein holding company\u2014unusual size suggests significant conviction in asset management sector."
-        },
-        {
-          "politician": "Angus King",
-          "party": "I",
-          "ticker": "LLY",
-          "transaction_type": "Purchase",
-          "amount": "$1K-$15K",
-          "insight": "Senate Energy Committee member buying pharma\u2014no obvious committee conflict but timing ahead of Medicare negotiations notable."
-        },
-        {
-          "politician": "Angus King",
-          "party": "I",
-          "ticker": "HON",
-          "transaction_type": "Purchase",
-          "amount": "$1K-$15K",
-          "insight": "Honeywell\u2014industrial conglomerate with defense and energy efficiency exposure. Aligns with infrastructure spending thesis."
-        }
-      ]
-    }
-  ],
+  "monthly_history": [],
   "closed_positions": [],
   "performance_summary": {
     "total_return_pct": 0.0,
-    "sp500_total_return_pct": 0.34,
-    "total_alpha_pct": -0.34,
+    "sp500_total_return_pct": 0.0,
+    "total_alpha_pct": 0.0,
     "win_count": 0,
     "loss_count": 0,
-    "win_rate_pct": 0,
-    "average_win_pct": 0,
-    "average_loss_pct": 0,
+    "win_rate_pct": 0.0,
+    "average_win_pct": 0.0,
+    "average_loss_pct": 0.0,
     "best_trade": null,
     "worst_trade": null
   }
