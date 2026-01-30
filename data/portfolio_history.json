@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-01-30",
     "last_updated": "2026-01-30",
-    "total_months": 4,
+    "total_months": 5,
     "starting_capital": 100000
   },
   "current_portfolio": [
@@ -327,13 +327,40 @@
       ],
       "sells_executed": [],
       "notable_politician_trades": []
+    },
+    {
+      "month": "2026-01",
+      "starting_value": 100000,
+      "ending_value": 100000.0,
+      "portfolio_return_pct": 0.0,
+      "sp500_return_pct": 0.72,
+      "alpha_pct": -0.72,
+      "recommendations_made": [
+        {
+          "ticker": "GOOGL",
+          "action": "BUY",
+          "allocation": 12
+        },
+        {
+          "ticker": "XOM",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "GLD",
+          "action": "BUY",
+          "allocation": 7
+        }
+      ],
+      "sells_executed": [],
+      "notable_politician_trades": []
     }
   ],
   "closed_positions": [],
   "performance_summary": {
     "total_return_pct": 0.0,
-    "sp500_total_return_pct": 2.25,
-    "total_alpha_pct": -2.25,
+    "sp500_total_return_pct": 2.97,
+    "total_alpha_pct": -2.97,
     "win_count": 0,
     "loss_count": 0,
     "win_rate_pct": 0,
