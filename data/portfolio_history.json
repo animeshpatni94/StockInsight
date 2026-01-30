@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-01-30",
     "last_updated": "2026-01-30",
-    "total_months": 5,
+    "total_months": 6,
     "starting_capital": 100000
   },
   "current_portfolio": [
@@ -28,7 +28,7 @@
       "price_target": 413.11,
       "stop_loss": 291.06,
       "thesis": "Cheapest mega-cap tech name. AI search integration progressing well. Strong FCF generation.",
-      "status": "BUY",
+      "status": "HOLD",
       "last_reviewed": "2026-01-30"
     },
     {
@@ -53,37 +53,187 @@
       "price_target": 169.42,
       "stop_loss": 123.81,
       "thesis": "Best-in-class operator with strong dividend. Pioneer acquisition adds Permian scale.",
+      "status": "HOLD",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "SCCO",
+      "company_name": "Southern Copper Corporation",
+      "asset_class": "international_stock",
+      "sector": "Materials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 6,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 184.61,
+      "entry_zone": {
+        "low": 184.61,
+        "high": 194.13
+      },
+      "price_target": 238.53,
+      "stop_loss": 167.48,
+      "thesis": "Copper is the critical metal for electrification, AI data center buildouts, and renewable energy infrastructure. SCCO operates some of the lowest-cost mines globally with massive reserves in Peru and Mexico. The +30.82% monthly surge reflects supply constraints meeting surging demand. Weakening dollar amplifies returns for this ADR. Strong margin profile provides downside protection.",
       "status": "BUY",
       "last_reviewed": "2026-01-30"
     },
     {
-      "ticker": "GLD",
-      "company_name": "SPDR Gold Trust",
-      "asset_class": "commodity_etf",
-      "sector": "Metals",
+      "ticker": "LMT",
+      "company_name": "Lockheed Martin Corporation",
+      "asset_class": "us_stock",
+      "sector": "Industrials",
       "sub_industry": "",
       "market_cap": "",
       "geography": "US",
-      "investment_style": "hedge",
-      "risk_level": "conservative",
+      "investment_style": "value",
+      "risk_level": "moderate",
       "time_horizon": "long_term",
       "allocation_pct": 7,
       "shares": 0,
       "recommended_date": "2026-01-30",
-      "recommended_price": 431.6,
+      "recommended_price": 615.19,
       "entry_zone": {
-        "low": 431.6,
-        "high": 453.85
+        "low": 615.19,
+        "high": 646.9
       },
-      "price_target": 508.51,
-      "stop_loss": 399.55,
-      "thesis": "Portfolio insurance against tail risks. Central bank buying remains strong.",
+      "price_target": 761.06,
+      "stop_loss": 563.19,
+      "thesis": "Global defense spending entering multi-year upcycle driven by geopolitical tensions (NATO expansion, Indo-Pacific concerns, Middle East conflict). LMT's F-35 program provides decades of recurring revenue. $160B+ backlog offers unprecedented visibility. Strong dividend growth history (21 consecutive years of increases). RSI 85.5 reflects momentum rather than exhaustion in this case.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "GILD",
+      "company_name": "Gilead Sciences Inc.",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 137.69,
+      "entry_zone": {
+        "low": 137.69,
+        "high": 144.79
+      },
+      "price_target": 172.37,
+      "stop_loss": 126.74,
+      "thesis": "Defensive biotech trading at single-digit P/E with dominant HIV franchise generating $17B+ annual revenue. 52-week high breakout confirms institutional accumulation. Oncology portfolio (Trodelvy, Yescarta) provides growth optionality. Strong FCF supports dividend and buybacks. Healthcare sector showing relative strength (+5.61 RS) as investors rotate to defensives.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "QCOM",
+      "company_name": "Qualcomm Incorporated",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 6,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 147.04,
+      "entry_zone": {
+        "low": 147.04,
+        "high": 154.62
+      },
+      "price_target": 197.07,
+      "stop_loss": 131.38,
+      "thesis": "RSI at 11.1 represents extreme oversold condition creating asymmetric entry. QCOM leads in mobile, automotive, and IoT chips with AI edge computing opportunity largely unpriced. Apple modem deal extension removes near-term overhang. Android premium tier strength and automotive design wins (BMW, GM) provide diversified growth vectors. Technical capitulation often precedes sharp reversals.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "KO",
+      "company_name": "The Coca-Cola Company",
+      "asset_class": "us_stock",
+      "sector": "Consumer Staples",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 6,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 72.57,
+      "entry_zone": {
+        "low": 72.57,
+        "high": 76.31
+      },
+      "price_target": 86.94,
+      "stop_loss": 65.71,
+      "thesis": "Ultimate defensive compounder at 52-week highs as investors rotate to quality. 62 consecutive years of dividend increases (Dividend King). Consumer Staples sector strength (+6.86% 1mo) reflects flight to safety. Global brand power enables pricing pass-through in inflationary environment. International revenue mix benefits from weaker dollar. Core holding for preservation-first approach.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "ENB",
+      "company_name": "Enbridge Inc.",
+      "asset_class": "international_stock",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 5,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 47.37,
+      "entry_zone": {
+        "low": 47.37,
+        "high": 49.82
+      },
+      "price_target": 58.41,
+      "stop_loss": 42.29,
+      "thesis": "Golden cross technical signal confirms bullish momentum. Largest North American midstream operator with regulated/contracted cash flows providing bond-like stability. 6%+ dividend yield with 28 years of consecutive increases. Energy infrastructure essential regardless of oil price volatility. Canadian dollar weakness vs USD creates valuation discount for US investors.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "VICI",
+      "company_name": "VICI Properties Inc.",
+      "asset_class": "reit",
+      "sector": "Real Estate",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 5,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 27.24,
+      "entry_zone": {
+        "low": 27.24,
+        "high": 28.64
+      },
+      "price_target": 34.1,
+      "stop_loss": 24.07,
+      "thesis": "Best-in-class gaming REIT with irreplaceable Las Vegas Strip assets. Triple-net leases to investment-grade tenants (Caesars, MGM) provide recession-resistant cash flows. 5%+ dividend yield with embedded growth from CPI escalators. Real Estate sector showing early signs of recovery (+0.37 RS improving). Portfolio diversification into defensive income-generating assets prudent given macro uncertainty.",
       "status": "BUY",
       "last_reviewed": "2026-01-30"
     }
   ],
   "cash": {
-    "allocation_pct": 73,
+    "allocation_pct": 37,
     "vehicle": "SGOV",
     "yield_pct": 5.1
   },
@@ -354,13 +504,106 @@
       ],
       "sells_executed": [],
       "notable_politician_trades": []
+    },
+    {
+      "month": "2026-01",
+      "starting_value": 100000,
+      "ending_value": 100000.0,
+      "portfolio_return_pct": 0.0,
+      "sp500_return_pct": 0.72,
+      "alpha_pct": -0.72,
+      "recommendations_made": [
+        {
+          "ticker": "SCCO",
+          "action": "BUY",
+          "allocation": 6
+        },
+        {
+          "ticker": "LMT",
+          "action": "BUY",
+          "allocation": 7
+        },
+        {
+          "ticker": "GILD",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "QCOM",
+          "action": "BUY",
+          "allocation": 6
+        },
+        {
+          "ticker": "KO",
+          "action": "BUY",
+          "allocation": 6
+        },
+        {
+          "ticker": "ENB",
+          "action": "BUY",
+          "allocation": 5
+        },
+        {
+          "ticker": "VICI",
+          "action": "BUY",
+          "allocation": 5
+        }
+      ],
+      "sells_executed": [],
+      "notable_politician_trades": [
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "GOOGL",
+          "transaction_type": "Purchase",
+          "amount": "$500K-$1M",
+          "date": "16 Jan 2026",
+          "insight": "Continued accumulation despite Dec selling suggests tactical repositioning rather than bearish view. Adds confidence to our GOOGL HOLD thesis."
+        },
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "LPAB",
+          "transaction_type": "Purchase",
+          "amount": "$1M-$5M",
+          "date": "16 Jan 2026",
+          "insight": "AllianceBernstein holding company - unusual size suggests conviction in asset management sector. Worth monitoring for financial sector exposure."
+        },
+        {
+          "politician": "Angus King",
+          "party": "I",
+          "ticker": "HON",
+          "transaction_type": "Purchase",
+          "amount": "$1K-$15K",
+          "date": "29 Dec 2025",
+          "insight": "HON at 52-week highs. King serves on Armed Services Committee; Honeywell has significant defense/aerospace exposure. Consider adding to watchlist."
+        },
+        {
+          "politician": "Angus King",
+          "party": "I",
+          "ticker": "LLY",
+          "transaction_type": "Purchase",
+          "amount": "$1K-$15K",
+          "date": "29 Dec 2025",
+          "insight": "Eli Lilly leads GLP-1 obesity drug market. King may have visibility on Medicare coverage expansion for weight-loss drugs. Healthcare committee relevance."
+        },
+        {
+          "politician": "Katie Britt",
+          "party": "R",
+          "ticker": "NVDA",
+          "transaction_type": "Sale",
+          "amount": "$1K-$15K",
+          "date": "7 Nov 2025",
+          "insight": "Sold NVDA, AAPL, GOOGL, AMZN in same batch - systematic tech reduction. Bought UPS, V for income/stability. Proved directionally correct as tech lagged."
+        }
+      ]
     }
   ],
   "closed_positions": [],
   "performance_summary": {
     "total_return_pct": 0.0,
-    "sp500_total_return_pct": 2.97,
-    "total_alpha_pct": -2.97,
+    "sp500_total_return_pct": 3.69,
+    "total_alpha_pct": -3.69,
     "win_count": 0,
     "loss_count": 0,
     "win_rate_pct": 0,
