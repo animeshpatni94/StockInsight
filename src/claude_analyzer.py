@@ -14,6 +14,13 @@ from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, CLAUDE_THINKING_BUDGET, ALLO
 SYSTEM_PROMPT = """
 You are a seasoned portfolio manager and investment strategist with 20+ years of experience managing wealth for high-net-worth clients. Your approach combines rigorous fundamental analysis, technical awareness, and macro insight to deliver institutional-quality advice.
 
+## 🔴 CRITICAL: USE REAL MARKET PRICES ONLY
+The market data provided to you contains REAL-TIME PRICES from Yahoo Finance (yfinance).
+- YOUR TRAINING DATA PRICES ARE OUTDATED. Do NOT use prices from memory.
+- ALWAYS use the prices shown in the screen results (e.g., "AAPL: $195.50")
+- Your entry_zone, price_target, and stop_loss MUST be relative to the REAL price shown
+- Example: If GLD shows $313.45, use that price - NOT a stale $268 from training data
+
 ## YOUR INVESTMENT PHILOSOPHY
 - **Preservation First**: Capital preservation is paramount. Avoid catastrophic losses.
 - **Asymmetric Risk/Reward**: Seek opportunities where upside significantly exceeds downside.
@@ -37,9 +44,8 @@ You have access to comprehensive market intelligence:
 5. **Macro Indicators**: VIX, yield curve, sector rotation signals
 6. **Commodities & Metals**: Gold, silver, copper, oil trends
 7. **Politician Trading**: Congressional trades with committee correlation flags
-8. **News Sentiment**: AI-analyzed sentiment for top candidates (supplementary only)
-9. **Earnings Calendar**: Upcoming catalysts for watchlist stocks
-10. **5-Year Historical Context**: Long-term sector performance, market cycles
+8. **Earnings Calendar**: Upcoming catalysts for watchlist stocks
+9. **5-Year Historical Context**: Long-term sector performance, market cycles
 
 ## DECISION FRAMEWORK
 
@@ -118,13 +124,6 @@ Identify the current regime and tilt accordingly:
 - **Inflationary**: Favor commodities, TIPS, miners, real assets
 - **Deflationary**: Favor long bonds, quality growth, cash
 - **Stagflation**: Favor gold, energy, defensives; avoid growth
-
-### News Sentiment Guidelines
-Sentiment data is CONTEXT, not a decision gate:
-- Bearish sentiment on strong fundamentals = potential CONTRARIAN opportunity
-- Bullish sentiment doesn't guarantee returns — may signal crowding
-- Missing sentiment for a stock should NOT exclude it from consideration
-- NEVER reject a fundamentally sound pick solely due to negative sentiment
 
 ### Politician Trading Analysis
 - Flag trades that correlate with committee assignments
@@ -493,31 +492,16 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
         for ticker, data in list(earnings.items())[:10]:
             sections.append(f"- {ticker}: Earnings in {data.get('days_until', '?')} days ({data.get('earnings_date', 'TBD')})")
     
-    # News Sentiment
-    sentiment = analysis_input.get('news_sentiment', {})
-    sentiment_summary = analysis_input.get('sentiment_summary', {})
-    if sentiment:
-        sections.append(f"\n## NEWS SENTIMENT ANALYSIS")
-        sections.append(f"Overall Market Sentiment: {sentiment_summary.get('overall_emoji', '')} {sentiment_summary.get('overall', 'unknown').upper()}")
-        sections.append(f"Average Bullish: {sentiment_summary.get('avg_bullish_pct', 50):.1f}%")
-        sections.append(f"Stocks Analyzed: {sentiment_summary.get('total_analyzed', 0)} ({sentiment_summary.get('stocks_bullish', 0)} bullish, {sentiment_summary.get('stocks_bearish', 0)} bearish)")
-        
-        # Show notable sentiments
-        bullish_stocks = [(t, s) for t, s in sentiment.items() if s.get('label') in ['BULLISH']]
-        bearish_stocks = [(t, s) for t, s in sentiment.items() if s.get('label') in ['BEARISH']]
-        
-        if bullish_stocks:
-            sections.append("\nMost Bullish Sentiment:")
-            for ticker, data in bullish_stocks[:5]:
-                sections.append(f"  - {ticker}: {data.get('bullish_pct', 0):.0f}% bullish")
-        
-        if bearish_stocks:
-            sections.append("\nMost Bearish Sentiment:")
-            for ticker, data in bearish_stocks[:5]:
-                sections.append(f"  - {ticker}: {data.get('bearish_pct', 0):.0f}% bearish")
-    
-    # Screen Results
+    # Screen Results - WITH REAL PRICES (yfinance is source of truth)
     screens = analysis_input.get('screen_results', {})
+    
+    sections.append("""
+## 🔴 CRITICAL: REAL-TIME PRICE DATA
+The prices shown below are REAL MARKET PRICES from Yahoo Finance (yfinance).
+YOU MUST USE THESE EXACT PRICES when making recommendations.
+DO NOT use prices from your training data - they are outdated.
+Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
+""")
     
     if screens.get('momentum'):
         sections.append("\n## MOMENTUM SCREENS")
@@ -526,13 +510,29 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
         if gainers:
             sections.append("Top Gainers (1mo):")
             for g in gainers:
-                sections.append(f"  - {g.get('ticker')}: {g.get('return_pct', 0):+.2f}%")
+                price = g.get('current_price', 0)
+                sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Return: {g.get('return_pct', 0):+.2f}%")
         
         losers = screens['momentum'].get('top_losers', [])[:5]
         if losers:
             sections.append("Top Losers (potential value):")
             for l in losers:
-                sections.append(f"  - {l.get('ticker')}: {l.get('return_pct', 0):+.2f}%")
+                price = l.get('current_price', 0)
+                sections.append(f"  - {l.get('ticker')}: ${price:.2f} | Return: {l.get('return_pct', 0):+.2f}%")
+        
+        breakouts = screens['momentum'].get('52w_high_breakouts', [])[:5]
+        if breakouts:
+            sections.append("52-Week High Breakouts:")
+            for b in breakouts:
+                price = b.get('current_price', 0)
+                sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
+        
+        volume = screens['momentum'].get('unusual_volume', [])[:5]
+        if volume:
+            sections.append("Unusual Volume:")
+            for v in volume:
+                price = v.get('current_price', 0)
+                sections.append(f"  - {v.get('ticker')}: ${price:.2f} | Vol ratio: {v.get('volume_ratio', 0):.1f}x")
     
     if screens.get('fundamental'):
         sections.append("\n## FUNDAMENTAL SCREENS")
@@ -541,13 +541,22 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
         if value:
             sections.append("Value Stocks (P/E<15, EPS growth>10%):")
             for v in value:
-                sections.append(f"  - {v.get('ticker')}: P/E {v.get('pe_ratio', 0):.1f}, EPS growth {v.get('earnings_growth', 0):.1f}%")
+                price = v.get('current_price', 0)
+                sections.append(f"  - {v.get('ticker')}: ${price:.2f} | P/E {v.get('pe_ratio', 0):.1f}, EPS growth {v.get('earnings_growth', 0):.1f}%")
+        
+        growth = screens['fundamental'].get('growth_stocks', [])[:5]
+        if growth:
+            sections.append("Growth Stocks:")
+            for g in growth:
+                price = g.get('current_price', 0)
+                sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Revenue growth {g.get('revenue_growth', 0):.1f}%")
         
         dividend = screens['fundamental'].get('dividend_stocks', [])[:5]
         if dividend:
             sections.append("Dividend Stocks (>3% yield):")
             for d in dividend:
-                sections.append(f"  - {d.get('ticker')}: {d.get('dividend_yield', 0):.2f}% yield")
+                price = d.get('current_price', 0)
+                sections.append(f"  - {d.get('ticker')}: ${price:.2f} | Yield: {d.get('dividend_yield', 0):.2f}%")
     
     if screens.get('technical'):
         sections.append("\n## TECHNICAL SCREENS")
@@ -556,13 +565,22 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
         if oversold:
             sections.append("Oversold (RSI < 30):")
             for o in oversold:
-                sections.append(f"  - {o.get('ticker')}: RSI {o.get('rsi', 0):.1f}")
+                price = o.get('current_price', 0)
+                sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {o.get('rsi', 0):.1f}")
+        
+        overbought = screens['technical'].get('overbought', [])[:5]
+        if overbought:
+            sections.append("Overbought (RSI > 70):")
+            for o in overbought:
+                price = o.get('current_price', 0)
+                sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {o.get('rsi', 0):.1f}")
         
         golden = screens['technical'].get('golden_crosses', [])[:5]
         if golden:
             sections.append("Golden Crosses:")
             for g in golden:
-                sections.append(f"  - {g.get('ticker')}")
+                price = g.get('current_price', 0)
+                sections.append(f"  - {g.get('ticker')}: ${price:.2f}")
     
     # Politician Trades
     pol_trades = analysis_input.get('politician_trades', [])

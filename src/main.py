@@ -99,47 +99,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"       Found {len(politician_trades)} recent trades")
     print(f"       Flagged {len(flagged_trades)} suspicious trades")
     
-    # Step 5b: Fetch news sentiment (if Alpha Vantage configured)
-    print("  Fetching news sentiment...")
-    news_sentiment = {}
-    sentiment_summary = {}
-    if is_alphavantage_configured():
-        # Get tickers from screens - prioritize TOP performers from each screen type
-        # This ensures sentiment aligns with stocks most likely to be recommended
-        screen_tickers = []
-        
-        # Take top stocks from each screen type proportionally
-        for screen_type in ['momentum', 'fundamental', 'technical']:
-            screen_data = screen_results.get(screen_type, {})
-            type_tickers = []
-            for key, items in screen_data.items():
-                if isinstance(items, list):
-                    # Take top 3 from each sub-screen (these are ranked by score)
-                    type_tickers.extend([item.get('ticker') for item in items[:3] if item.get('ticker')])
-            screen_tickers.extend(type_tickers[:7])  # Max 7 per screen type = 21 total
-        
-        # Dedupe while preserving order (top performers first)
-        seen = set()
-        unique_tickers = []
-        for t in screen_tickers:
-            if t not in seen:
-                seen.add(t)
-                unique_tickers.append(t)
-        screen_tickers = unique_tickers[:20]  # Cap at 20 for API limits
-        
-        if screen_tickers:
-            print(f"    Fetching sentiment for {len(screen_tickers)} tickers: {', '.join(screen_tickers[:5])}...")
-            news_sentiment = fetch_multiple_sentiments(screen_tickers)
-            sentiment_summary = get_market_sentiment_summary(news_sentiment)
-            print(f"    ✓ Got sentiment for {len(news_sentiment)} stocks")
-            if sentiment_summary:
-                print(f"    Market mood: {sentiment_summary.get('overall_sentiment', 'N/A')} (Bullish: {len(sentiment_summary.get('bullish_tickers', []))}, Bearish: {len(sentiment_summary.get('bearish_tickers', []))})")
-        else:
-            print("    No tickers available for sentiment analysis")
-    else:
-        print("    ⚠ Alpha Vantage API not configured - skipping sentiment")
-    
-    # Step 5c: Get earnings calendar for portfolio and potential picks
+    # Step 5b: Get earnings calendar for portfolio and potential picks
     print("  Fetching earnings calendar...")
     all_tickers = [h.get('ticker') for h in current_portfolio if h.get('ticker')]
     # Add tickers from top screens
@@ -159,7 +119,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         upcoming_str = ', '.join([f"{e.get('ticker')} ({e.get('earnings_date', 'TBD')})" for e in upcoming])
         print(f"    Upcoming: {upcoming_str}")
     
-    # Step 5d: Calculate risk metrics (drawdown protection)
+    # Step 5c: Calculate risk metrics (drawdown protection)
     print("  Calculating risk metrics...")
     risk_metrics = calculate_risk_metrics(history)
     risk_status = risk_metrics.get('risk_status', 'NORMAL')
@@ -176,7 +136,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     rules = risk_metrics.get('rules', {})
     print(f"    Mode Rules: Max position {rules.get('max_position_size', 15)}%, Min cash {rules.get('min_cash', 5)}%")
     
-    # Step 6: Prepare analysis input
+    # Step 6: Prepare analysis input (NO sentiment - Claude decides purely on fundamentals)
     print("\n[6/10] Preparing analysis input...")
     analysis_input = {
         "current_portfolio": portfolio_performance,
@@ -188,8 +148,6 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         "screen_results": screen_results,
         "politician_trades": politician_trades,
         "flagged_trades": flagged_trades,
-        "news_sentiment": news_sentiment,
-        "sentiment_summary": sentiment_summary,
         "earnings_calendar": earnings_calendar,
         "current_date": datetime.now().isoformat()
     }
@@ -211,12 +169,13 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"       Generated {len(new_recs)} new recommendations")
     print(f"       Generated {len(sells)} sell signals")
     
-    # Step 7b: ALWAYS use real yfinance prices - Claude's prices are outdated
-    # yfinance is the source of truth for all price data
+    # Step 7b: VERIFY real yfinance prices - failsafe in case Claude ignored our instructions
+    # We sent real prices TO Claude in the prompt, but this is a safety net
+    # yfinance is ALWAYS the source of truth for all price data
     if new_recs:
         rec_tickers = [r.get('ticker') for r in new_recs if r.get('ticker')]
         if rec_tickers:
-            print(f"       Fetching real prices for {len(rec_tickers)} recommended tickers...")
+            print(f"       Verifying prices for {len(rec_tickers)} recommended tickers...")
             from data_fetcher import get_current_prices
             real_prices = get_current_prices(rec_tickers)
             
@@ -256,6 +215,29 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
             
             print(f"       ✓ All {len(real_prices)} tickers using real yfinance prices")
     
+    # Step 7c: Fetch sentiment ONLY for Claude's recommended stocks (no bias)
+    news_sentiment = {}
+    sentiment_summary = {}
+    if new_recs and is_alphavantage_configured():
+        rec_tickers = [r.get('ticker') for r in new_recs if r.get('ticker')]
+        if rec_tickers:
+            print(f"       Fetching sentiment for {len(rec_tickers)} recommended stocks...")
+            news_sentiment = fetch_multiple_sentiments(rec_tickers)
+            sentiment_summary = get_market_sentiment_summary(news_sentiment)
+            print(f"       ✓ Got sentiment for {len(news_sentiment)} stocks")
+            
+            # Add sentiment to each recommendation for display
+            for rec in new_recs:
+                ticker = rec.get('ticker')
+                if ticker and ticker in news_sentiment:
+                    sentiment_data = news_sentiment[ticker]
+                    rec['sentiment'] = {
+                        'label': sentiment_data.get('label', 'NEUTRAL'),
+                        'bullish_pct': sentiment_data.get('bullish_pct', 50),
+                        'emoji': sentiment_data.get('emoji', '⚪')
+                    }
+                    print(f"       {ticker}: {sentiment_data.get('emoji', '')} {sentiment_data.get('label', 'N/A')} ({sentiment_data.get('bullish_pct', 50):.0f}% bullish)")
+    
     # Step 8: Update portfolio history
     print("\n[8/10] Updating portfolio history...")
     if not dry_run:
@@ -273,7 +255,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     email_context = {
         'vix_data': vix_data,
         'earnings_calendar': earnings_calendar,
-        'news_sentiment': news_sentiment,
+        'news_sentiment': news_sentiment,  # Now contains sentiment for recommended stocks only
         'sentiment_summary': sentiment_summary,
         'historical_context': historical_context
     }
