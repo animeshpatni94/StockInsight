@@ -164,6 +164,18 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         max_tokens=CLAUDE_MAX_TOKENS
     )
     
+    # Check if Claude API failed
+    api_failed = analysis_result.get('_api_failed', False)
+    if api_failed:
+        print("\n" + "=" * 60)
+        print("❌ CLAUDE API FAILED - ABORTING RUN")
+        print("=" * 60)
+        print("   • Existing portfolio preserved (no changes made)")
+        print("   • No email sent")
+        print("   • Please check your API key and try again")
+        print("=" * 60)
+        return
+    
     new_recs = analysis_result.get('new_recommendations', [])
     sells = analysis_result.get('sells', [])
     print(f"       Generated {len(new_recs)} new recommendations")

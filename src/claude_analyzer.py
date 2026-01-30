@@ -264,8 +264,9 @@ def analyze_with_claude(analysis_input: Dict,
     api_key = os.getenv('ANTHROPIC_API_KEY')
     
     if not api_key:
-        print("  Warning: ANTHROPIC_API_KEY not set, returning mock analysis")
-        return _get_mock_analysis()
+        print("  ❌ ANTHROPIC_API_KEY not set")
+        print("  ⚠️  Returning safe fallback - existing portfolio will be preserved")
+        return _get_fallback_analysis()
     
     client = Anthropic(api_key=api_key)
     
@@ -316,8 +317,9 @@ def analyze_with_claude(analysis_input: Dict,
         return analysis_result
         
     except Exception as e:
-        print(f"  Error calling Claude API: {str(e)}")
-        return _get_mock_analysis()
+        print(f"  ❌ Error calling Claude API: {str(e)}")
+        print(f"  ⚠️  Returning safe fallback - existing portfolio will be preserved")
+        return _get_fallback_analysis()
 
 
 def _format_analysis_prompt(analysis_input: Dict) -> str:
@@ -714,9 +716,40 @@ def _parse_claude_response(response_text: str) -> Dict:
         }
 
 
+def _get_fallback_analysis() -> Dict:
+    """
+    Return safe fallback analysis when API fails.
+    Does NOT recommend new stocks - preserves existing portfolio.
+    
+    Returns:
+        Safe fallback analysis dictionary with failure flag
+    """
+    return {
+        "_api_failed": True,  # Flag to indicate API failure
+        "macro_assessment": {
+            "regime": "unknown",
+            "summary": "Claude API unavailable - no analysis performed. Existing portfolio preserved.",
+            "implications": ["Review manually before making changes"]
+        },
+        "portfolio_review": [],  # Empty - will preserve existing holdings
+        "sells": [],  # No sells - preserve everything
+        "new_recommendations": [],  # No new recs - don't add random stocks
+        "metals_commodities_outlook": {},
+        "politician_trade_analysis": {
+            "notable_trades": [],
+            "suspicious_patterns": [],
+            "overlap_with_portfolio": []
+        },
+        "allocation_summary": {},
+        "risks_to_portfolio": [],
+        "watchlist": []
+    }
+
+
 def _get_mock_analysis() -> Dict:
     """
-    Return mock analysis for testing when API is unavailable.
+    Return mock analysis for LOCAL TESTING ONLY when API key not set.
+    WARNING: This adds hardcoded stocks - only for development testing.
     
     Returns:
         Mock analysis dictionary
