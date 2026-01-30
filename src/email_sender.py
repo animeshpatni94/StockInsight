@@ -20,7 +20,7 @@ def send_email(to_email: str, subject: str, html_content: str,
     Send an HTML email using Resend API.
     
     Args:
-        to_email: Recipient email address
+        to_email: Recipient email address (can be comma-separated for multiple)
         subject: Email subject line
         html_content: HTML body of the email
         cc_emails: Optional list of CC recipients
@@ -29,7 +29,7 @@ def send_email(to_email: str, subject: str, html_content: str,
         True if sent successfully, False otherwise
     """
     api_key = os.getenv('RESEND_API_KEY')
-    sender_address = os.getenv('RESEND_SENDER', 'Stock Insight <onboarding@resend.dev>')
+    sender_address = os.getenv('RESEND_FROM_EMAIL', 'Stock Insight <onboarding@resend.dev>')
     
     if not api_key:
         print("  Warning: RESEND_API_KEY not configured")
@@ -39,17 +39,20 @@ def send_email(to_email: str, subject: str, html_content: str,
     # Initialize Resend with API key
     resend.api_key = api_key
     
+    # Parse multiple recipients (comma-separated)
+    recipients = [email.strip() for email in to_email.split(',') if email.strip()]
+    
     max_retries = EMAIL_CONFIG.get('max_retries', 3)
     retry_delay = EMAIL_CONFIG.get('retry_delay_seconds', 5)
     
     for attempt in range(max_retries):
         try:
-            print(f"  Sending email to {to_email}...")
+            print(f"  Sending email to {', '.join(recipients)}...")
             
             # Build email parameters
             params: resend.Emails.SendParams = {
                 "from": sender_address,
-                "to": [to_email],
+                "to": recipients,
                 "subject": subject,
                 "html": html_content
             }
