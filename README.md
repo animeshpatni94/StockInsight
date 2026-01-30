@@ -5,10 +5,11 @@ AI-powered **bi-weekly** stock analysis with portfolio memory, politician trade 
 ## Features
 
 - **Full Market Coverage**: All 11 S&P sectors, all market caps, international, metals, commodities (1000+ stocks screened)
+- **Real-Time Prices**: All prices sourced from yfinance - never uses stale training data
 - **Portfolio Memory**: Tracks recommendations over time, calculates performance, learns from past trades
 - **Risk Management**: Industry-standard drawdown protection with automatic defensive modes
 - **Politician Tracking**: Monitors congressional trades from Capitol Trades (90-day lookback), flags suspicious timing
-- **News Sentiment**: AI-analyzed market sentiment via Alpha Vantage (optional)
+- **News Sentiment**: AI-analyzed sentiment via Alpha Vantage - fetched AFTER stock selection to avoid bias
 - **Earnings Calendar**: Tracks upcoming earnings for portfolio and watchlist stocks
 - **Diversification**: Enforces allocation rules across asset class, sector, style, horizon
 - **Actionable Output**: Clear BUY/SELL/HOLD with entry zones, targets, stop-losses
@@ -101,17 +102,34 @@ python src/main.py
 ### Bi-Weekly Workflow
 
 1. **Load Portfolio History** - Reads previous recommendations and performance
-2. **Fetch Market Data** - Gets current prices for all holdings and market indexes
+2. **Fetch Market Data** - Gets current prices for all holdings and market indexes (yfinance)
 3. **Run Market Screens** - Executes momentum, fundamental, and technical screens on 1000+ stocks
 4. **Fetch Politician Trades** - Scrapes Capitol Trades for recent congressional trading activity (90-day lookback)
-5. **Fetch News Sentiment** - Gets AI-analyzed sentiment for top stock candidates (Alpha Vantage)
-6. **Check Earnings Calendar** - Identifies upcoming earnings catalysts
-7. **Calculate Risk Metrics** - Determines if defensive mode should be activated
-8. **Analyze with Claude** - AI analyzes data and generates recommendations (respects risk mode rules)
-9. **Update History** - Saves new portfolio state and performance metrics
-10. **Build Email** - Creates professional HTML report
-11. **Send Email** - Delivers via Resend
-12. **Commit Changes** - Updates portfolio_history.json in the repo
+5. **Check Earnings Calendar** - Identifies upcoming earnings catalysts
+6. **Calculate Risk Metrics** - Determines if defensive mode should be activated
+7. **Analyze with Claude** - AI analyzes data and generates recommendations (with real prices, respects risk mode rules)
+8. **Verify Prices** - Safety net to ensure all recommendations use real yfinance prices
+9. **Fetch Sentiment** - Gets news sentiment ONLY for recommended stocks (no selection bias)
+10. **Update History** - Saves new portfolio state and performance metrics
+11. **Build Email** - Creates professional HTML report with sentiment badges
+12. **Send Email** - Delivers via Resend
+13. **Commit Changes** - Updates portfolio_history.json in the repo
+
+### Data Flow (No Selection Bias)
+
+```
+yfinance screens 1000+ stocks (with real prices)
+           ↓
+Claude selects stocks purely on fundamentals/technicals
+           ↓
+Verify prices with yfinance (safety net)
+           ↓
+Fetch sentiment ONLY for selected stocks (Alpha Vantage)
+           ↓
+Display sentiment as supplementary info in email
+```
+
+**Why this order?** Fetching sentiment BEFORE Claude would bias stock selection toward stocks with sentiment data. By fetching AFTER, Claude makes unbiased decisions based purely on market data.
 
 ### Screens Included
 
