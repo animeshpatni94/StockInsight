@@ -211,8 +211,8 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"       Generated {len(new_recs)} new recommendations")
     print(f"       Generated {len(sells)} sell signals")
     
-    # Step 7b: Inject real current prices into recommendations
-    # Claude doesn't know current prices, so we fetch and add them
+    # Step 7b: ALWAYS use real yfinance prices - Claude's prices are outdated
+    # yfinance is the source of truth for all price data
     if new_recs:
         rec_tickers = [r.get('ticker') for r in new_recs if r.get('ticker')]
         if rec_tickers:
@@ -226,31 +226,35 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
                     real_price = real_prices[ticker]
                     rec['current_market_price'] = round(real_price, 2)
                     
-                    # Update entry_zone if Claude's prices are way off (>30% different)
+                    # Get Claude's suggested upside/downside percentages (these are still valid)
                     entry = rec.get('entry_zone', {})
-                    if entry:
-                        entry_mid = (entry.get('low', 0) + entry.get('high', 0)) / 2
-                        if entry_mid > 0:
-                            diff_pct = abs(real_price - entry_mid) / entry_mid * 100
-                            if diff_pct > 30:
-                                # Claude's price is stale, adjust to realistic zone
-                                print(f"       ⚠️ {ticker}: Adjusting entry zone from ${entry_mid:.0f} to ${real_price:.0f} (was {diff_pct:.0f}% off)")
-                                rec['entry_zone'] = {
-                                    'low': round(real_price * 0.97, 2),  # -3% from current
-                                    'high': round(real_price * 1.02, 2)  # +2% from current
-                                }
-                                # Also adjust price target proportionally if it exists
-                                old_target = rec.get('price_target', 0)
-                                if old_target > 0 and entry_mid > 0:
-                                    target_upside = (old_target / entry_mid) - 1  # Original upside %
-                                    rec['price_target'] = round(real_price * (1 + target_upside), 2)
-                                # Adjust stop loss
-                                old_stop = rec.get('stop_loss', 0)
-                                if old_stop > 0 and entry_mid > 0:
-                                    stop_downside = 1 - (old_stop / entry_mid)  # Original downside %
-                                    rec['stop_loss'] = round(real_price * (1 - stop_downside), 2)
+                    old_entry_mid = (entry.get('low', 0) + entry.get('high', 0)) / 2 if entry else 0
+                    old_target = rec.get('price_target', 0)
+                    old_stop = rec.get('stop_loss', 0)
+                    
+                    # Calculate Claude's intended risk/reward percentages
+                    if old_entry_mid > 0 and old_target > 0:
+                        target_upside_pct = (old_target / old_entry_mid) - 1  # e.g., 0.15 = 15% upside
+                    else:
+                        target_upside_pct = 0.15  # Default 15% upside
+                    
+                    if old_entry_mid > 0 and old_stop > 0:
+                        stop_downside_pct = 1 - (old_stop / old_entry_mid)  # e.g., 0.12 = 12% downside
+                    else:
+                        stop_downside_pct = 0.12  # Default 12% stop loss
+                    
+                    # ALWAYS recalculate prices based on REAL yfinance price
+                    rec['entry_zone'] = {
+                        'low': round(real_price * 0.97, 2),   # -3% from current (buy zone)
+                        'high': round(real_price * 1.02, 2)   # +2% from current
+                    }
+                    rec['price_target'] = round(real_price * (1 + target_upside_pct), 2)
+                    rec['stop_loss'] = round(real_price * (1 - stop_downside_pct), 2)
+                    rec['recommended_price'] = round(real_price, 2)  # Use real price as entry
+                    
+                    print(f"       ✓ {ticker}: ${real_price:.2f} | Target: ${rec['price_target']:.2f} (+{target_upside_pct*100:.0f}%) | Stop: ${rec['stop_loss']:.2f} (-{stop_downside_pct*100:.0f}%)")
             
-            print(f"       ✓ Prices validated for {len(real_prices)} tickers")
+            print(f"       ✓ All {len(real_prices)} tickers using real yfinance prices")
     
     # Step 8: Update portfolio history
     print("\n[8/10] Updating portfolio history...")
