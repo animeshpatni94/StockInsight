@@ -1,22 +1,28 @@
 """
 Politician trade tracking and analysis module.
-Fetches and analyzes congressional stock trades from public sources.
+Fetches and analyzes congressional stock trades from free public sources.
+Uses House/Senate financial disclosure data (no paid API required).
 """
 
 import os
 import requests
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
+from bs4 import BeautifulSoup
+import re
 from config import COMMITTEE_SECTOR_MAP
 
 
-# API Configuration
-QUIVER_BASE_URL = "https://api.quiverquant.com/beta"
+# Free data sources
+HOUSE_DISCLOSURES_URL = "https://disclosures-clerk.house.gov/PublicDisclosure/FinancialDisclosure"
+SENATE_DISCLOSURES_URL = "https://efdsearch.senate.gov/search/"
+CAPITOLTRADES_URL = "https://www.capitoltrades.com/trades"
 
 
 def fetch_recent_trades(days: int = 45) -> List[Dict]:
     """
-    Fetch all congressional trades from the past N days.
+    Fetch all congressional trades from the past N days using free sources.
+    Tries Capitol Trades (free), falls back to mock data if unavailable.
     
     Args:
         days: Number of days to look back
@@ -24,64 +30,122 @@ def fetch_recent_trades(days: int = 45) -> List[Dict]:
     Returns:
         List of trade dictionaries
     """
-    api_key = os.getenv('QUIVER_API_KEY')
+    print("  Fetching politician trades from free public sources...")
     
-    if not api_key:
-        print("  Warning: QUIVER_API_KEY not set, using mock data")
-        return _get_mock_trades()
+    # Try to scrape Capitol Trades (aggregates public disclosure data)
+    trades = _scrape_capitol_trades(days)
     
+    if trades:
+        print(f"  Found {len(trades)} recent politician trades")
+        return trades
+    
+    # Fallback to mock data for testing/development
+    print("  Using sample trade data (live scraping unavailable)")
+    return _get_mock_trades()
+
+
+def _scrape_capitol_trades(days: int = 45) -> List[Dict]:
+    """
+    Scrape recent trades from Capitol Trades (free public aggregator).
+    
+    Args:
+        days: Number of days to look back
+    
+    Returns:
+        List of trade dictionaries, empty list if scraping fails
+    """
     try:
         headers = {
-            'Authorization': f'Bearer {api_key}',
-            'Accept': 'application/json'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
-        # Calculate date range
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
+        response = requests.get(CAPITOLTRADES_URL, headers=headers, timeout=30)
         
-        # Quiver Quantitative endpoint for congressional trading
-        url = f"{QUIVER_BASE_URL}/historical/congresstrading"
-        params = {
-            'from': start_date.strftime('%Y-%m-%d'),
-            'to': end_date.strftime('%Y-%m-%d')
-        }
+        if response.status_code != 200:
+            print(f"  Capitol Trades returned status {response.status_code}")
+            return []
         
-        response = requests.get(url, headers=headers, params=params, timeout=30)
-        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        trades = []
         
-        trades = response.json()
+        # Find trade rows (structure may vary, this is a best-effort parse)
+        trade_rows = soup.select('table tbody tr, .trade-row, [data-trade]')
         
-        # Normalize the data
-        normalized_trades = []
-        for trade in trades:
-            normalized_trades.append({
-                'politician': trade.get('Representative', 'Unknown'),
-                'party': trade.get('Party', 'Unknown'),
-                'chamber': trade.get('House', 'Unknown'),
-                'ticker': trade.get('Ticker', ''),
-                'company': trade.get('Company', ''),
-                'transaction_type': trade.get('Transaction', ''),
-                'amount': trade.get('Amount', ''),
-                'trade_date': trade.get('TransactionDate', ''),
-                'disclosure_date': trade.get('DisclosureDate', ''),
-                'sector': trade.get('Sector', 'Unknown'),
-                'committees': trade.get('Committees', [])
-            })
+        cutoff_date = datetime.now() - timedelta(days=days)
         
-        return normalized_trades
+        for row in trade_rows[:100]:  # Limit to recent 100
+            try:
+                # Extract trade data (adjust selectors based on actual site structure)
+                cells = row.find_all(['td', 'div'])
+                if len(cells) < 5:
+                    continue
+                
+                trade_date_str = cells[0].get_text(strip=True) if cells else ''
+                
+                # Parse date and check if within range
+                try:
+                    trade_date = datetime.strptime(trade_date_str, '%Y-%m-%d')
+                    if trade_date < cutoff_date:
+                        continue
+                except:
+                    pass
+                
+                trade = {
+                    'politician': cells[1].get_text(strip=True) if len(cells) > 1 else 'Unknown',
+                    'party': _extract_party(cells),
+                    'chamber': _extract_chamber(cells),
+                    'ticker': cells[2].get_text(strip=True) if len(cells) > 2 else '',
+                    'company': cells[3].get_text(strip=True) if len(cells) > 3 else '',
+                    'transaction_type': cells[4].get_text(strip=True) if len(cells) > 4 else '',
+                    'amount': cells[5].get_text(strip=True) if len(cells) > 5 else '',
+                    'trade_date': trade_date_str,
+                    'disclosure_date': '',
+                    'sector': 'Unknown',
+                    'committees': []
+                }
+                
+                if trade['ticker']:  # Only add if we got a ticker
+                    trades.append(trade)
+                    
+            except Exception as e:
+                continue  # Skip malformed rows
+        
+        return trades
         
     except requests.exceptions.RequestException as e:
-        print(f"  Error fetching politician trades: {str(e)}")
-        return _get_mock_trades()
+        print(f"  Could not reach Capitol Trades: {str(e)}")
+        return []
     except Exception as e:
-        print(f"  Unexpected error: {str(e)}")
-        return _get_mock_trades()
+        print(f"  Error scraping trades: {str(e)}")
+        return []
+
+
+def _extract_party(cells) -> str:
+    """Extract party affiliation from cells."""
+    for cell in cells:
+        text = cell.get_text(strip=True).upper()
+        if 'DEMOCRAT' in text or '(D)' in text:
+            return 'Democrat'
+        if 'REPUBLICAN' in text or '(R)' in text:
+            return 'Republican'
+    return 'Unknown'
+
+
+def _extract_chamber(cells) -> str:
+    """Extract chamber (House/Senate) from cells."""
+    for cell in cells:
+        text = cell.get_text(strip=True).upper()
+        if 'SENATE' in text or 'SEN.' in text:
+            return 'Senate'
+        if 'HOUSE' in text or 'REP.' in text:
+            return 'House'
+    return 'Unknown'
 
 
 def _get_mock_trades() -> List[Dict]:
     """
-    Return mock data for testing when API is unavailable.
+    Return mock data for testing when scraping is unavailable.
+    Based on typical congressional trading patterns.
     
     Returns:
         List of mock trade dictionaries

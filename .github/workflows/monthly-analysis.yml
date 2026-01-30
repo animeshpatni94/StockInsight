@@ -49,7 +49,6 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-          QUIVER_API_KEY: ${{ secrets.QUIVER_API_KEY }}
         run: |
           cd ${{ github.workspace }}
           
