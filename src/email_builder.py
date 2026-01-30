@@ -49,6 +49,8 @@ def build_email_html(analysis_result: Dict, history: Dict, email_context: Dict =
     this_month_return = _safe_float(monthly[-1].get('portfolio_return_pct') if monthly else 0)
     sp500_return = _safe_float(monthly[-1].get('sp500_return_pct') if monthly else 0)
     total_return = _safe_float(perf.get('total_return_pct'))
+    sp500_total_return = _safe_float(perf.get('sp500_total_return_pct'))
+    total_alpha = _safe_float(perf.get('total_alpha_pct'))
     win_rate = _safe_float(perf.get('win_rate_pct'))
     win_count = int(_safe_float(perf.get('win_count')))
     loss_count = int(_safe_float(perf.get('loss_count')))
@@ -334,23 +336,38 @@ def build_email_html(analysis_result: Dict, history: Dict, email_context: Dict =
                 <div style="font-size: 16px; font-weight: 600; color: #3fb950;">Welcome to Your First Report!</div>
                 <div style="color: #8b949e; font-size: 13px; margin-top: 8px;">Performance tracking begins next period after positions are established.</div>
             </div>''' if is_first_report else f'''
-            <div class="scorecard">
+            <div style="margin-bottom: 12px; color: #8b949e; font-size: 13px; text-align: center;">This Period vs Since Inception</div>
+            <div class="scorecard" style="grid-template-columns: repeat(3, 1fr);">
                 <div class="score-box {'positive' if this_month_return > 0 else 'negative' if this_month_return < 0 else 'neutral'}">
                     <div class="score-value">{this_month_return:+.1f}%</div>
-                    <div class="score-label">This Period</div>
+                    <div class="score-label">Portfolio (Period)</div>
                 </div>
                 <div class="score-box {'positive' if sp500_return > 0 else 'negative' if sp500_return < 0 else 'neutral'}">
                     <div class="score-value">{sp500_return:+.1f}%</div>
-                    <div class="score-label">S&P 500</div>
+                    <div class="score-label">S&P 500 (Period)</div>
+                </div>
+                <div class="score-box {'positive' if (this_month_return - sp500_return) > 0 else 'negative' if (this_month_return - sp500_return) < 0 else 'neutral'}">
+                    <div class="score-value">{(this_month_return - sp500_return):+.1f}%</div>
+                    <div class="score-label">Alpha (Period)</div>
                 </div>
                 <div class="score-box {'positive' if total_return > 0 else 'negative' if total_return < 0 else 'neutral'}">
                     <div class="score-value">{total_return:+.1f}%</div>
-                    <div class="score-label">Total Return</div>
+                    <div class="score-label">Portfolio (Total)</div>
                 </div>
-                <div class="score-box neutral">
-                    <div class="score-value">{win_rate:.0f}%</div>
-                    <div class="score-label">Win Rate ({win_count}W/{loss_count}L)</div>
+                <div class="score-box {'positive' if sp500_total_return > 0 else 'negative' if sp500_total_return < 0 else 'neutral'}">
+                    <div class="score-value">{sp500_total_return:+.1f}%</div>
+                    <div class="score-label">S&P 500 (Total)</div>
                 </div>
+                <div class="score-box {'positive' if total_alpha > 0 else 'negative' if total_alpha < 0 else 'neutral'}">
+                    <div class="score-value">{total_alpha:+.1f}%</div>
+                    <div class="score-label">Alpha (Total)</div>
+                </div>
+            </div>
+            <div style="margin-top: 16px; text-align: center;">
+                <span class="score-box neutral" style="display: inline-block; padding: 12px 24px;">
+                    <span class="score-value" style="font-size: 24px;">{win_rate:.0f}%</span>
+                    <span class="score-label" style="margin-left: 8px;">Win Rate ({win_count}W/{loss_count}L)</span>
+                </span>
             </div>'''}
         </div>
         
