@@ -29,7 +29,7 @@ class MarketScanner:
         self.stock_universe = None
         self._price_cache = {}  # Cache for historical prices
         
-    def load_universe(self, max_stocks: int = 1000):
+    def load_universe(self, max_stocks: int = 1500):
         """Load stock universe data for screening."""
         # Dynamically fetch stock universe from ETF holdings
         self.stock_universe = get_dynamic_stock_universe()
@@ -40,7 +40,7 @@ class MarketScanner:
         all_tickers = list(set(all_tickers))[:max_stocks]
         
         print(f"    Loading {len(all_tickers)} stocks...")
-        # Use rate-limited fetching with very conservative settings to fetch all 1000+ stocks
+        # Use rate-limited fetching with very conservative settings to fetch all 1500 stocks
         self.stock_info = fetch_multiple_ticker_info(all_tickers, max_workers=2, batch_size=20, delay_between_batches=3.0)
         print(f"    Loaded info for {len(self.stock_info)} stocks")
         
@@ -839,7 +839,7 @@ def run_all_screens() -> Dict:
     """
     print("  Initializing market scanner...")
     scanner = MarketScanner()
-    scanner.load_universe(max_stocks=1000)  # Analyze full 1000 stock universe
+    scanner.load_universe(max_stocks=1500)  # Analyze full 1500 stock universe
     
     results = {
         'timestamp': datetime.now().isoformat(),
