@@ -148,13 +148,13 @@ def calculate_performance(current_portfolio: List[Dict],
             gain_loss_pct = 0
         
         # Check stop-loss and target
-        stop_loss = holding.get('stop_loss', 0)
-        price_target = holding.get('price_target', 0)
+        stop_loss = holding.get('stop_loss') or 0
+        price_target = holding.get('price_target') or 0
         
         status = holding.get('status', 'HOLD')
-        if current_price <= stop_loss and stop_loss > 0:
+        if stop_loss and current_price <= stop_loss:
             status = 'STOP_LOSS_HIT'
-        elif current_price >= price_target and price_target > 0:
+        elif price_target and current_price >= price_target:
             status = 'TARGET_REACHED'
         
         updated_holding = {

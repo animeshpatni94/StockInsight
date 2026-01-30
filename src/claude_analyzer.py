@@ -301,16 +301,16 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
         sections.append("## CURRENT PORTFOLIO HOLDINGS")
         for h in portfolio:
             sections.append(f"""
-**{h.get('ticker')}** - {h.get('company_name', 'Unknown')}
-- Sector: {h.get('sector', 'Unknown')}
-- Entry Price: ${h.get('recommended_price', 0):.2f}
-- Current Price: ${h.get('current_price', 0):.2f}
-- Gain/Loss: {h.get('gain_loss_pct', 0):+.2f}%
-- Allocation: {h.get('allocation_pct', 0):.1f}%
-- Price Target: ${h.get('price_target', 0):.2f}
-- Stop Loss: ${h.get('stop_loss', 0):.2f}
-- Thesis: {h.get('thesis', 'N/A')}
-- Status: {h.get('status', 'HOLD')}
+**{h.get('ticker')}** - {h.get('company_name') or 'Unknown'}
+- Sector: {h.get('sector') or 'Unknown'}
+- Entry Price: ${(h.get('recommended_price') or 0):.2f}
+- Current Price: ${(h.get('current_price') or 0):.2f}
+- Gain/Loss: {(h.get('gain_loss_pct') or 0):+.2f}%
+- Allocation: {(h.get('allocation_pct') or 0):.1f}%
+- Price Target: ${(h.get('price_target') or 0):.2f}
+- Stop Loss: ${(h.get('stop_loss') or 0):.2f}
+- Thesis: {h.get('thesis') or 'N/A'}
+- Status: {h.get('status') or 'HOLD'}
 """)
     else:
         sections.append("## CURRENT PORTFOLIO: Empty (100% Cash)\n")

@@ -1,38 +1,39 @@
 # 📊 Stock Insight Agent
 
-AI-powered monthly stock analysis with portfolio memory, politician trade tracking, and actionable recommendations.
+AI-powered **bi-weekly** stock analysis with portfolio memory, politician trade tracking, and actionable recommendations.
 
 ## Features
 
 - **Full Market Coverage**: All 11 S&P sectors, all market caps, international, metals, commodities
-- **Portfolio Memory**: Tracks recommendations month-over-month, calculates performance
-- **Politician Tracking**: Monitors congressional trades, flags suspicious timing
+- **Portfolio Memory**: Tracks recommendations over time, calculates performance
+- **Politician Tracking**: Monitors congressional trades from Capitol Trades (90-day lookback), flags suspicious timing
 - **Diversification**: Enforces allocation rules across asset class, sector, style, horizon
 - **Actionable Output**: Clear BUY/SELL/HOLD with entry zones, targets, stop-losses
 - **Critical Analysis**: Contrarian, skeptical, admits mistakes
+- **Dark Mode Email**: Professional HTML reports optimized for both light and dark mode email clients
 
 ## Project Structure
 
 ```
-stock-insight-agent/
+StockInsight/
 ├── .github/
 │   └── workflows/
-│       └── monthly-analysis.yml
+│       └── biweekly-analysis.yml    # Runs every 2 weeks
 ├── data/
-│   └── portfolio_history.json
+│   └── portfolio_history.json    # Portfolio state & history
+├── output/
+│   └── *.html                    # Generated email previews
 ├── src/
 │   ├── __init__.py
-│   ├── main.py                    # Entry point
-│   ├── config.py                  # Configuration and constants
-│   ├── data_fetcher.py            # Market data + politician trades
-│   ├── market_scanner.py          # Full market screening logic
-│   ├── politician_tracker.py      # Congress trade analysis
-│   ├── history_manager.py         # Portfolio memory management
-│   ├── claude_analyzer.py         # Claude Opus integration
-│   ├── email_builder.py           # HTML email construction
-│   └── email_sender.py            # Azure Communication Services
-├── templates/
-│   └── email_template.html        # Base email template
+│   ├── main.py                   # Entry point
+│   ├── config.py                 # Configuration and constants
+│   ├── data_fetcher.py           # Market data via yfinance
+│   ├── market_scanner.py         # Full market screening logic
+│   ├── politician_tracker.py     # Capitol Trades scraper
+│   ├── history_manager.py        # Portfolio memory management
+│   ├── claude_analyzer.py        # Claude Opus 4.5 integration
+│   ├── email_builder.py          # Dark-mode HTML email builder
+│   └── email_sender.py           # Resend API integration
 ├── requirements.txt
 ├── .env.example
 └── README.md
@@ -78,7 +79,7 @@ Go to your repo → Settings → Secrets and variables → Actions → New repos
 
 ### 4. Deploy
 
-Push to GitHub — the action runs automatically on the 1st of each month at 9:00 AM UTC.
+Push to GitHub — the action runs automatically every 2 weeks (1st and 15th of each month at 9:00 AM UTC).
 
 ## Manual Run
 
@@ -92,12 +93,12 @@ python src/main.py
 
 ## How It Works
 
-### Monthly Workflow
+### Bi-Weekly Workflow
 
 1. **Load Portfolio History** - Reads previous recommendations and performance
 2. **Fetch Market Data** - Gets current prices for all holdings and market indexes
-3. **Run Market Screens** - Executes momentum, fundamental, and technical screens
-4. **Fetch Politician Trades** - Gets recent congressional trading activity
+3. **Run Market Screens** - Executes momentum, fundamental, and technical screens on 394+ stocks
+4. **Fetch Politician Trades** - Scrapes Capitol Trades for recent congressional trading activity (90-day lookback)
 5. **Analyze with Claude** - AI analyzes data and generates recommendations
 6. **Update History** - Saves new portfolio state and performance metrics
 7. **Build Email** - Creates professional HTML report
@@ -160,17 +161,19 @@ The agent enforces strict allocation limits:
 
 ## Email Report Sections
 
-1. Performance Scorecard
+The email uses a **dark-theme-first design** that looks great in both light and dark mode email clients.
+
+1. Performance Scorecard (This Period / S&P 500 / Total Return)
 2. Macro Regime Assessment
-3. Current Holdings Review
-4. Sells This Month
-5. New Recommendations (by time horizon)
+3. Current Holdings Review with status indicators
+4. Sells This Period
+5. New Recommendations (grouped by time horizon)
 6. Metals & Commodities Outlook
-7. Portfolio Allocation Charts
-8. Politician Trade Alerts
+7. Portfolio Allocation Summary
+8. Politician Trade Alerts (Notable trades, Suspicious patterns, Portfolio overlap)
 9. Risks to Portfolio
 10. Watchlist
-11. Action Summary
+11. Action Summary (BUY/SELL/TRIM/CASH)
 
 ## Disclaimer
 
