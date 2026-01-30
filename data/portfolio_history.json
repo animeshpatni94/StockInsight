@@ -2,23 +2,373 @@
   "metadata": {
     "created_at": "2026-01-30",
     "last_updated": "2026-01-30",
-    "total_months": 0,
+    "total_months": 1,
     "starting_capital": 100000
   },
-  "current_portfolio": [],
+  "current_portfolio": [
+    {
+      "ticker": "GLD",
+      "company_name": "SPDR Gold Shares",
+      "asset_class": "commodity_etf",
+      "sector": "Metals",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "hedge",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 7,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 480,
+      "entry_zone": {
+        "low": 480,
+        "high": 500
+      },
+      "price_target": 580,
+      "stop_loss": 420,
+      "thesis": "Gold up 24% in a month is parabolic, but the underlying thesis is sound - weakening dollar, persistent inflation, geopolitical uncertainty. This is portfolio insurance, not a trade. Don't chase the rip; scale in on pullbacks. Central banks are buyers.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "SLV",
+      "company_name": "iShares Silver Trust",
+      "asset_class": "commodity_etf",
+      "sector": "Metals",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "short_term",
+      "allocation_pct": 5,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 95,
+      "entry_zone": {
+        "low": 95,
+        "high": 108
+      },
+      "price_target": 130,
+      "stop_loss": 85,
+      "thesis": "Silver up 60% in a month is INSANE - this is either the start of a massive move or a blow-off top. Taking small speculative position because silver has industrial (EV, solar) AND monetary demand. Gold-silver ratio historically favors silver here. TIGHT STOP-LOSS MANDATORY.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "XOM",
+      "company_name": "Exxon Mobil Corporation",
+      "asset_class": "us_stock",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 105,
+      "entry_zone": {
+        "low": 105,
+        "high": 115
+      },
+      "price_target": 135,
+      "stop_loss": 95,
+      "thesis": "Energy sector +13% this month, oil at $79 with upside potential. XOM is the quality play - integrated model, strong balance sheet, 3%+ dividend yield. Inflationary regime historically favors energy. Permian Basin and Guyana assets underappreciated.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "AMGN",
+      "company_name": "Amgen Inc.",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 275,
+      "entry_zone": {
+        "low": 275,
+        "high": 295
+      },
+      "price_target": 340,
+      "stop_loss": 250,
+      "thesis": "Healthcare down 1.28% this month while everything else rips - that's opportunity, not a red flag. AMGN has obesity drug MariTide in Phase 3, biosimilar portfolio generating cash, and reasonable valuation. Defensive grower in an expensive market. Angus King bought LLY - the obesity trade is on.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "GOOGL",
+      "company_name": "Alphabet Inc.",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 185,
+      "entry_zone": {
+        "low": 185,
+        "high": 200
+      },
+      "price_target": 240,
+      "stop_loss": 165,
+      "thesis": "Pelosi bought $750K-$1.5M in GOOGL in January after selling $1-5M in December - looks like tax-loss harvesting then re-entering. Skeptical of following politicians, but GOOGL is genuinely cheap vs. peers at ~20x earnings with Gemini AI optionality and YouTube dominance. Cloud growing 30%+.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "BRK.B",
+      "company_name": "Berkshire Hathaway Inc.",
+      "asset_class": "us_stock",
+      "sector": "Financials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 460,
+      "entry_zone": {
+        "low": 460,
+        "high": 490
+      },
+      "price_target": 580,
+      "stop_loss": 415,
+      "thesis": "Buffett sitting on $300B+ cash while market gets frothy. In an uncertain regime, owning the ultimate capital allocator makes sense. Insurance float benefits from higher rates. Energy exposure through BHE. Apple position reduced but still substantial. The 'dry powder' optionality alone is worth the premium.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "EFA",
+      "company_name": "iShares MSCI EAFE ETF",
+      "asset_class": "international_stock",
+      "sector": "Diversified",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 78,
+      "entry_zone": {
+        "low": 78,
+        "high": 84
+      },
+      "price_target": 95,
+      "stop_loss": 70,
+      "thesis": "Dollar weakening is a MAJOR tailwind for international. Europe trading at deep discount to US, Japan corporate governance reforms unlocking value. Diversification away from US concentration risk is prudent. Developed markets give exposure without full EM risk.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "QCOM",
+      "company_name": "Qualcomm Incorporated",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "short_term",
+      "allocation_pct": 7,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 145,
+      "entry_zone": {
+        "low": 145,
+        "high": 165
+      },
+      "price_target": 200,
+      "stop_loss": 135,
+      "thesis": "RSI at 10.1 - this is EXTREMELY oversold. Either something is very wrong, or this is a massive overreaction. QCOM is the mobile modem king, has AI chip exposure, automotive design wins growing. 15x P/E for a company growing double-digits is compelling if nothing structural is broken.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "VIG",
+      "company_name": "Vanguard Dividend Appreciation ETF",
+      "asset_class": "etf",
+      "sector": "Diversified",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "medium_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 185,
+      "entry_zone": {
+        "low": 185,
+        "high": 195
+      },
+      "price_target": 220,
+      "stop_loss": 170,
+      "thesis": "Quality dividend growers - companies that consistently raise dividends tend to outperform in volatile markets. Provides ballast against speculative positions. Lower beta than S&P 500. Diversified across sectors with quality tilt.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    },
+    {
+      "ticker": "BIL",
+      "company_name": "SPDR Bloomberg 1-3 Month T-Bill ETF",
+      "asset_class": "bond_etf",
+      "sector": "Fixed Income",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "conservative",
+      "risk_level": "conservative",
+      "time_horizon": "short_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-01-30",
+      "recommended_price": 91.5,
+      "entry_zone": {
+        "low": 91.5,
+        "high": 92
+      },
+      "price_target": 92,
+      "stop_loss": 91,
+      "thesis": "Cash earning 5%+ while we wait. Short-duration means minimal rate risk. This isn't exciting, but in an uncertain macro environment with potential volatility, having dry powder earning yield is smart. Ready to deploy on corrections.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-30"
+    }
+  ],
   "closed_positions": [],
-  "monthly_history": [],
+  "monthly_history": [
+    {
+      "month": "2026-01",
+      "starting_value": 100000,
+      "ending_value": 100000.0,
+      "portfolio_return_pct": 0.0,
+      "sp500_return_pct": 0.9,
+      "alpha_pct": -0.9,
+      "recommendations_made": [
+        {
+          "ticker": "GLD",
+          "action": "BUY",
+          "allocation": 7
+        },
+        {
+          "ticker": "SLV",
+          "action": "BUY",
+          "allocation": 5
+        },
+        {
+          "ticker": "XOM",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "AMGN",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "GOOGL",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "BRK.B",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "EFA",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "QCOM",
+          "action": "BUY",
+          "allocation": 7
+        },
+        {
+          "ticker": "VIG",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "BIL",
+          "action": "BUY",
+          "allocation": 10
+        }
+      ],
+      "sells_executed": [],
+      "notable_politician_trades": [
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "GOOGL",
+          "transaction_type": "Multiple (Sold then Bought)",
+          "amount": "Net buyer $750K-$1.5M after selling $1M-$5M",
+          "insight": "Classic tax-loss harvesting with immediate re-entry. Still bullish GOOGL but don't read too much into the December sales."
+        },
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "LPAB",
+          "transaction_type": "Purchase",
+          "amount": "$1M-$5M",
+          "insight": "AllianceBernstein - asset management play. Interesting pivot to financials during rate environment."
+        },
+        {
+          "politician": "Angus King",
+          "party": "I",
+          "ticker": "LLY",
+          "transaction_type": "Purchase",
+          "amount": "$1K-$15K",
+          "insight": "Obesity drug thesis continues. Small amount but King also bought HON - industrials exposure."
+        },
+        {
+          "politician": "Dale Strong",
+          "party": "R",
+          "ticker": "IREN",
+          "transaction_type": "Purchase",
+          "amount": "$1K-$15K",
+          "insight": "Bitcoin mining company. Speculative retail-style trade from a House Republican."
+        }
+      ]
+    }
+  ],
   "performance_summary": {
-    "total_return_pct": 0,
-    "total_alpha_pct": 0,
+    "total_return_pct": 0.0,
+    "sp500_total_return_pct": 0.9,
+    "total_alpha_pct": -0.9,
+    "win_count": 0,
+    "loss_count": 0,
     "win_rate_pct": 0,
     "average_win_pct": 0,
     "average_loss_pct": 0,
-    "max_drawdown_pct": 0,
-    "sharpe_ratio": 0
+    "best_trade": null,
+    "worst_trade": null
   },
   "cash": {
-    "allocation_pct": 100,
+    "allocation_pct": 15,
     "vehicle": "SGOV"
   }
 }
