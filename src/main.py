@@ -257,7 +257,8 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         'earnings_calendar': earnings_calendar,
         'news_sentiment': news_sentiment,  # Now contains sentiment for recommended stocks only
         'sentiment_summary': sentiment_summary,
-        'historical_context': historical_context
+        'historical_context': historical_context,
+        'portfolio_performance': portfolio_performance  # With live current_price data
     }
     
     email_html = build_email_html(analysis_result, updated_history, email_context)

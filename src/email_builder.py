@@ -25,6 +25,7 @@ def build_email_html(analysis_result: Dict, history: Dict, email_context: Dict =
     vix_data = email_context.get('vix_data', {})
     earnings_calendar = email_context.get('earnings_calendar', {})
     news_sentiment = email_context.get('news_sentiment', {})
+    portfolio_performance = email_context.get('portfolio_performance', [])
     
     # Extract data
     macro = analysis_result.get('macro_assessment', {})
@@ -39,7 +40,8 @@ def build_email_html(analysis_result: Dict, history: Dict, email_context: Dict =
     
     perf = history.get('performance_summary', {}) or {}
     monthly = history.get('monthly_history', []) or []
-    current_portfolio = history.get('current_portfolio', []) or []
+    # Use portfolio_performance (with live prices) if available, otherwise fall back to history
+    current_portfolio = portfolio_performance if portfolio_performance else (history.get('current_portfolio', []) or [])
     cash = history.get('cash', {}) or {}
     total_months = history.get('metadata', {}).get('total_months', 0)
     
