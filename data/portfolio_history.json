@@ -1,8 +1,8 @@
 {
   "metadata": {
     "created": "2026-01-30",
-    "last_updated": "2026-01-30",
-    "total_months": 1,
+    "last_updated": "2026-01-31",
+    "total_months": 2,
     "starting_capital": 100000
   },
   "current_portfolio": [
@@ -29,7 +29,7 @@
       "stop_loss": 291.06,
       "thesis": "Cheapest mega-cap tech name. AI search integration progressing well. Strong FCF generation.",
       "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "XOM",
@@ -42,7 +42,7 @@
       "investment_style": "value",
       "risk_level": "moderate",
       "time_horizon": "medium_term",
-      "allocation_pct": 8,
+      "allocation_pct": 6,
       "shares": 0,
       "recommended_date": "2026-01-30",
       "recommended_price": 137.16,
@@ -53,8 +53,8 @@
       "price_target": 169.42,
       "stop_loss": 123.81,
       "thesis": "Best-in-class operator with strong dividend. Pioneer acquisition adds Permian scale.",
-      "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "status": "TRIM",
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "SCCO",
@@ -79,7 +79,7 @@
       "stop_loss": 167.48,
       "thesis": "Copper is the critical metal for electrification, AI data center buildouts, and renewable energy infrastructure. SCCO operates some of the lowest-cost mines globally with massive reserves in Peru and Mexico. The +30.82% monthly surge reflects supply constraints meeting surging demand. Weakening dollar amplifies returns for this ADR. Strong margin profile provides downside protection.",
       "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "LMT",
@@ -92,7 +92,7 @@
       "investment_style": "value",
       "risk_level": "moderate",
       "time_horizon": "long_term",
-      "allocation_pct": 7,
+      "allocation_pct": 5,
       "shares": 0,
       "recommended_date": "2026-01-30",
       "recommended_price": 615.19,
@@ -103,8 +103,8 @@
       "price_target": 761.06,
       "stop_loss": 563.19,
       "thesis": "Global defense spending entering multi-year upcycle driven by geopolitical tensions (NATO expansion, Indo-Pacific concerns, Middle East conflict). LMT's F-35 program provides decades of recurring revenue. $160B+ backlog offers unprecedented visibility. Strong dividend growth history (21 consecutive years of increases). RSI 85.5 reflects momentum rather than exhaustion in this case.",
-      "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "status": "TRIM",
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "GILD",
@@ -129,7 +129,7 @@
       "stop_loss": 126.74,
       "thesis": "Defensive biotech trading at single-digit P/E with dominant HIV franchise generating $17B+ annual revenue. 52-week high breakout confirms institutional accumulation. Oncology portfolio (Trodelvy, Yescarta) provides growth optionality. Strong FCF supports dividend and buybacks. Healthcare sector showing relative strength (+5.61 RS) as investors rotate to defensives.",
       "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "QCOM",
@@ -154,7 +154,7 @@
       "stop_loss": 131.38,
       "thesis": "RSI at 11.1 represents extreme oversold condition creating asymmetric entry. QCOM leads in mobile, automotive, and IoT chips with AI edge computing opportunity largely unpriced. Apple modem deal extension removes near-term overhang. Android premium tier strength and automotive design wins (BMW, GM) provide diversified growth vectors. Technical capitulation often precedes sharp reversals.",
       "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "KO",
@@ -179,7 +179,7 @@
       "stop_loss": 65.71,
       "thesis": "Ultimate defensive compounder at 52-week highs as investors rotate to quality. 62 consecutive years of dividend increases (Dividend King). Consumer Staples sector strength (+6.86% 1mo) reflects flight to safety. Global brand power enables pricing pass-through in inflationary environment. International revenue mix benefits from weaker dollar. Core holding for preservation-first approach.",
       "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "ENB",
@@ -204,7 +204,7 @@
       "stop_loss": 42.29,
       "thesis": "Golden cross technical signal confirms bullish momentum. Largest North American midstream operator with regulated/contracted cash flows providing bond-like stability. 6%+ dividend yield with 28 years of consecutive increases. Energy infrastructure essential regardless of oil price volatility. Canadian dollar weakness vs USD creates valuation discount for US investors.",
       "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "VICI",
@@ -229,7 +229,7 @@
       "stop_loss": 24.07,
       "thesis": "Best-in-class gaming REIT with irreplaceable Las Vegas Strip assets. Triple-net leases to investment-grade tenants (Caesars, MGM) provide recession-resistant cash flows. 5%+ dividend yield with embedded growth from CPI escalators. Real Estate sector showing early signs of recovery (+0.37 RS improving). Portfolio diversification into defensive income-generating assets prudent given macro uncertainty.",
       "status": "HOLD",
-      "last_reviewed": "2026-01-30"
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "GLD",
@@ -253,8 +253,8 @@
       "price_target": 525.85,
       "stop_loss": 399.44,
       "thesis": "Gold surging +11.55% monthly as real rates decline and dollar weakens. Central bank buying accelerating globally. Inflationary regime historically favors precious metals. Portfolio requires metals/commodities allocation (5-15% rule) and gold provides uncorrelated return stream. Silver/copper already performing\u2014gold catching up.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-30"
+      "status": "HOLD",
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "ASML",
@@ -278,8 +278,8 @@
       "price_target": 1759.89,
       "stop_loss": 1226.9,
       "thesis": "Monopoly provider of EUV lithography machines essential for advanced semiconductor manufacturing. +32.73% monthly momentum reflects chip recovery recognition. Zero competition below 7nm nodes. AI buildout requires exponential chip capacity expansion. International allocation requirement satisfied with highest-quality technology franchise globally.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-30"
+      "status": "HOLD",
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "BND",
@@ -303,8 +303,8 @@
       "price_target": 80.42,
       "stop_loss": 68.04,
       "thesis": "Portfolio requires 10-25% bonds/cash allocation for diversification mandate. S&P 500 at 28x P/E (64.8% above historical average) warrants defensive positioning. Investment-grade bond exposure provides yield and negative correlation to equities in stress scenarios. Fed cutting cycle supports bond prices. 4%+ yield competitive with expensive equity market.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-30"
+      "status": "HOLD",
+      "last_reviewed": "2026-01-31"
     },
     {
       "ticker": "HON",
@@ -328,12 +328,137 @@
       "price_target": 271.82,
       "stop_loss": 196.31,
       "thesis": "Diversified industrial at 52-week high with +15.87% monthly return as Industrials sector shows strength (RS +5.23). Senator Angus King purchased recently\u2014notable given committee visibility. Aerospace, building automation, and energy transition exposure provide multiple growth vectors. Portfolio spinoff optionality could unlock value.",
+      "status": "HOLD",
+      "last_reviewed": "2026-01-31"
+    },
+    {
+      "ticker": "SLV",
+      "company_name": "iShares Silver Trust",
+      "asset_class": "commodity_etf",
+      "sector": "Metals",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "hedge",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 4,
+      "shares": 0,
+      "recommended_date": "2026-01-31",
+      "recommended_price": 73.18,
+      "entry_zone": {
+        "low": 73.18,
+        "high": 76.95
+      },
+      "price_target": 93.16,
+      "stop_loss": 66.83,
+      "thesis": "Silver lagging gold's +11.55% move with only +9.37% monthly gain, creating catch-up potential. Industrial demand (solar, EVs, electronics) accelerating while mine supply constrained. Gold-silver ratio historically elevated, suggesting silver undervalued relative to gold. Inflationary regime favors precious metals, and silver offers higher beta for tactical allocation.",
       "status": "BUY",
-      "last_reviewed": "2026-01-30"
+      "last_reviewed": "2026-01-31"
+    },
+    {
+      "ticker": "PBR",
+      "company_name": "Petr\u00f3leo Brasileiro S.A. - Petrobras",
+      "asset_class": "international_stock",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 3,
+      "shares": 0,
+      "recommended_date": "2026-01-31",
+      "recommended_price": 14.88,
+      "entry_zone": {
+        "low": 14.88,
+        "high": 15.65
+      },
+      "price_target": 20.45,
+      "stop_loss": 12.78,
+      "thesis": "Deep value Brazilian oil major trading at extreme discount to reserves. +29.34% monthly momentum with RSI at 93.9 reflects recognition of undervaluation. Weakening dollar amplifies ADR returns. Massive pre-salt reserves provide decades of production visibility. Government dividend policy more shareholder-friendly than feared. Energy sector leading globally.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-31"
+    },
+    {
+      "ticker": "MOS",
+      "company_name": "The Mosaic Company",
+      "asset_class": "us_stock",
+      "sector": "Materials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 4,
+      "shares": 0,
+      "recommended_date": "2026-01-31",
+      "recommended_price": 26.68,
+      "entry_zone": {
+        "low": 26.68,
+        "high": 28.05
+      },
+      "price_target": 38.7,
+      "stop_loss": 23.43,
+      "thesis": "Premier fertilizer producer at P/E of 7.1 with 239% EPS growth\u2014severely undervalued. Materials sector showing +12.86 relative strength with +13.87% monthly return. Food security concerns and agricultural inflation provide structural demand tailwind. Potash and phosphate prices recovering. Inflation hedge with real asset characteristics.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-31"
+    },
+    {
+      "ticker": "TEVA",
+      "company_name": "Teva Pharmaceutical Industries Limited",
+      "asset_class": "international_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 4,
+      "shares": 0,
+      "recommended_date": "2026-01-31",
+      "recommended_price": 33.06,
+      "entry_zone": {
+        "low": 33.06,
+        "high": 34.76
+      },
+      "price_target": 45.78,
+      "stop_loss": 28.48,
+      "thesis": "52-week high breakout signals institutional accumulation after years of restructuring. World's largest generic drug maker benefiting from patent cliffs across pharma industry. Healthcare sector showing defensive relative strength (+5.61 RS). Debt reduction ahead of schedule. Pipeline improvements with biosimilar Humira and innovative drugs showing promise.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-31"
+    },
+    {
+      "ticker": "WMB",
+      "company_name": "Williams Companies Inc.",
+      "asset_class": "us_stock",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 3,
+      "shares": 0,
+      "recommended_date": "2026-01-31",
+      "recommended_price": 65.24,
+      "entry_zone": {
+        "low": 65.24,
+        "high": 68.61
+      },
+      "price_target": 82.94,
+      "stop_loss": 58.66,
+      "thesis": "Natural gas infrastructure leader with RSI at 82.4 confirming momentum. Natural gas +28.81% monthly as AI data center power demand surges. 85% of cash flows from fee-based contracts provide stability. 4.5%+ dividend yield with consistent growth. Essential midstream assets benefit regardless of nat gas price volatility due to volume-based fees.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-31"
     }
   ],
   "cash": {
-    "allocation_pct": 12,
+    "allocation_pct": 0,
     "vehicle": "SGOV",
     "yield_pct": 5.1
   },
@@ -410,13 +535,75 @@
           "insight": "Systematic rotation out of big tech (NVDA, AAPL, GOOGL, AMZN) into value/income (V, UPS). Senate Banking Committee member reducing growth exposure suggests risk-off positioning."
         }
       ]
+    },
+    {
+      "month": "2026-01",
+      "starting_value": 100000,
+      "ending_value": 103093.12886752142,
+      "portfolio_return_pct": 3.09,
+      "sp500_return_pct": 0.72,
+      "alpha_pct": 2.37,
+      "recommendations_made": [
+        {
+          "ticker": "SLV",
+          "action": "BUY",
+          "allocation": 4
+        },
+        {
+          "ticker": "PBR",
+          "action": "BUY",
+          "allocation": 3
+        },
+        {
+          "ticker": "MOS",
+          "action": "BUY",
+          "allocation": 4
+        },
+        {
+          "ticker": "TEVA",
+          "action": "BUY",
+          "allocation": 4
+        },
+        {
+          "ticker": "WMB",
+          "action": "BUY",
+          "allocation": 3
+        }
+      ],
+      "sells_executed": [],
+      "notable_politician_trades": [
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "GOOGL",
+          "transaction_type": "Multiple (Sold $1-5M, Bought $500K-1M, Bought $250K-500K)",
+          "amount": "Net unclear, possibly options roll",
+          "insight": "Active trading in GOOGL suggests conviction in name despite apparent sells\u2014likely rolling options positions. We hold 12% GOOGL which aligns."
+        },
+        {
+          "politician": "Angus King",
+          "party": "I",
+          "ticker": "HON",
+          "transaction_type": "Purchase",
+          "amount": "$1K-$15K",
+          "insight": "Senate Energy Committee member buying industrial conglomerate with energy transition exposure. We hold HON at 5%\u2014validates position despite death cross warning."
+        },
+        {
+          "politician": "Steve Cohen",
+          "party": "D",
+          "ticker": "NOC",
+          "transaction_type": "Sale",
+          "amount": "$15K-$50K",
+          "insight": "Defense stock sale in late December preceded LMT surge\u2014possibly sector rotation signal. Supports our decision to trim LMT from 7% to 5%."
+        }
+      ]
     }
   ],
   "closed_positions": [],
   "performance_summary": {
-    "total_return_pct": 0.0,
-    "sp500_total_return_pct": 0.72,
-    "total_alpha_pct": -0.72,
+    "total_return_pct": 3.09,
+    "sp500_total_return_pct": 1.44,
+    "total_alpha_pct": 1.65,
     "win_count": 0,
     "loss_count": 0,
     "win_rate_pct": 0,
