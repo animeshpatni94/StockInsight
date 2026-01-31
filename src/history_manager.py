@@ -79,6 +79,56 @@ def save_history(history: Dict, file_path: Optional[str] = None) -> bool:
         return False
 
 
+def fix_closed_positions(history: Dict) -> Dict:
+    """
+    Fix closed positions that have missing sell_price or incorrect return_pct.
+    Fetches current prices and recalculates returns.
+    
+    Args:
+        history: Portfolio history dictionary
+        
+    Returns:
+        Updated history with fixed closed positions
+    """
+    closed = history.get('closed_positions', [])
+    if not closed:
+        return history
+    
+    # Find positions that need fixing (null sell_price or 0 return with valid buy_price)
+    needs_fix = []
+    for pos in closed:
+        if pos.get('sell_price') is None or (pos.get('return_pct', 0) == 0 and pos.get('buy_price', 0) > 0):
+            needs_fix.append(pos)
+    
+    if not needs_fix:
+        print("  No closed positions need fixing")
+        return history
+    
+    print(f"  Fixing {len(needs_fix)} closed positions with missing data...")
+    
+    # Get current prices for tickers that need fixing
+    tickers = [p.get('ticker') for p in needs_fix if p.get('ticker')]
+    current_prices = get_current_prices(tickers) if tickers else {}
+    
+    # Fix each position
+    for pos in needs_fix:
+        ticker = pos.get('ticker')
+        buy_price = pos.get('buy_price', 0)
+        
+        if ticker and ticker in current_prices and buy_price > 0:
+            sell_price = current_prices[ticker]
+            return_pct = ((sell_price / buy_price) - 1) * 100
+            
+            pos['sell_price'] = round(sell_price, 2)
+            pos['return_pct'] = round(return_pct, 2)
+            print(f"    Fixed {ticker}: sell_price=${sell_price:.2f}, return={return_pct:+.2f}%")
+    
+    # Recalculate performance summary
+    history['performance_summary'] = _update_performance_summary(history)
+    
+    return history
+
+
 def _create_empty_history() -> Dict:
     """
     Create a new empty portfolio history structure.
@@ -132,17 +182,34 @@ def calculate_performance(current_portfolio: List[Dict],
         return []
     
     # Get current prices for all holdings
-    tickers = [h['ticker'] for h in current_portfolio]
+    tickers = [h['ticker'] for h in current_portfolio if h.get('ticker')]
     current_prices = get_current_prices(tickers)
+    
+    # Log warning if many prices are missing
+    missing_prices = [t for t in tickers if t not in current_prices]
+    if missing_prices:
+        print(f"  Warning: Could not fetch prices for {len(missing_prices)} tickers: {missing_prices[:5]}...")
     
     updated_portfolio = []
     for holding in current_portfolio:
-        ticker = holding['ticker']
+        ticker = holding.get('ticker')
+        if not ticker:
+            continue
+            
         entry_price = holding.get('recommended_price', 0)
-        current_price = current_prices.get(ticker, entry_price)
+        current_price = current_prices.get(ticker)
+        
+        # If we couldn't get current price, don't just use entry price (that gives fake 0% P&L)
+        # Instead, try to indicate the data is stale
+        if current_price is None or current_price <= 0:
+            print(f"  Warning: No current price for {ticker}, using entry price ${entry_price}")
+            current_price = entry_price
+            price_stale = True
+        else:
+            price_stale = False
         
         # Calculate gain/loss
-        if entry_price > 0:
+        if entry_price > 0 and current_price > 0:
             gain_loss_pct = ((current_price / entry_price) - 1) * 100
         else:
             gain_loss_pct = 0
@@ -152,19 +219,25 @@ def calculate_performance(current_portfolio: List[Dict],
         price_target = holding.get('price_target') or 0
         
         status = holding.get('status', 'HOLD')
-        if stop_loss and current_price <= stop_loss:
-            status = 'STOP_LOSS_HIT'
-        elif price_target and current_price >= price_target:
-            status = 'TARGET_REACHED'
+        if not price_stale:  # Only update status if we have real prices
+            if stop_loss and current_price <= stop_loss:
+                status = 'STOP_LOSS_HIT'
+            elif price_target and current_price >= price_target:
+                status = 'TARGET_REACHED'
         
         updated_holding = {
             **holding,
             'current_price': round(current_price, 2),
             'gain_loss_pct': round(gain_loss_pct, 2),
             'status': status,
+            'price_stale': price_stale,
             'last_reviewed': datetime.now().strftime('%Y-%m-%d')
         }
         updated_portfolio.append(updated_holding)
+    
+    # Log summary
+    prices_fetched = len(tickers) - len(missing_prices)
+    print(f"  Performance calculated: {prices_fetched}/{len(tickers)} prices fetched successfully")
     
     return updated_portfolio
 
@@ -316,22 +389,37 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
     # Calculate this month's performance
     old_portfolio = history.get('current_portfolio', [])
     
-    # Process sells
+    # Process sells - fetch current prices for sold stocks to calculate actual returns
     sells = analysis_result.get('sells', [])
     closed_this_month = []
+    
+    # Get current prices for all sold tickers
+    sold_tickers = [s.get('ticker') for s in sells if s.get('ticker')]
+    sold_prices = get_current_prices(sold_tickers) if sold_tickers else {}
+    
     for sell in sells:
         ticker = sell.get('ticker')
         # Find the original position
         original = next((h for h in old_portfolio if h['ticker'] == ticker), None)
         if original:
+            buy_price = original.get('recommended_price', 0)
+            # Use current market price as sell price (the actual price we'd get today)
+            sell_price = sold_prices.get(ticker) or sell.get('sell_price') or original.get('current_price') or buy_price
+            
+            # Calculate actual return from buy to sell price
+            if buy_price > 0 and sell_price > 0:
+                actual_return_pct = ((sell_price / buy_price) - 1) * 100
+            else:
+                actual_return_pct = 0
+            
             closed_this_month.append({
                 'ticker': ticker,
                 'company_name': original.get('company_name', ''),
                 'buy_date': original.get('recommended_date'),
-                'buy_price': original.get('recommended_price'),
+                'buy_price': round(buy_price, 2),
                 'sell_date': datetime.now().strftime('%Y-%m-%d'),
-                'sell_price': sell.get('sell_price', original.get('current_price')),
-                'return_pct': sell.get('loss_pct', 0),
+                'sell_price': round(sell_price, 2),
+                'return_pct': round(actual_return_pct, 2),
                 'hold_period_days': _calculate_hold_days(original.get('recommended_date')),
                 'reason': sell.get('reason', ''),
                 'lesson_learned': sell.get('lesson_learned', '')
@@ -371,6 +459,12 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
     # Add new recommendations
     new_recs = analysis_result.get('new_recommendations', [])
     for rec in new_recs:
+        # Use the actual recommended_price if set, otherwise use current_market_price,
+        # otherwise fall back to entry_zone midpoint (not the low!)
+        entry_zone = rec.get('entry_zone', {})
+        entry_mid = (entry_zone.get('low', 0) + entry_zone.get('high', 0)) / 2 if entry_zone else 0
+        rec_price = rec.get('recommended_price') or rec.get('current_market_price') or entry_mid
+        
         new_portfolio.append({
             'ticker': rec.get('ticker'),
             'company_name': rec.get('company_name', ''),
@@ -385,8 +479,8 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
             'allocation_pct': rec.get('allocation_pct', 0),
             'shares': 0,  # Would need to calculate based on price and allocation
             'recommended_date': datetime.now().strftime('%Y-%m-%d'),
-            'recommended_price': rec.get('entry_zone', {}).get('low', 0),
-            'entry_zone': rec.get('entry_zone', {}),
+            'recommended_price': round(rec_price, 2),  # Use actual current price, not entry zone low
+            'entry_zone': entry_zone,
             'price_target': rec.get('price_target', 0),
             'stop_loss': rec.get('stop_loss', 0),
             'thesis': rec.get('thesis', ''),
@@ -493,8 +587,12 @@ def _update_performance_summary(history: Dict) -> Dict:
     closed = history.get('closed_positions', [])
     monthly = history.get('monthly_history', [])
     
-    wins = [c for c in closed if c.get('return_pct', 0) > 0]
-    losses = [c for c in closed if c.get('return_pct', 0) <= 0]
+    # Use a small threshold for breakeven - trades within +/- 0.5% are considered breakeven
+    # Only count as win if > 0.5%, only count as loss if < -0.5%
+    breakeven_threshold = 0.5
+    wins = [c for c in closed if c.get('return_pct', 0) > breakeven_threshold]
+    losses = [c for c in closed if c.get('return_pct', 0) < -breakeven_threshold]
+    # Note: trades between -0.5% and +0.5% are breakeven and don't count toward win/loss
     
     total_return = sum(m.get('portfolio_return_pct', 0) for m in monthly)
     sp500_return = sum(m.get('sp500_return_pct', 0) for m in monthly)

@@ -451,32 +451,81 @@ def get_current_prices(tickers: List[str]) -> Dict[str, float]:
     Returns:
         Dictionary mapping ticker to current price
     """
+    if not tickers:
+        return {}
+    
     prices = {}
+    
+    # Remove duplicates and None values
+    tickers = list(set(t for t in tickers if t))
+    
     try:
-        data = yf.download(tickers, period="1d", progress=False)
-        if 'Close' in data.columns:
-            # Multiple tickers
-            for ticker in tickers:
-                if ticker in data['Close'].columns:
-                    price = data['Close'][ticker].iloc[-1]
-                    if not pd.isna(price):
-                        prices[ticker] = float(price)
+        data = yf.download(tickers, period="5d", progress=False)
+        
+        if data.empty:
+            raise ValueError("Empty data returned from yfinance")
+        
+        # Handle different data structures from yfinance
+        if len(tickers) == 1:
+            # Single ticker - data has simple columns
+            if 'Close' in data.columns:
+                close_data = data['Close'].dropna()
+                if not close_data.empty:
+                    prices[tickers[0]] = float(close_data.iloc[-1])
         else:
-            # Single ticker
-            if len(tickers) == 1 and not data.empty:
-                prices[tickers[0]] = float(data['Close'].iloc[-1])
+            # Multiple tickers - data has MultiIndex columns
+            if 'Close' in data.columns:
+                close_data = data['Close']
+                for ticker in tickers:
+                    try:
+                        if ticker in close_data.columns:
+                            ticker_close = close_data[ticker].dropna()
+                            if not ticker_close.empty:
+                                prices[ticker] = float(ticker_close.iloc[-1])
+                    except Exception:
+                        pass
+            elif isinstance(data.columns, pd.MultiIndex):
+                # Alternative MultiIndex structure
+                for ticker in tickers:
+                    try:
+                        if ('Close', ticker) in data.columns:
+                            ticker_close = data[('Close', ticker)].dropna()
+                            if not ticker_close.empty:
+                                prices[ticker] = float(ticker_close.iloc[-1])
+                    except Exception:
+                        pass
     except Exception as e:
-        print(f"Error fetching current prices: {str(e)}")
-        # Fallback to individual fetches
-        for ticker in tickers:
+        print(f"Bulk download failed: {str(e)}, trying individual fetches...")
+    
+    # Fallback: fetch missing tickers individually
+    missing_tickers = [t for t in tickers if t not in prices]
+    for ticker in missing_tickers:
+        try:
+            stock = yf.Ticker(ticker)
+            # Try fast_info first (faster)
             try:
-                stock = yf.Ticker(ticker)
-                info = stock.info
-                price = info.get('currentPrice', info.get('regularMarketPrice'))
-                if price:
+                price = stock.fast_info.get('lastPrice') or stock.fast_info.get('regularMarketPrice')
+                if price and price > 0:
                     prices[ticker] = float(price)
+                    continue
             except:
                 pass
+            
+            # Fallback to info
+            info = stock.info
+            price = info.get('currentPrice') or info.get('regularMarketPrice') or info.get('previousClose')
+            if price and price > 0:
+                prices[ticker] = float(price)
+            else:
+                # Last resort: use history
+                hist = stock.history(period="5d")
+                if not hist.empty and 'Close' in hist.columns:
+                    close_data = hist['Close'].dropna()
+                    if not close_data.empty:
+                        prices[ticker] = float(close_data.iloc[-1])
+        except Exception as e:
+            print(f"  Warning: Could not fetch price for {ticker}: {e}")
+    
     return prices
 
 
