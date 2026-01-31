@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-01-30",
     "last_updated": "2026-01-31",
-    "total_months": 3,
+    "total_months": 4,
     "starting_capital": 100000
   },
   "current_portfolio": [
@@ -42,7 +42,7 @@
       "investment_style": "value",
       "risk_level": "moderate",
       "time_horizon": "medium_term",
-      "allocation_pct": 4,
+      "allocation_pct": 2,
       "shares": 0,
       "recommended_date": "2026-01-30",
       "recommended_price": 141.4,
@@ -92,7 +92,7 @@
       "investment_style": "value",
       "risk_level": "moderate",
       "time_horizon": "long_term",
-      "allocation_pct": 3,
+      "allocation_pct": 2,
       "shares": 0,
       "recommended_date": "2026-01-30",
       "recommended_price": 634.22,
@@ -292,7 +292,7 @@
       "investment_style": "dividend",
       "risk_level": "conservative",
       "time_horizon": "long_term",
-      "allocation_pct": 10,
+      "allocation_pct": 12,
       "shares": 0,
       "recommended_date": "2026-01-30",
       "recommended_price": 74.23,
@@ -342,7 +342,7 @@
       "investment_style": "hedge",
       "risk_level": "moderate",
       "time_horizon": "medium_term",
-      "allocation_pct": 4,
+      "allocation_pct": 3,
       "shares": 0,
       "recommended_date": "2026-01-31",
       "recommended_price": 75.44,
@@ -353,7 +353,7 @@
       "price_target": 93.16,
       "stop_loss": 66.83,
       "thesis": "Silver lagging gold's +11.55% move with only +9.37% monthly gain, creating catch-up potential. Industrial demand (solar, EVs, electronics) accelerating while mine supply constrained. Gold-silver ratio historically elevated, suggesting silver undervalued relative to gold. Inflationary regime favors precious metals, and silver offers higher beta for tactical allocation.",
-      "status": "HOLD",
+      "status": "TRIM",
       "last_reviewed": "2026-01-31"
     },
     {
@@ -432,31 +432,6 @@
       "last_reviewed": "2026-01-31"
     },
     {
-      "ticker": "VIRT",
-      "company_name": "Virtu Financial Inc.",
-      "asset_class": "us_stock",
-      "sector": "Financials",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "value",
-      "risk_level": "moderate",
-      "time_horizon": "medium_term",
-      "allocation_pct": 3,
-      "shares": 0,
-      "recommended_date": "2026-01-31",
-      "recommended_price": 41.51,
-      "entry_zone": {
-        "low": 40.26,
-        "high": 42.34
-      },
-      "price_target": 52.97,
-      "stop_loss": 36.16,
-      "thesis": "Electronic market maker trading at P/E 8.1 with 49.7% EPS growth\u2014deeply undervalued. Virtu benefits from volatility regardless of market direction. RSI 95.5 is elevated but company fundamentally benefits from current regime. VIX near lows creates asymmetric setup\u2014when volatility inevitably spikes, VIRT revenues surge. Low correlation to equity market direction provides portfolio diversification.",
-      "status": "BUY",
-      "last_reviewed": "2026-01-31"
-    },
-    {
       "ticker": "ISRG",
       "company_name": "Intuitive Surgical Inc.",
       "asset_class": "us_stock",
@@ -478,7 +453,7 @@
       "price_target": 625.23,
       "stop_loss": 443.71,
       "thesis": "RSI 7.2 represents extreme capitulation in best-in-class surgical robotics company. Da Vinci system has 80%+ market share with installed base creating recurring razor/blade revenue model. Healthcare showing defensive strength (+5.61 RS). Oversold condition in quality growth name with 20%+ procedure growth creates asymmetric entry. New Da Vinci 5 system launch drives upgrade cycle.",
-      "status": "BUY",
+      "status": "HOLD",
       "last_reviewed": "2026-01-31"
     },
     {
@@ -503,7 +478,7 @@
       "price_target": 99.5,
       "stop_loss": 69.04,
       "thesis": "Natural gas infrastructure leader with 71.9% revenue growth from Magellan Midstream acquisition. AI data center buildout requires massive power\u2014natural gas is the bridge fuel. Fee-based model provides cash flow stability. 4%+ dividend yield with growth. Energy midstream showing strength as natural gas surges +28.81% monthly. Complements WMB and ENB exposure with differentiated NGL focus.",
-      "status": "BUY",
+      "status": "HOLD",
       "last_reviewed": "2026-01-31"
     },
     {
@@ -517,7 +492,7 @@
       "investment_style": "value",
       "risk_level": "aggressive",
       "time_horizon": "medium_term",
-      "allocation_pct": 3,
+      "allocation_pct": 2,
       "shares": 0,
       "recommended_date": "2026-01-31",
       "recommended_price": 22.13,
@@ -528,6 +503,56 @@
       "price_target": 32.19,
       "stop_loss": 18.11,
       "thesis": "P/E 7.8 with 225% EPS growth\u2014severely undervalued social platform. Bounce from 52-week low suggests bottom formation. Digital advertising recovery benefiting platforms with engaged user bases. AI-powered shopping features driving improved monetization. Communication Services sector +3.29 RS showing resilience. High short interest creates squeeze potential on positive earnings.",
+      "status": "TRIM",
+      "last_reviewed": "2026-01-31"
+    },
+    {
+      "ticker": "PFE",
+      "company_name": "Pfizer Inc.",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "conservative",
+      "time_horizon": "medium_term",
+      "allocation_pct": 4,
+      "shares": 0,
+      "recommended_date": "2026-01-31",
+      "recommended_price": 26.44,
+      "entry_zone": {
+        "low": 25.65,
+        "high": 26.97
+      },
+      "price_target": 34.25,
+      "stop_loss": 22.66,
+      "thesis": "Pfizer at $26.44 represents deep value after COVID revenue normalization fully priced in. Golden cross technical signal confirms bottoming process. Pipeline includes oncology and RSV vaccines providing growth vectors. 6%+ dividend yield offers income while waiting for turnaround. Healthcare sector +5.61 RS supports defensive rotation, and multiple politician trades in pharma suggest legislative tailwinds.",
+      "status": "BUY",
+      "last_reviewed": "2026-01-31"
+    },
+    {
+      "ticker": "VZ",
+      "company_name": "Verizon Communications Inc.",
+      "asset_class": "us_stock",
+      "sector": "Communication Services",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 3,
+      "shares": 0,
+      "recommended_date": "2026-01-31",
+      "recommended_price": 44.52,
+      "entry_zone": {
+        "low": 43.18,
+        "high": 45.41
+      },
+      "price_target": 54.33,
+      "stop_loss": 38.23,
+      "thesis": "Verizon at $44.52 with 6.93% dividend yield offers compelling defensive income in uncertain market. Unusual volume (3.9x average) signals institutional accumulation. 5G network monetization accelerating with enterprise/IoT applications. Communication Services +3.29 RS showing resilience. Defensive telecom provides portfolio ballast with attractive yield during inflationary regime where cash flows from essential services maintain purchasing power.",
       "status": "BUY",
       "last_reviewed": "2026-01-31"
     }
@@ -742,6 +767,66 @@
           "insight": "Sold defense contractor despite sector strength. May signal potential regulatory/budget scrutiny ahead. Our LMT trim aligns with this caution."
         }
       ]
+    },
+    {
+      "month": "2026-01",
+      "starting_value": 100000,
+      "ending_value": 99998.67857921883,
+      "portfolio_return_pct": -0.0,
+      "sp500_return_pct": 0.72,
+      "alpha_pct": -0.72,
+      "recommendations_made": [
+        {
+          "ticker": "PFE",
+          "action": "BUY",
+          "allocation": 4
+        },
+        {
+          "ticker": "VZ",
+          "action": "BUY",
+          "allocation": 3
+        }
+      ],
+      "sells_executed": [
+        {
+          "ticker": "VIRT",
+          "return_pct": 0.0
+        }
+      ],
+      "notable_politician_trades": [
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "GOOGL",
+          "transaction_type": "Purchase",
+          "amount": "$750K-$1.5M (multiple tranches)",
+          "insight": "Accumulated GOOGL across December-January despite tech sector weakness, suggesting conviction in AI search monetization. Consistent with her historical pattern of ahead-of-curve tech positioning."
+        },
+        {
+          "politician": "Nancy Pelosi",
+          "party": "D",
+          "ticker": "LPAB",
+          "transaction_type": "Purchase",
+          "amount": "$1M-$5M",
+          "insight": "Large AllianceBernstein position suggests confidence in asset management industry, possibly anticipating wealth management demand or regulatory tailwinds."
+        },
+        {
+          "politician": "Angus King",
+          "party": "I",
+          "ticker": "HON",
+          "transaction_type": "Purchase",
+          "amount": "$1K-$15K",
+          "insight": "Independent Senator buying diversified industrial ahead of infrastructure spending. King sits on Energy and Intelligence committees - aerospace/defense exposure in HON may signal contract visibility."
+        },
+        {
+          "politician": "Steve Cohen",
+          "party": "D",
+          "ticker": "NOC",
+          "transaction_type": "Sale",
+          "amount": "$15K-$50K",
+          "insight": "Defense contractor sale contrarian to sector strength (+29.96% LMT). Possible profit-taking or concerns about defense budget normalization post-conflict."
+        }
+      ]
     }
   ],
   "closed_positions": [
@@ -756,17 +841,29 @@
       "hold_period_days": 0,
       "reason": "Extreme overbought RSI 93.9 after +29.34% monthly surge. EM political risk and currency volatility warrant taking profits. Portfolio already has sufficient energy exposure through XOM, ENB, and WMB without Brazilian political headline risk.",
       "lesson_learned": "High-momentum emerging market plays require tighter profit targets\u2014take gains aggressively when technicals become extreme."
+    },
+    {
+      "ticker": "VIRT",
+      "company_name": "Virtu Financial Inc.",
+      "buy_date": "2026-01-31",
+      "buy_price": 41.51,
+      "sell_date": "2026-01-31",
+      "sell_price": 41.51,
+      "return_pct": -0.0,
+      "hold_period_days": 0,
+      "reason": "RSI 95.5 extreme overbought after momentum surge. Fundamentals intact (P/E 8.1, 49.7% EPS growth) but technicals demand profit-taking. Market maker benefiting from volatility will present better entry point.",
+      "lesson_learned": "Even in stocks with strong fundamentals, RSI above 90 signals unsustainable momentum. Take profits on technical extremes and reload on reset. The thesis can be right while the entry/exit timing matters."
     }
   ],
   "performance_summary": {
     "total_return_pct": 6.18,
-    "sp500_total_return_pct": 2.16,
-    "total_alpha_pct": 4.02,
+    "sp500_total_return_pct": 2.88,
+    "total_alpha_pct": 3.3,
     "win_count": 0,
-    "loss_count": 1,
-    "win_rate_pct": 0.0,
+    "loss_count": 0,
+    "win_rate_pct": 0,
     "average_win_pct": 0,
-    "average_loss_pct": 0.0,
+    "average_loss_pct": 0,
     "best_trade": {
       "ticker": "PBR",
       "return_pct": 0
