@@ -518,6 +518,10 @@ def _build_holdings_table(holdings: List[Dict], reviews: List[Dict], earnings_ca
         cur_price = _safe_float(h.get('current_price'))
         alloc = _safe_float(h.get('allocation_pct'))
         
+        # Risk level tag
+        risk = (h.get('risk_level', 'moderate') or 'moderate').lower()
+        risk_emoji = '🟢' if risk == 'conservative' else '🟡' if risk == 'moderate' else '🔴'
+        
         # Build badges for ticker cell
         badges = ''
         
@@ -552,7 +556,7 @@ def _build_holdings_table(holdings: List[Dict], reviews: List[Dict], earnings_ca
         
         rows.append(f'''
             <tr>
-                <td style="color: #58a6ff; font-weight: 600;">{ticker}{badges}</td>
+                <td style="color: #58a6ff; font-weight: 600;">{ticker} {risk_emoji}{badges}</td>
                 <td style="color: #e6edf3;">${rec_price:.2f}</td>
                 <td style="color: #e6edf3;">${cur_price:.2f}</td>
                 <td style="color: {gain_color}; font-weight: 600;">{gain:+.2f}%</td>
