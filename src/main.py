@@ -255,7 +255,8 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"   Indexes: {', '.join(market_data.get('indexes', {}).keys())}")
     print(f"   Sectors: {', '.join(market_data.get('sectors', {}).keys())}")
     commodities = market_data.get('commodities', {})
-    print(f"   Commodities: {', '.join([f\"{k}({v.get('ticker', 'N/A')})\" for k,v in list(commodities.items())[:5]])}...")
+    commodity_list = [k + "(" + v.get('ticker', 'N/A') + ")" for k, v in list(commodities.items())[:5]]
+    print(f"   Commodities: {', '.join(commodity_list)}...")
     
     # Log ETF data
     growth_etfs = market_data.get('growth_etfs', {})
