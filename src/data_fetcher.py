@@ -14,8 +14,7 @@ from typing import Dict, List, Optional, Any, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config import (
-    INDEXES, SECTORS, COMMODITIES, FIXED_INCOME, 
-    INTERNATIONAL, TECHNICAL_PARAMS
+    INDEXES, SECTORS, TECHNICAL_PARAMS
 )
 
 
@@ -196,42 +195,7 @@ def _screen_by_sector(sector: str, count: int = 30, min_market_cap: int = 500_00
         return []
 
 
-def _screen_by_industry(industry: str, count: int = 30, min_cap: int = 100_000_000) -> List[str]:
-    """
-    Screen stocks by industry (sub-sector) on US exchanges.
-    Industry is more specific than sector (e.g., "Aerospace & Defense" under "Industrials").
-    Uses lower market cap threshold to catch smaller space/tech companies.
-    """
-    try:
-        query = EquityQuery('AND', [
-            EquityQuery('EQ', ['industry', industry]),
-            EquityQuery('IS-IN', ['exchange', 'NMS', 'NYQ']),  # NASDAQ, NYSE
-            EquityQuery('GT', ['intradaymarketcap', min_cap])
-        ])
-        
-        all_symbols = []
-        offset = 0
-        page_size = 25
-        
-        while len(all_symbols) < count:
-            result = yf.screen(query, count=page_size, offset=offset)
-            quotes = result.get('quotes', [])
-            if not quotes:
-                break
-            
-            for q in quotes:
-                ticker = _clean_ticker(q.get('symbol'))
-                if ticker and ticker not in all_symbols:
-                    all_symbols.append(ticker)
-            
-            offset += page_size
-            if offset >= result.get('total', 0):
-                break
-        
-        return all_symbols[:count]
-    except Exception as e:
-        print(f"    Screen by industry {industry} failed: {e}")
-        return []
+# NOTE: _screen_by_industry() was removed - not used in current implementation
 
 
 def _clean_ticker(symbol: str) -> Optional[str]:
@@ -269,21 +233,7 @@ def _fallback_etf_holdings() -> List[str]:
     return list(dict.fromkeys(all_holdings))  # Remove duplicates
 
 
-def _fetch_etf_holdings(etf_symbol: str, limit: int = 50) -> List[str]:
-    """
-    Fetch holdings from a single ETF (legacy method, kept for compatibility).
-    """
-    try:
-        etf = yf.Ticker(etf_symbol)
-        funds_data = etf.funds_data
-        if funds_data and hasattr(funds_data, 'top_holdings'):
-            holdings = funds_data.top_holdings
-            if holdings is not None and not holdings.empty:
-                tickers = holdings.index.tolist()[:limit]
-                return [_clean_ticker(t) for t in tickers if _clean_ticker(t)]
-    except:
-        pass
-    return []
+# NOTE: _fetch_etf_holdings() was removed - use _fallback_etf_holdings() instead
 
 
 def fetch_ticker_data(ticker: str, period: str = "1y") -> Optional[pd.DataFrame]:
@@ -643,25 +593,86 @@ def fetch_sector_performance() -> Dict[str, Dict]:
             print(f"Error processing sector {sector}: {str(e)}")
     
     return sector_data
+
+
+def _screen_etfs_by_category(category_keywords: List[str], min_aum: int = 100_000_000, count: int = 5) -> List[str]:
+    """
+    Dynamically screen ETFs using Yahoo Finance based on category keywords.
     
-    return sector_data
+    Args:
+        category_keywords: Keywords to search in ETF names (e.g., ["gold", "miners"])
+        min_aum: Minimum assets under management
+        count: Number of ETFs to return
+    
+    Returns:
+        List of ETF tickers
+    """
+    try:
+        # Screen for ETFs with minimum AUM
+        query = EquityQuery('AND', [
+            EquityQuery('EQ', ['quoteType', 'ETF']),
+            EquityQuery('GT', ['totalAssets', min_aum])
+        ])
+        
+        result = yf.screen(query, count=100)
+        quotes = result.get('quotes', [])
+        
+        # Filter by keywords in name
+        matching_etfs = []
+        for q in quotes:
+            name = (q.get('longName', '') or q.get('shortName', '') or '').lower()
+            ticker = q.get('symbol', '')
+            if ticker and any(kw.lower() in name for kw in category_keywords):
+                matching_etfs.append(ticker)
+                if len(matching_etfs) >= count:
+                    break
+        
+        return matching_etfs
+    except Exception as e:
+        print(f"    ETF screen failed for {category_keywords}: {e}")
+        return []
 
 
 def fetch_commodity_data() -> Dict[str, Dict]:
     """
-    Fetch data for commodities and metals.
+    Fetch data for commodities and metals DYNAMICALLY.
+    Uses Yahoo Finance to find and track commodity ETFs.
     
     Returns:
         Dictionary with commodity/metal data
     """
+    print("    Fetching commodity ETFs dynamically...")
     commodity_data = {}
     
-    # Combine all commodity tickers
-    all_commodities = {}
-    for category, tickers in {**COMMODITIES}.items():
-        all_commodities[category] = tickers[0]  # Use primary ETF
+    # Define commodity categories with search keywords
+    # Yahoo Finance will find the best ETFs for each category
+    commodity_categories = {
+        "Gold": ["gold", "precious metal"],
+        "Silver": ["silver"],
+        "Oil": ["oil", "crude", "energy"],
+        "Natural Gas": ["natural gas"],
+        "Agriculture": ["agriculture", "farm", "agri"],
+        "Metals": ["metal", "mining", "copper"],
+        "Commodities Broad": ["commodity", "commodities"]
+    }
     
-    for category, ticker in all_commodities.items():
+    for category, keywords in commodity_categories.items():
+        # Try to find ETF dynamically
+        etfs = _screen_etfs_by_category(keywords, min_aum=50_000_000, count=1)
+        
+        if not etfs:
+            # Fallback: use well-known tickers that rarely change
+            fallback_map = {
+                "Gold": "GLD", "Silver": "SLV", "Oil": "USO",
+                "Natural Gas": "UNG", "Agriculture": "DBA", 
+                "Metals": "DBB", "Commodities Broad": "DJP"
+            }
+            etfs = [fallback_map.get(category, "")]
+        
+        ticker = etfs[0] if etfs else None
+        if not ticker:
+            continue
+            
         try:
             stock = yf.Ticker(ticker)
             hist = stock.history(period="1y")
@@ -691,15 +702,39 @@ def fetch_commodity_data() -> Dict[str, Dict]:
 
 def fetch_fixed_income_data() -> Dict[str, Dict]:
     """
-    Fetch data for fixed income ETFs.
+    Fetch data for fixed income ETFs DYNAMICALLY.
+    Uses Yahoo Finance to find and track bond ETFs.
     
     Returns:
         Dictionary with fixed income data
     """
+    print("    Fetching fixed income ETFs dynamically...")
     fi_data = {}
     
-    for category, tickers in FIXED_INCOME.items():
-        ticker = tickers[0]  # Use primary ETF
+    # Define fixed income categories with search keywords
+    fi_categories = {
+        "Treasury Short": ["treasury", "short term", "t-bill"],
+        "Treasury Long": ["treasury", "long term", "20+ year"],
+        "Corporate Bond": ["corporate bond", "investment grade"],
+        "High Yield": ["high yield", "junk bond"],
+        "TIPS": ["tips", "inflation protected"]
+    }
+    
+    for category, keywords in fi_categories.items():
+        etfs = _screen_etfs_by_category(keywords, min_aum=100_000_000, count=1)
+        
+        if not etfs:
+            # Fallback for well-known bond ETFs
+            fallback_map = {
+                "Treasury Short": "SHY", "Treasury Long": "TLT",
+                "Corporate Bond": "LQD", "High Yield": "HYG", "TIPS": "TIP"
+            }
+            etfs = [fallback_map.get(category, "")]
+        
+        ticker = etfs[0] if etfs else None
+        if not ticker:
+            continue
+            
         try:
             stock = yf.Ticker(ticker)
             hist = stock.history(period="1y")
@@ -731,15 +766,41 @@ def fetch_fixed_income_data() -> Dict[str, Dict]:
 
 def fetch_international_data() -> Dict[str, Dict]:
     """
-    Fetch data for international market ETFs.
+    Fetch data for international market ETFs DYNAMICALLY.
+    Uses Yahoo Finance to find regional ETFs.
     
     Returns:
         Dictionary with international market data
     """
+    print("    Fetching international ETFs dynamically...")
     intl_data = {}
     
-    for region, tickers in INTERNATIONAL.items():
-        ticker = tickers[0]  # Use primary ETF
+    # Define international regions with search keywords
+    intl_categories = {
+        "Developed Markets": ["developed market", "international developed", "eafe"],
+        "Emerging Markets": ["emerging market", "em equity"],
+        "Europe": ["europe", "european"],
+        "Asia Pacific": ["asia pacific", "pacific"],
+        "China": ["china", "chinese"],
+        "Japan": ["japan", "japanese"]
+    }
+    
+    for region, keywords in intl_categories.items():
+        etfs = _screen_etfs_by_category(keywords, min_aum=500_000_000, count=1)
+        
+        if not etfs:
+            # Fallback for well-known international ETFs
+            fallback_map = {
+                "Developed Markets": "VEA", "Emerging Markets": "VWO",
+                "Europe": "VGK", "Asia Pacific": "VPL",
+                "China": "FXI", "Japan": "EWJ"
+            }
+            etfs = [fallback_map.get(region, "")]
+        
+        ticker = etfs[0] if etfs else None
+        if not ticker:
+            continue
+            
         try:
             stock = yf.Ticker(ticker)
             hist = stock.history(period="1y")
@@ -765,6 +826,76 @@ def fetch_international_data() -> Dict[str, Dict]:
             print(f"Error fetching international {region}: {str(e)}")
     
     return intl_data
+
+
+def fetch_growth_etf_data() -> Dict[str, Dict]:
+    """
+    Fetch data for growth and thematic ETFs DYNAMICALLY.
+    Uses Yahoo Finance to find ETFs for each investment theme.
+    
+    Returns:
+        Dictionary with growth/thematic ETF data organized by theme
+    """
+    print("    Fetching thematic/growth ETFs dynamically...")
+    growth_data = {}
+    
+    # Define growth themes with search keywords
+    theme_categories = {
+        "AI & Technology": ["artificial intelligence", "ai", "technology"],
+        "Semiconductors": ["semiconductor", "chip"],
+        "Clean Energy": ["clean energy", "solar", "renewable"],
+        "Healthcare Innovation": ["healthcare", "biotech", "genomics"],
+        "Cybersecurity": ["cybersecurity", "cyber"],
+        "Cloud Computing": ["cloud computing", "cloud"],
+        "Dividend Growth": ["dividend growth", "dividend appreciation"]
+    }
+    
+    for theme, keywords in theme_categories.items():
+        etfs = _screen_etfs_by_category(keywords, min_aum=100_000_000, count=2)
+        
+        if not etfs:
+            # Fallback for well-known thematic ETFs
+            fallback_map = {
+                "AI & Technology": ["QQQ"], "Semiconductors": ["SMH"],
+                "Clean Energy": ["ICLN"], "Healthcare Innovation": ["XBI"],
+                "Cybersecurity": ["CIBR"], "Cloud Computing": ["CLOU"],
+                "Dividend Growth": ["VIG"]
+            }
+            etfs = fallback_map.get(theme, [])
+        
+        theme_data = {}
+        for ticker in etfs[:2]:
+            try:
+                stock = yf.Ticker(ticker)
+                hist = stock.history(period="1y")
+                info = stock.info
+                
+                if hist.empty:
+                    continue
+                
+                current = hist['Close'].iloc[-1]
+                
+                # Calculate returns
+                returns = {}
+                for period_name, days in [('1mo', 21), ('3mo', 63), ('6mo', 126), ('1y', 252)]:
+                    if len(hist) > days:
+                        past_price = hist['Close'].iloc[-days-1]
+                        returns[period_name] = (current / past_price - 1) * 100
+                
+                theme_data[ticker] = {
+                    'name': info.get('longName', info.get('shortName', ticker)),
+                    'current': round(current, 2),
+                    'returns': {k: round(v, 2) for k, v in returns.items()},
+                    'expense_ratio': info.get('annualReportExpenseRatio', 0),
+                    'aum': info.get('totalAssets', 0)
+                }
+            except Exception as e:
+                continue
+        
+        if theme_data:
+            growth_data[theme] = theme_data
+    
+    return growth_data
 
 
 def fetch_dollar_index() -> Dict:
@@ -889,6 +1020,99 @@ def fetch_treasury_yields() -> Dict:
     return yields
 
 
+def fetch_market_news(max_news: int = 15) -> List[Dict]:
+    """
+    Fetch recent market and geopolitical news from Yahoo Finance.
+    Uses major market tickers to get broad market news coverage.
+    
+    Args:
+        max_news: Maximum number of news items to return
+    
+    Returns:
+        List of news items with title, publisher, summary, and date
+    """
+    print("  Fetching market news from Yahoo Finance...")
+    all_news = []
+    seen_titles = set()
+    
+    # Tickers that give broad market/geopolitical news coverage
+    # Using popular stocks + ETFs that attract diverse news
+    news_tickers = ['AAPL', 'MSFT', 'NVDA', 'SPY', 'QQQ', 'GLD', 'XLE', 'TLT', 'EEM']
+    
+    for ticker_symbol in news_tickers:
+        try:
+            ticker = yf.Ticker(ticker_symbol)
+            news = ticker.news
+            
+            if news:
+                for item in news[:5]:  # Get top 5 from each ticker
+                    # Handle new nested structure: news item has 'content' key
+                    content = item.get('content', item)  # Fall back to item if no content key
+                    
+                    title = content.get('title', '')
+                    if not title:
+                        continue
+                    
+                    # Skip duplicates
+                    if title in seen_titles:
+                        continue
+                    seen_titles.add(title)
+                    
+                    # Extract publisher from nested structure
+                    provider = content.get('provider', {})
+                    publisher = provider.get('displayName', 'Unknown') if isinstance(provider, dict) else 'Unknown'
+                    
+                    # Extract URL from nested structure
+                    canonical = content.get('canonicalUrl', {})
+                    link = canonical.get('url', '') if isinstance(canonical, dict) else ''
+                    
+                    # Extract publish date
+                    pub_date = content.get('pubDate', '')
+                    
+                    # Extract summary if available
+                    summary = content.get('summary', '')[:200] if content.get('summary') else ''
+                    
+                    # Extract relevant fields
+                    news_item = {
+                        'title': title,
+                        'publisher': publisher,
+                        'link': link,
+                        'published': pub_date,
+                        'summary': summary,
+                        'type': content.get('contentType', 'STORY')
+                    }
+                    
+                    # Look for geopolitical keywords in title AND summary
+                    text_to_search = (title + ' ' + summary).lower()
+                    geopolitical_keywords = [
+                        'tariff', 'trade war', 'sanction', 'china', 'russia', 'ukraine',
+                        'fed', 'federal reserve', 'interest rate', 'inflation', 'recession',
+                        'election', 'policy', 'regulation', 'antitrust', 'oil', 'opec',
+                        'supply chain', 'semiconductor', 'chip', 'war', 'conflict',
+                        'currency', 'dollar', 'yuan', 'euro', 'central bank', 'treasury',
+                        'trump', 'biden', 'congress', 'senate', 'nato', 'middle east',
+                        'iran', 'israel', 'taiwan', 'korea', 'import', 'export'
+                    ]
+                    news_item['is_geopolitical'] = any(kw in text_to_search for kw in geopolitical_keywords)
+                    
+                    all_news.append(news_item)
+                    
+                    if len(all_news) >= max_news * 2:  # Get extra for filtering
+                        break
+        except Exception as e:
+            print(f"    Error fetching news for {ticker_symbol}: {e}")
+            continue
+    
+    # Sort by geopolitical priority first
+    all_news.sort(key=lambda x: not x.get('is_geopolitical', False))
+    
+    # Return limited results
+    result = all_news[:max_news]
+    print(f"    Found {len(result)} relevant news items ({sum(1 for n in result if n.get('is_geopolitical'))} geopolitical)")
+    
+    return result
+
+
 def fetch_all_market_data() -> Dict[str, Any]:
     """
     Fetch all market data needed for analysis.
@@ -911,10 +1135,16 @@ def fetch_all_market_data() -> Dict[str, Any]:
     print("  Fetching international data...")
     international_data = fetch_international_data()
     
+    print("  Fetching growth/thematic ETF data...")
+    growth_etf_data = fetch_growth_etf_data()
+    
     print("  Fetching macro indicators...")
     dollar_data = fetch_dollar_index()
     vix_data = fetch_vix()
     yield_data = fetch_treasury_yields()
+    
+    # Fetch market news for geopolitical context
+    market_news = fetch_market_news(max_news=15)
     
     return {
         'timestamp': datetime.now().isoformat(),
@@ -923,11 +1153,13 @@ def fetch_all_market_data() -> Dict[str, Any]:
         'commodities': commodity_data,
         'fixed_income': fixed_income_data,
         'international': international_data,
+        'growth_etfs': growth_etf_data,
         'macro': {
             'dollar': dollar_data,
             'vix': vix_data,
             'yields': yield_data
-        }
+        },
+        'market_news': market_news
     }
 
 
@@ -1079,6 +1311,58 @@ def fetch_historical_context() -> Dict:
         print(f"Error fetching historical context: {str(e)}")
     
     return context
+
+
+def get_dividend_calendar(tickers: List[str], days_ahead: int = 14) -> Dict[str, Dict]:
+    """
+    Get upcoming ex-dividend dates and dividend info for portfolio holdings.
+    
+    Args:
+        tickers: List of stock symbols to check
+        days_ahead: Number of days to look ahead for ex-dividend dates
+    
+    Returns:
+        Dictionary mapping ticker to dividend info
+    """
+    print(f"  Checking dividend calendar ({days_ahead} days ahead)...")
+    dividend_data = {}
+    today = datetime.now()
+    
+    for ticker in tickers:
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            
+            ex_div_timestamp = info.get('exDividendDate')
+            dividend_rate = info.get('dividendRate', 0)  # Annual dividend per share
+            dividend_yield = info.get('dividendYield', 0)  # Yield as decimal
+            
+            if ex_div_timestamp and dividend_rate and dividend_rate > 0:
+                # Convert Unix timestamp to datetime
+                ex_div_date = datetime.fromtimestamp(ex_div_timestamp)
+                days_until = (ex_div_date - today).days
+                
+                # Only include if ex-div is upcoming within window
+                if 0 <= days_until <= days_ahead:
+                    # Quarterly dividend (most common) = annual / 4
+                    quarterly_dividend = dividend_rate / 4
+                    
+                    dividend_data[ticker] = {
+                        'ex_dividend_date': ex_div_date.strftime('%Y-%m-%d'),
+                        'ex_dividend_display': ex_div_date.strftime('%b %d'),
+                        'days_until': days_until,
+                        'dividend_per_share': round(quarterly_dividend, 4),
+                        'annual_dividend': round(dividend_rate, 4),
+                        'dividend_yield_pct': round((dividend_yield or 0) * 100, 2),
+                        'company_name': info.get('longName', info.get('shortName', ticker))
+                    }
+        except Exception:
+            pass
+    
+    if dividend_data:
+        print(f"    Found {len(dividend_data)} stocks with upcoming ex-dividend dates")
+    
+    return dividend_data
 
 
 def get_earnings_calendar(tickers: List[str], days_ahead: int = 14) -> Dict[str, Dict]:

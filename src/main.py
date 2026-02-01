@@ -16,15 +16,17 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 
 from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, PATHS
-from data_fetcher import fetch_all_market_data, fetch_historical_context, get_earnings_calendar
+from data_fetcher import fetch_all_market_data, fetch_historical_context, get_earnings_calendar, get_dividend_calendar
 from market_scanner import run_all_screens
 from politician_tracker import fetch_recent_trades, analyze_committee_correlation
 from history_manager import (
     load_history, save_history, calculate_performance,
-    update_history_with_month, get_portfolio_summary, calculate_risk_metrics
+    update_history_with_month, get_portfolio_summary, calculate_risk_metrics,
+    validate_allocation_rules, auto_generate_sells_from_alerts, get_actual_portfolio_value
 )
 from claude_analyzer import analyze_with_claude, SYSTEM_PROMPT
 from email_builder import build_email_html
+from retail_advisor import run_retail_investor_analysis, generate_dca_plan
 from email_sender import send_email, validate_email_config
 from news_sentiment import fetch_multiple_sentiments, get_market_sentiment_summary, is_alphavantage_configured
 
@@ -74,7 +76,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     
     # Step 3: Calculate portfolio performance
     print("\n[3/10] Calculating portfolio performance...")
-    portfolio_performance = calculate_performance(current_portfolio, market_data)
+    portfolio_performance, triggered_alerts = calculate_performance(current_portfolio, market_data)
     
     if portfolio_performance:
         total_gain = sum(p.get('gain_loss_pct', 0) * p.get('allocation_pct', 0) 
@@ -83,6 +85,12 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         print(f"       Portfolio weighted return: {total_gain:+.2f}%")
     else:
         print("       No positions to calculate (100% cash)")
+    
+    # Handle triggered alerts (auto-sell stop losses)
+    auto_sells = []
+    if triggered_alerts:
+        print(f"\n       ⚠️ ALERT: {len(triggered_alerts)} positions triggered stop-loss/target!")
+        auto_sells = auto_generate_sells_from_alerts(triggered_alerts, portfolio_performance)
     
     # Step 4: Run market screens
     print("\n[4/10] Running market screens...")
@@ -112,12 +120,25 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     
     print(f"    Checking earnings for {len(all_tickers)} tickers...")
     earnings_calendar = get_earnings_calendar(all_tickers, days_ahead=14)
-    upcoming_count = len(earnings_calendar.get('upcoming', []))
+    # earnings_calendar is a flat dict {ticker: earnings_info}
+    upcoming_count = len(earnings_calendar)
     print(f"    ✓ Found {upcoming_count} stocks with earnings in next 14 days")
     if upcoming_count > 0:
-        upcoming = earnings_calendar.get('upcoming', [])[:5]
-        upcoming_str = ', '.join([f"{e.get('ticker')} ({e.get('earnings_date', 'TBD')})" for e in upcoming])
+        # Convert flat dict to list for display
+        upcoming_list = [{'ticker': t, **info} for t, info in list(earnings_calendar.items())[:5]]
+        upcoming_str = ', '.join([f"{e['ticker']} ({e.get('earnings_date', 'TBD')})" for e in upcoming_list])
         print(f"    Upcoming: {upcoming_str}")
+    
+    # Step 5d: Fetch dividend calendar for portfolio
+    print("  Fetching dividend calendar...")
+    dividend_calendar = get_dividend_calendar(all_tickers, days_ahead=14)
+    # dividend_calendar is a dict keyed by ticker, e.g. {'AAPL': {'ex_dividend_date': ..., 'days_until': ...}}
+    div_count = len(dividend_calendar)
+    print(f"    ✓ Found {div_count} stocks with ex-dividend dates in next 14 days")
+    if div_count > 0:
+        upcoming_divs = list(dividend_calendar.items())[:5]
+        div_str = ', '.join([f"{ticker} ({data.get('ex_dividend_display', 'TBD')}: ${data.get('dividend_per_share', 0):.2f})" for ticker, data in upcoming_divs])
+        print(f"    Upcoming: {div_str}")
     
     # Step 5c: Calculate risk metrics (drawdown protection)
     print("  Calculating risk metrics...")
@@ -136,6 +157,39 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     rules = risk_metrics.get('rules', {})
     print(f"    Mode Rules: Max position {rules.get('max_position_size', 15)}%, Min cash {rules.get('min_cash', 5)}%")
     
+    # Step 5d: Run retail investor analysis (tax harvesting, correlation, liquidity, etc.)
+    print("\n  Running retail investor analysis...")
+    # Get current prices for retail analysis
+    all_portfolio_tickers = [h.get('ticker') for h in current_portfolio if h.get('ticker')]
+    from data_fetcher import get_current_prices
+    current_prices_for_retail = get_current_prices(all_portfolio_tickers) if all_portfolio_tickers else {}
+    
+    retail_analysis = run_retail_investor_analysis(
+        portfolio=current_portfolio,
+        current_prices=current_prices_for_retail,
+        watchlist=all_tickers[:30]  # Top watchlist tickers
+    )
+    
+    # Display retail investor alerts
+    priority_alerts = retail_analysis.get('priority_alerts', [])
+    if priority_alerts:
+        print(f"    📊 RETAIL INVESTOR ALERTS ({len(priority_alerts)}):")
+        for alert in priority_alerts[:5]:  # Show top 5
+            print(f"       {alert.get('title', 'Alert')}")
+    
+    # Tax-loss harvesting summary
+    tlh = retail_analysis.get('tax_loss_harvesting', [])
+    if tlh:
+        high_priority = [t for t in tlh if t.get('priority') == 'HIGH']
+        if high_priority:
+            print(f"    🏦 TAX-LOSS HARVESTING: {len(high_priority)} high-priority opportunities")
+    
+    # Correlation warnings
+    corr = retail_analysis.get('correlation_analysis', {})
+    div_score = corr.get('diversification_score', 0)
+    if div_score > 0:
+        print(f"    📊 Diversification Score: {div_score:.0f}/100 ({corr.get('diversification_grade', 'N/A')})")
+    
     # Step 6: Prepare analysis input (NO sentiment - Claude decides purely on fundamentals)
     print("\n[6/10] Preparing analysis input...")
     analysis_input = {
@@ -149,7 +203,23 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         "politician_trades": politician_trades,
         "flagged_trades": flagged_trades,
         "earnings_calendar": earnings_calendar,
-        "current_date": datetime.now().isoformat()
+        "dividend_calendar": dividend_calendar,
+        "triggered_alerts": triggered_alerts,
+        "auto_sells": auto_sells,
+        "current_date": datetime.now().isoformat(),
+        # Retail investor specific data
+        "retail_analysis": {
+            "tax_loss_harvesting": retail_analysis.get('tax_loss_harvesting', []),
+            "correlation_analysis": retail_analysis.get('correlation_analysis', {}),
+            "liquidity_warnings": retail_analysis.get('liquidity_analysis', {}).get('warnings', []),
+            "trailing_stops": retail_analysis.get('trailing_stops', []),
+            "short_interest": retail_analysis.get('short_interest', []),
+            "institutional_ownership": retail_analysis.get('institutional_ownership', []),
+            "sector_rotation": retail_analysis.get('sector_rotation', {}),
+            "fee_analysis": retail_analysis.get('fee_analysis', {}),
+            "dividend_timing": retail_analysis.get('dividend_timing', {}),
+            "priority_alerts": retail_analysis.get('priority_alerts', [])
+        }
     }
     
     # Step 7: Analyze with Claude
@@ -178,8 +248,32 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     
     new_recs = analysis_result.get('new_recommendations', [])
     sells = analysis_result.get('sells', [])
+    
+    # Merge auto-generated sells with Claude's sells
+    if auto_sells:
+        existing_sell_tickers = {s.get('ticker') for s in sells}
+        for auto_sell in auto_sells:
+            if auto_sell['ticker'] not in existing_sell_tickers:
+                sells.append(auto_sell)
+                print(f"       + Added auto-sell for {auto_sell['ticker']} (stop-loss triggered)")
+        analysis_result['sells'] = sells
+    
     print(f"       Generated {len(new_recs)} new recommendations")
     print(f"       Generated {len(sells)} sell signals")
+    
+    # Validate allocation rules
+    validation = validate_allocation_rules(analysis_result, history)
+    if not validation['valid']:
+        print(f"\n       ⚠️ ALLOCATION ISSUES:")
+        for issue in validation['issues']:
+            print(f"         - {issue}")
+    if validation['warnings']:
+        for warning in validation['warnings']:
+            print(f"         ⚠️ {warning}")
+    if validation['corrections']:
+        print(f"       ✓ Auto-corrections applied:")
+        for correction in validation['corrections']:
+            print(f"         - {correction}")
     
     # Step 7b: VERIFY real yfinance prices - failsafe in case Claude ignored our instructions
     # We sent real prices TO Claude in the prompt, but this is a safety net
@@ -263,14 +357,37 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     # Step 9: Build email report
     print("\n[9/10] Building email report...")
     
+    # Transform dividend calendar data structure for email builder
+    # email_builder expects: {'AAPL': {'ex_dividend_display': '...', 'days_until': N, ...}}
+    # get_dividend_calendar returns: {ticker: {'ex_dividend_date': '...', 'days_until': N, ...}}
+    dividend_calendar_for_email = {}
+    for ticker, div_data in dividend_calendar.items():
+        dividend_calendar_for_email[ticker] = {
+            'ex_dividend_display': div_data.get('ex_dividend_display', 'TBD'),
+            'days_until': div_data.get('days_until', '?'),
+            'dividend_per_share': div_data.get('dividend_per_share', 0),
+            'dividend_yield_pct': div_data.get('dividend_yield_pct', 0),
+            'current_price': div_data.get('current_price', 0)
+        }
+    
+    # Detect first-run scenario for special handling in email
+    is_first_run = len(current_portfolio) == 0 and len(history.get('monthly_history', [])) == 0
+    if is_first_run:
+        print("       📌 First run detected - email will include welcome guidance")
+    
     # Pass additional context for email badges
     email_context = {
         'vix_data': vix_data,
         'earnings_calendar': earnings_calendar,
+        'dividend_calendar': dividend_calendar_for_email,
+        'triggered_alerts': triggered_alerts,
         'news_sentiment': news_sentiment,  # Now contains sentiment for recommended stocks only
         'sentiment_summary': sentiment_summary,
         'historical_context': historical_context,
-        'portfolio_performance': portfolio_performance  # With live current_price data
+        'portfolio_performance': portfolio_performance,  # With live current_price data
+        'is_first_run': is_first_run,
+        # Retail investor insights
+        'retail_analysis': retail_analysis
     }
     
     email_html = build_email_html(analysis_result, updated_history, email_context)

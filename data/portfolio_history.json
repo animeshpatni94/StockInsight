@@ -1,28 +1,28 @@
 {
   "metadata": {
-    "created": "2026-01-31",
-    "last_updated": "2026-01-31",
+    "created": "",
+    "last_updated": "",
     "total_months": 0,
     "starting_capital": 100000
   },
   "current_portfolio": [],
-  "closed_positions": [],
-  "monthly_history": [],
-  "performance_summary": {
-    "total_return_pct": 0,
-    "sp500_total_return_pct": 0,
-    "total_alpha_pct": 0,
-    "win_count": 0,
-    "loss_count": 0,
-    "win_rate_pct": 0,
-    "avg_win_pct": 0,
-    "avg_loss_pct": 0,
-    "best_trade": null,
-    "worst_trade": null
-  },
   "cash": {
     "allocation_pct": 100,
     "vehicle": "SGOV",
-    "amount": 100000
+    "yield_pct": 5.0
+  },
+  "monthly_history": [],
+  "closed_positions": [],
+  "performance_summary": {
+    "total_return_pct": 0.0,
+    "sp500_total_return_pct": 0.0,
+    "total_alpha_pct": 0.0,
+    "win_count": 0,
+    "loss_count": 0,
+    "win_rate_pct": 0,
+    "average_win_pct": 0,
+    "average_loss_pct": 0,
+    "best_trade": null,
+    "worst_trade": null
   }
 }

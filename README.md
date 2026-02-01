@@ -1,22 +1,44 @@
 # 📊 Stock Insight Agent
 
-AI-powered **bi-weekly** stock analysis with portfolio memory, politician trade tracking, risk management, and actionable recommendations.
+AI-powered **bi-weekly** stock analysis with portfolio memory, politician trade tracking, risk management, and actionable recommendations designed specifically for **retail investors**.
 
-## Features
+## ✨ Features
 
-- **Full Market Coverage**: All 11 S&P sectors, all market caps, international, metals, commodities (1000+ stocks screened)
+### Core Analysis
+- **100% Dynamic Stock Universe**: Zero hardcoded stock lists - Yahoo Finance EquityQuery API screens 1,500+ stocks in real-time by market cap and sector
+- **Full Market Coverage**: All 11 GICS sectors, mega-to-nano cap ($100M+), commodities, fixed income, international markets
+- **Dynamic ETF Discovery**: Commodity, bond, and international ETFs found via keyword search - always current
 - **Real-Time Prices**: All prices sourced from yfinance - never uses stale training data
 - **Portfolio Memory**: Tracks recommendations over time, calculates performance, learns from past trades
 - **Risk Management**: Industry-standard drawdown protection with automatic defensive modes
+- **Stop-Loss & Target Alerts**: Automatic detection when positions hit stop-loss or price targets
+- **Allocation Validation**: Auto-validates Claude's recommendations against allocation rules
+
+### Retail Investor Focus 💰
+- **Tax-Loss Harvesting Detection**: Identifies positions for tax-efficient selling with replacement suggestions
+- **Portfolio Correlation Analysis**: Detects hidden concentration risks between correlated holdings
+- **Liquidity Warnings**: Flags illiquid stocks with high bid-ask spreads
+- **Trailing Stop Management**: Dynamic stop-loss recommendations to lock in profits
+- **Short Squeeze Detection**: Identifies potential squeeze candidates with high short interest
+- **Position Sizing Guidance**: Clear dollar amounts and share counts based on portfolio size
+- **Sector Rotation Timing**: Phase-aware sector recommendations (early/mid/late cycle)
+- **Fee Impact Analysis**: Warns about high expense ratio ETFs
+
+### Market Intelligence
+- **Dividend Calendar**: Tracks ex-dividend dates for portfolio holdings (14-day lookahead)
+- **Earnings Calendar**: Tracks upcoming earnings for portfolio and watchlist stocks
 - **Politician Tracking**: Monitors congressional trades from Capitol Trades (90-day lookback), flags suspicious timing
 - **News Sentiment**: AI-analyzed sentiment via Alpha Vantage - fetched AFTER stock selection to avoid bias
-- **Earnings Calendar**: Tracks upcoming earnings for portfolio and watchlist stocks
-- **Diversification**: Enforces allocation rules across asset class, sector, style, horizon
-- **Actionable Output**: Clear BUY/SELL/HOLD with entry zones, targets, stop-losses
-- **Critical Analysis**: Contrarian, skeptical, admits mistakes
-- **Dark Mode Email**: Professional HTML reports optimized for both light and dark mode email clients
+- **Geopolitical News Integration**: Factors trade tensions, sanctions, and policy changes into analysis
 
-## Project Structure
+### Email Report
+- **Dark Mode Design**: Professional HTML reports optimized for both light and dark mode email clients
+- **First-Run Welcome**: Special onboarding section for new users
+- **Current Holdings Dashboard**: Real-time P&L with status indicators for each position
+- **Action Plan with Dollar Amounts**: Clear "invest $X in Y shares" guidance
+- **Performance Attribution**: Shows which positions moved your portfolio
+
+## 📁 Project Structure
 
 ```
 StockInsight/
@@ -24,27 +46,30 @@ StockInsight/
 │   └── workflows/
 │       └── biweekly-analysis.yml    # Runs every 2 weeks
 ├── data/
-│   └── portfolio_history.json    # Portfolio state & history
+│   └── portfolio_history.json       # Portfolio state & history
 ├── output/
-│   └── *.html                    # Generated email previews
+│   └── *.html                       # Generated email previews
 ├── src/
 │   ├── __init__.py
-│   ├── main.py                   # Entry point
-│   ├── config.py                 # Configuration and constants
-│   ├── data_fetcher.py           # Market data via yfinance
-│   ├── market_scanner.py         # Full market screening (1000+ stocks)
-│   ├── politician_tracker.py     # Capitol Trades scraper
-│   ├── history_manager.py        # Portfolio memory & risk management
-│   ├── news_sentiment.py         # Alpha Vantage sentiment analysis
-│   ├── claude_analyzer.py        # Claude Opus 4.5 integration
-│   ├── email_builder.py          # Dark-mode HTML email builder
-│   └── email_sender.py           # Resend API integration
+│   ├── main.py                      # Entry point & orchestration
+│   ├── config.py                    # Configuration and constants
+│   ├── data_fetcher.py              # Market data via yfinance
+│   ├── market_scanner.py            # Full market screening (1500+ stocks)
+│   ├── politician_tracker.py        # Capitol Trades scraper
+│   ├── history_manager.py           # Portfolio memory & risk management
+│   ├── news_sentiment.py            # Alpha Vantage sentiment analysis
+│   ├── retail_advisor.py            # Retail-specific analysis (NEW)
+│   ├── claude_analyzer.py           # Claude Opus 4.5 integration
+│   ├── email_builder.py             # Dark-mode HTML email builder
+│   └── email_sender.py              # Resend API integration
+├── templates/
+│   └── email_template.html          # Legacy template (unused)
 ├── requirements.txt
 ├── .env.example
 └── README.md
 ```
 
-## Setup
+## 🚀 Setup
 
 ### 1. Clone and Install
 
@@ -70,24 +95,31 @@ cp .env.example .env
 # Edit .env with your API keys
 ```
 
-### 3. Configure GitHub Secrets
+**Required Environment Variables:**
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Claude API key from console.anthropic.com |
+| `RESEND_API_KEY` | Email API key from resend.com |
+| `RESEND_FROM_EMAIL` | Verified sender email |
+| `RECIPIENT_EMAIL` | Where to send reports |
+
+**Optional Environment Variables:**
+| Variable | Description |
+|----------|-------------|
+| `QUIVER_API_KEY` | Quiver Quantitative API for politician trades |
+| `ALPHAVANTAGE_API_KEY` | Alpha Vantage API for news sentiment |
+
+### 3. Configure GitHub Secrets (for automated runs)
 
 Go to your repo → Settings → Secrets and variables → Actions → New repository secret
 
-| Secret Name | Value |
-|-------------|-------|
-| `ANTHROPIC_API_KEY` | Your Claude API key from console.anthropic.com |
-| `RESEND_API_KEY` | Your API key from resend.com/api-keys |
-| `RESEND_FROM_EMAIL` | Your verified sender email (e.g., reports@yourdomain.com) |
-| `RECIPIENT_EMAIL` | Where to send the monthly report |
-| `QUIVER_API_KEY` | Optional: Quiver Quantitative API key |
-| `ALPHAVANTAGE_API_KEY` | Optional: Alpha Vantage API key for news sentiment |
+Add all the environment variables listed above.
 
 ### 4. Deploy
 
 Push to GitHub — the action runs automatically every 2 weeks (1st and 15th of each month at 9:00 AM UTC).
 
-## Manual Run
+## 💻 Manual Run
 
 ```bash
 # Activate virtual environment
@@ -95,30 +127,70 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Run analysis
 python src/main.py
+
+# Options
+python src/main.py --dry-run      # Don't save history or send email
+python src/main.py --skip-email   # Save history but don't email
+python src/main.py --verbose      # Detailed output
+python src/main.py --check-config # Verify configuration
 ```
 
-## How It Works
+## 🔄 How It Works
 
 ### Bi-Weekly Workflow
 
-1. **Load Portfolio History** - Reads previous recommendations and performance
-2. **Fetch Market Data** - Gets current prices for all holdings and market indexes (yfinance)
-3. **Run Market Screens** - Executes momentum, fundamental, and technical screens on 1000+ stocks
-4. **Fetch Politician Trades** - Scrapes Capitol Trades for recent congressional trading activity (90-day lookback)
-5. **Check Earnings Calendar** - Identifies upcoming earnings catalysts
-6. **Calculate Risk Metrics** - Determines if defensive mode should be activated
-7. **Analyze with Claude** - AI analyzes data and generates recommendations (with real prices, respects risk mode rules)
-8. **Verify Prices** - Safety net to ensure all recommendations use real yfinance prices
-9. **Fetch Sentiment** - Gets news sentiment ONLY for recommended stocks (no selection bias)
-10. **Update History** - Saves new portfolio state and performance metrics
-11. **Build Email** - Creates professional HTML report with sentiment badges
-12. **Send Email** - Delivers via Resend
-13. **Commit Changes** - Updates portfolio_history.json in the repo
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. Load Portfolio History                                       │
+│     └─ Previous recommendations, performance, lessons learned    │
+├─────────────────────────────────────────────────────────────────┤
+│  2. Fetch Market Data (yfinance)                                │
+│     └─ Current prices, indexes, sectors, commodities            │
+├─────────────────────────────────────────────────────────────────┤
+│  3. Calculate Performance                                        │
+│     └─ P&L, detect stop-loss/target hits, generate alerts       │
+├─────────────────────────────────────────────────────────────────┤
+│  4. Run Market Screens (1500+ stocks)                           │
+│     └─ Momentum, fundamental, technical screens                  │
+├─────────────────────────────────────────────────────────────────┤
+│  5. Fetch External Data                                          │
+│     ├─ Politician trades (Capitol Trades, 90 days)              │
+│     ├─ Earnings calendar (14-day lookahead)                     │
+│     └─ Dividend calendar (14-day lookahead)                     │
+├─────────────────────────────────────────────────────────────────┤
+│  6. Run Retail Investor Analysis                                 │
+│     ├─ Tax-loss harvesting opportunities                        │
+│     ├─ Portfolio correlation analysis                           │
+│     ├─ Liquidity warnings                                       │
+│     ├─ Trailing stop recommendations                            │
+│     ├─ Short interest / squeeze detection                       │
+│     └─ Sector rotation phase                                    │
+├─────────────────────────────────────────────────────────────────┤
+│  7. Calculate Risk Metrics                                       │
+│     └─ Drawdown, win rate, consecutive losses → Risk Mode       │
+├─────────────────────────────────────────────────────────────────┤
+│  8. Analyze with Claude Opus 4.5                                │
+│     └─ Extended thinking, respects risk mode, real prices       │
+├─────────────────────────────────────────────────────────────────┤
+│  9. Validate & Verify                                            │
+│     ├─ Check allocations against rules                          │
+│     └─ Verify prices with yfinance (safety net)                 │
+├─────────────────────────────────────────────────────────────────┤
+│ 10. Fetch Sentiment (Alpha Vantage)                             │
+│     └─ ONLY for selected stocks (no selection bias)             │
+├─────────────────────────────────────────────────────────────────┤
+│ 11. Build & Send Email                                           │
+│     └─ Dark-mode HTML with all insights                         │
+├─────────────────────────────────────────────────────────────────┤
+│ 12. Save History & Commit                                        │
+│     └─ Update portfolio_history.json                            │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ### Data Flow (No Selection Bias)
 
 ```
-yfinance screens 1000+ stocks (with real prices)
+yfinance screens 1500+ stocks (with real prices)
            ↓
 Claude selects stocks purely on fundamentals/technicals
            ↓
@@ -131,52 +203,93 @@ Display sentiment as supplementary info in email
 
 **Why this order?** Fetching sentiment BEFORE Claude would bias stock selection toward stocks with sentiment data. By fetching AFTER, Claude makes unbiased decisions based purely on market data.
 
+## 📧 Email Report Sections
+
+The email uses a **dark-theme-first design** that looks great in both light and dark mode email clients.
+
+| Section | Description |
+|---------|-------------|
+| 🎉 **Welcome** (First Run) | Onboarding guide for new users |
+| 🚨 **Urgent Alerts** | Stop-loss triggers and target hits |
+| 📊 **Market Pulse** | Major indices with % changes |
+| 📰 **News Sentiment** | AI-analyzed sentiment for recommended stocks |
+| 📊 **Performance Attribution** | What moved your portfolio this period |
+| 💼 **Current Holdings** | Real-time P&L with status indicators |
+| 🎯 **Action Plan** | BUY/HOLD/SELL/TRIM with allocation bar |
+| 📊 **Stock Picks** | Detailed cards with position sizing |
+| 📅 **Dividend Calendar** | Upcoming ex-dividend dates |
+| 💰 **Retail Insights** | Tax harvesting, correlation, stops, squeezes |
+| 🏛️ **Politician Trades** | Congressional trading activity |
+| 📈 **Recommendation Tracker** | Win rate and historical performance |
+| ⚡ **S&P 500 Comparison** | Portfolio vs benchmark |
+
 ### Screens Included
 
-**Momentum Screens**
+The agent runs **17 different screens** across the entire market:
+
+### Stock Universe (Dynamic)
+| Category | Count | Market Cap Range |
+|----------|-------|------------------|
+| Mega Cap | ~60 | > $500B |
+| Large Cap | ~200 | $50B - $500B |
+| Mid Cap | ~250 | $10B - $50B |
+| Small Cap | ~250 | $2B - $10B |
+| Micro Cap | ~200 | $500M - $2B |
+| Nano Cap | ~100 | $100M - $500M |
+| **+ 11 Sector Screens** | ~950 | Varies |
+| **Total (deduplicated)** | **~1,500+** | |
+
+### Momentum Screens
 - Top gainers/losers by sector
 - 52-week high breakouts
 - 52-week low bounces
-- Unusual volume spikes
+- Unusual volume spikes (3x+ average)
 
-**Fundamental Screens**
+### Fundamental Screens
 - Value stocks (P/E < 15, earnings growth > 10%)
 - Growth stocks (revenue growth > 20%)
 - Dividend stocks (yield > 3%, payout < 60%)
 - Insider buying clusters
-- Earnings surprises
 
-**Technical Screens**
-- Golden/Death crosses
+### Technical Screens
+- Golden/Death crosses (50/200 SMA)
 - Oversold (RSI < 30)
 - Overbought (RSI > 70)
 
-**Sector Analysis**
-- Relative performance
+### Growth Screens
+- High growth stocks (revenue growth > 20%, EPS growth)
+- GARP stocks (Growth at Reasonable Price - PEG ratio analysis)
+- Growth scoring (0-100 based on revenue, EPS, PEG, ROE)
+
+### Sector Analysis
+- Relative performance vs S&P 500
 - Rotation signals
-- Strength vs S&P 500
+- All 11 GICS sectors
 
-### Diversification Rules
+### Asset Class Tracking (100% Dynamic)
+| Asset Class | Discovery Method |
+|-------------|------------------|
+| Commodities | ETF keyword search: "gold", "silver", "oil", "copper", "agriculture" |
+| Fixed Income | ETF keyword search: "treasury", "corporate bond", "municipal" |
+| International | ETF keyword search: "emerging market", "europe", "japan", "china" |
+| Thematic | ETF keyword search: "AI", "clean energy", "semiconductor", "biotech" |
 
-The agent enforces strict allocation limits:
+All ETFs are discovered dynamically via Yahoo Finance - no hardcoded ticker lists.
+## 📐 Diversification Rules
 
-- **Single stock**: Max 20%
-- **Single sector**: Max 35%
-- **Positions**: 5-15 total
+Claude Opus 4.5 acts as the **sole advisor** with minimal guardrails:
 
-**By Asset Class:**
-- US Stocks: 40-70%
-- International: 5-20%
-- Metals/Commodities: 5-15%
-- Bonds/Cash: 10-25%
+| Rule | Limit | Purpose |
+|------|-------|---------|
+| Single stock | Max 15% | Prevent single-stock blowup |
 
-**By Style:**
-- Growth: 20-40%
-- Value: 20-40%
-- Dividend: 10-30%
-- Speculative: 0-10%
+**Everything else is Claude's decision** - asset allocation, sector weights, number of positions, investment style. The AI has full discretion based on:
+- Your user profile (age, risk tolerance, financial situation)
+- Current market conditions
+- Portfolio history and past performance
+- Real-time market data
 
-## 🛡️ Risk Management (Industry-Standard Drawdown Protection)
+## 🛡️ Risk Management
 
 The agent includes **automatic risk management** that adjusts strategy based on portfolio performance:
 
@@ -188,13 +301,6 @@ The agent includes **automatic risk management** that adjusts strategy based on 
 | 🟡 **CAUTION** | Drawdown ≥10% OR 3 consecutive losses OR win rate <40% | Reduce position sizes, avoid speculative plays, increase cash to 15%+ |
 | 🟠 **DEFENSIVE** | Drawdown ≥15% OR 4+ consecutive losses OR win rate <30% | Max 7% positions, 25%+ cash, conservative picks only, halt aggressive trades |
 | 🔴 **CRITICAL** | Drawdown ≥20% | Emergency mode: 40%+ cash, max 5% positions, treasuries/dividend aristocrats only |
-
-### Key Metrics Tracked
-
-- **Drawdown from Peak**: Measures decline from highest portfolio value
-- **Consecutive Losses**: Tracks losing streaks across periods
-- **Win Rate**: Success rate after 5+ trades
-- **Alpha vs S&P 500**: Performance relative to benchmark
 
 ### How It Works
 
@@ -216,42 +322,59 @@ MANDATORY RULES FOR DEFENSIVE MODE:
 - Maximum new positions this period: 2
 ```
 
-This ensures the AI automatically becomes more conservative when the portfolio is struggling, protecting against catastrophic losses.
-
-## Cost Estimate
+## 💵 Cost Estimate
 
 | Service | Monthly Cost |
 |---------|--------------|
 | Claude Opus API | ~$5-10 |
 | Resend (100 emails/day free) | $0 |
 | GitHub Actions | $0 |
+| Alpha Vantage (free tier) | $0 |
 | **Total** | **~$5-10/month** |
 
-## Email Report Sections
+## 🔧 Troubleshooting
 
-The email uses a **dark-theme-first design** that looks great in both light and dark mode email clients.
+### Common Issues
 
-1. Performance Scorecard (This Period / S&P 500 / Total Return)
-2. Macro Regime Assessment
-3. Current Holdings Review with status indicators
-4. Sells This Period
-5. New Recommendations (grouped by time horizon)
-6. Metals & Commodities Outlook
-7. Portfolio Allocation Summary
-8. Politician Trade Alerts (Notable trades, Suspicious patterns, Portfolio overlap)
-9. Risks to Portfolio
-10. Watchlist
-11. Action Summary (BUY/SELL/TRIM/CASH)
+**Empty email sections:**
+- First run will show welcome section instead of performance data
+- Portfolio builds over time with each run
 
-## Disclaimer
+**No politician trades:**
+- Capitol Trades may have rate limits
+- Mock data is used if API unavailable
 
-⚠️ **This is not financial advice.** This project is for educational and informational purposes only. 
+**No news sentiment:**
+- Check `ALPHAVANTAGE_API_KEY` is set
+- Free tier: 25 calls/day limit
+
+**Prices seem wrong:**
+- All prices come from yfinance in real-time
+- Claude's output is always verified against yfinance
+
+### Logs
+
+Check the console output for detailed progress:
+```
+[1/10] Loading portfolio history...
+[2/10] Fetching market data...
+[3/10] Calculating portfolio performance...
+...
+```
+
+## ⚠️ Disclaimer
+
+**This is not financial advice.** This project is for educational and informational purposes only. 
 
 - Past performance does not guarantee future results
 - Always do your own research before investing
 - Consult a licensed financial advisor for personalized advice
 - The authors are not responsible for any investment decisions made based on this tool's output
 
-## License
+## 📄 License
 
 MIT License - feel free to use, modify, and distribute.
+
+---
+
+Built with ❤️ for retail investors who want institutional-quality insights.

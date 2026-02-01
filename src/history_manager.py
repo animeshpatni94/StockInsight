@@ -6,8 +6,9 @@ Handles loading, saving, and updating portfolio state across months.
 import json
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
+from collections import defaultdict
 
 from config import PATHS, ALLOCATION_RULES
 from data_fetcher import get_current_prices
@@ -35,6 +36,10 @@ def load_history(file_path: Optional[str] = None) -> Dict:
     try:
         with open(file_path, 'r') as f:
             history = json.load(f)
+            
+            # Validate and fix any data integrity issues
+            history = _validate_and_fix_history(history)
+            
             return history
     except FileNotFoundError:
         print(f"Portfolio history not found at {file_path}, creating new one...")
@@ -42,6 +47,53 @@ def load_history(file_path: Optional[str] = None) -> Dict:
     except json.JSONDecodeError as e:
         print(f"Error parsing portfolio history: {e}")
         return _create_empty_history()
+
+
+def _validate_and_fix_history(history: Dict) -> Dict:
+    """
+    Validate history data and fix any issues.
+    Called automatically when loading history.
+    """
+    needs_recalc = False
+    
+    # Fix duplicate months in history
+    monthly = history.get('monthly_history', [])
+    if monthly:
+        seen_months = {}
+        unique_monthly = []
+        for m in monthly:
+            month = m.get('month')
+            if month not in seen_months:
+                seen_months[month] = True
+                unique_monthly.append(m)
+            else:
+                print(f"  Removed duplicate month entry: {month}")
+                needs_recalc = True
+        history['monthly_history'] = unique_monthly
+    
+    # Fix closed positions with missing sell prices
+    closed = history.get('closed_positions', [])
+    needs_fix = [p for p in closed if p.get('sell_price') is None]
+    if needs_fix:
+        tickers = [p.get('ticker') for p in needs_fix if p.get('ticker')]
+        if tickers:
+            print(f"  Fixing {len(needs_fix)} closed positions with missing sell prices...")
+            current_prices = get_current_prices(tickers)
+            for pos in needs_fix:
+                ticker = pos.get('ticker')
+                buy_price = pos.get('buy_price', 0)
+                if ticker in current_prices and buy_price > 0:
+                    sell_price = current_prices[ticker]
+                    pos['sell_price'] = round(sell_price, 2)
+                    pos['return_pct'] = round(((sell_price / buy_price) - 1) * 100, 2)
+                    needs_recalc = True
+    
+    # IMMEDIATELY recalculate performance summary if any fixes were applied
+    if needs_recalc:
+        print("  Recalculating performance summary after data fixes...")
+        history['performance_summary'] = _update_performance_summary(history)
+    
+    return history
 
 
 def save_history(history: Dict, file_path: Optional[str] = None) -> bool:
@@ -79,54 +131,8 @@ def save_history(history: Dict, file_path: Optional[str] = None) -> bool:
         return False
 
 
-def fix_closed_positions(history: Dict) -> Dict:
-    """
-    Fix closed positions that have missing sell_price or incorrect return_pct.
-    Fetches current prices and recalculates returns.
-    
-    Args:
-        history: Portfolio history dictionary
-        
-    Returns:
-        Updated history with fixed closed positions
-    """
-    closed = history.get('closed_positions', [])
-    if not closed:
-        return history
-    
-    # Find positions that need fixing (null sell_price or 0 return with valid buy_price)
-    needs_fix = []
-    for pos in closed:
-        if pos.get('sell_price') is None or (pos.get('return_pct', 0) == 0 and pos.get('buy_price', 0) > 0):
-            needs_fix.append(pos)
-    
-    if not needs_fix:
-        print("  No closed positions need fixing")
-        return history
-    
-    print(f"  Fixing {len(needs_fix)} closed positions with missing data...")
-    
-    # Get current prices for tickers that need fixing
-    tickers = [p.get('ticker') for p in needs_fix if p.get('ticker')]
-    current_prices = get_current_prices(tickers) if tickers else {}
-    
-    # Fix each position
-    for pos in needs_fix:
-        ticker = pos.get('ticker')
-        buy_price = pos.get('buy_price', 0)
-        
-        if ticker and ticker in current_prices and buy_price > 0:
-            sell_price = current_prices[ticker]
-            return_pct = ((sell_price / buy_price) - 1) * 100
-            
-            pos['sell_price'] = round(sell_price, 2)
-            pos['return_pct'] = round(return_pct, 2)
-            print(f"    Fixed {ticker}: sell_price=${sell_price:.2f}, return={return_pct:+.2f}%")
-    
-    # Recalculate performance summary
-    history['performance_summary'] = _update_performance_summary(history)
-    
-    return history
+
+# NOTE: fix_closed_positions() was removed - functionality now handled by _validate_and_fix_history()
 
 
 def _create_empty_history() -> Dict:
@@ -167,19 +173,21 @@ def _create_empty_history() -> Dict:
 
 
 def calculate_performance(current_portfolio: List[Dict], 
-                          market_data: Dict) -> List[Dict]:
+                          market_data: Dict) -> Tuple[List[Dict], List[Dict]]:
     """
-    Calculate current performance for all holdings.
+    Calculate current performance for all holdings and detect triggered alerts.
     
     Args:
         current_portfolio: List of current holdings
         market_data: Current market data
     
     Returns:
-        Portfolio with updated performance metrics
+        Tuple of (updated_portfolio, triggered_alerts)
+        - updated_portfolio: Portfolio with updated performance metrics
+        - triggered_alerts: List of positions that hit stop-loss or target
     """
     if not current_portfolio:
-        return []
+        return [], []
     
     # Get current prices for all holdings
     tickers = [h['ticker'] for h in current_portfolio if h.get('ticker')]
@@ -191,6 +199,8 @@ def calculate_performance(current_portfolio: List[Dict],
         print(f"  Warning: Could not fetch prices for {len(missing_prices)} tickers: {missing_prices[:5]}...")
     
     updated_portfolio = []
+    triggered_alerts = []
+    
     for holding in current_portfolio:
         ticker = holding.get('ticker')
         if not ticker:
@@ -219,11 +229,15 @@ def calculate_performance(current_portfolio: List[Dict],
         price_target = holding.get('price_target') or 0
         
         status = holding.get('status', 'HOLD')
+        alert_type = None
+        
         if not price_stale:  # Only update status if we have real prices
             if stop_loss and current_price <= stop_loss:
                 status = 'STOP_LOSS_HIT'
+                alert_type = 'stop_loss'
             elif price_target and current_price >= price_target:
                 status = 'TARGET_REACHED'
+                alert_type = 'target'
         
         updated_holding = {
             **holding,
@@ -234,141 +248,36 @@ def calculate_performance(current_portfolio: List[Dict],
             'last_reviewed': datetime.now().strftime('%Y-%m-%d')
         }
         updated_portfolio.append(updated_holding)
+        
+        # Track triggered alerts
+        if alert_type:
+            triggered_alerts.append({
+                'ticker': ticker,
+                'alert_type': alert_type,
+                'entry_price': entry_price,
+                'current_price': round(current_price, 2),
+                'trigger_price': stop_loss if alert_type == 'stop_loss' else price_target,
+                'gain_loss_pct': round(gain_loss_pct, 2),
+                'allocation_pct': holding.get('allocation_pct', 0)
+            })
     
     # Log summary
     prices_fetched = len(tickers) - len(missing_prices)
     print(f"  Performance calculated: {prices_fetched}/{len(tickers)} prices fetched successfully")
     
-    return updated_portfolio
+    if triggered_alerts:
+        print(f"  ⚠️  {len(triggered_alerts)} ALERTS TRIGGERED:")
+        for alert in triggered_alerts:
+            if alert['alert_type'] == 'stop_loss':
+                print(f"    🔴 {alert['ticker']}: STOP-LOSS HIT @ ${alert['current_price']:.2f} (loss: {alert['gain_loss_pct']:.1f}%)")
+            else:
+                print(f"    🟢 {alert['ticker']}: TARGET REACHED @ ${alert['current_price']:.2f} (gain: {alert['gain_loss_pct']:.1f}%)")
+    
+    return updated_portfolio, triggered_alerts
 
 
-def calculate_portfolio_value(portfolio: List[Dict], cash: Dict, 
-                              starting_capital: float = 100000) -> Dict:
-    """
-    Calculate total portfolio value and allocation percentages.
-    
-    Args:
-        portfolio: Current holdings
-        cash: Cash position info
-        starting_capital: Initial capital
-    
-    Returns:
-        Dictionary with portfolio value metrics
-    """
-    total_allocation = sum(h.get('allocation_pct', 0) for h in portfolio)
-    cash_allocation = cash.get('allocation_pct', 0)
-    
-    # Calculate implied value based on allocations
-    invested_value = (total_allocation / 100) * starting_capital
-    cash_value = (cash_allocation / 100) * starting_capital
-    
-    # If we have current prices and shares, calculate actual value
-    actual_value = 0
-    for holding in portfolio:
-        shares = holding.get('shares', 0)
-        current_price = holding.get('current_price', holding.get('recommended_price', 0))
-        actual_value += shares * current_price
-    
-    return {
-        'total_allocation_pct': total_allocation + cash_allocation,
-        'invested_allocation_pct': total_allocation,
-        'cash_allocation_pct': cash_allocation,
-        'implied_portfolio_value': invested_value + cash_value,
-        'actual_portfolio_value': actual_value + cash_value if actual_value > 0 else None,
-        'position_count': len(portfolio)
-    }
-
-
-def validate_allocations(portfolio: List[Dict], cash: Dict) -> Dict:
-    """
-    Validate portfolio allocations against diversification rules.
-    
-    Args:
-        portfolio: Current holdings
-        cash: Cash position info
-    
-    Returns:
-        Dictionary with validation results
-    """
-    violations = []
-    warnings = []
-    
-    # Check total allocation
-    total_alloc = sum(h.get('allocation_pct', 0) for h in portfolio)
-    total_alloc += cash.get('allocation_pct', 0)
-    
-    if abs(total_alloc - 100) > 0.5:
-        warnings.append(f"Total allocation is {total_alloc:.1f}% (should be ~100%)")
-    
-    # Check single stock max
-    for holding in portfolio:
-        alloc = holding.get('allocation_pct', 0)
-        if alloc > ALLOCATION_RULES['single_stock_max'] * 100:
-            violations.append(
-                f"{holding['ticker']} allocation {alloc:.1f}% exceeds "
-                f"{ALLOCATION_RULES['single_stock_max']*100:.0f}% maximum"
-            )
-    
-    # Check sector concentration
-    sector_allocs = {}
-    for holding in portfolio:
-        sector = holding.get('sector', 'Unknown')
-        sector_allocs[sector] = sector_allocs.get(sector, 0) + holding.get('allocation_pct', 0)
-    
-    for sector, alloc in sector_allocs.items():
-        if alloc > ALLOCATION_RULES['single_sector_max'] * 100:
-            violations.append(
-                f"{sector} sector allocation {alloc:.1f}% exceeds "
-                f"{ALLOCATION_RULES['single_sector_max']*100:.0f}% maximum"
-            )
-    
-    # Check position count
-    pos_count = len(portfolio)
-    if pos_count < ALLOCATION_RULES['min_positions'] and pos_count > 0:
-        warnings.append(
-            f"Position count ({pos_count}) below minimum "
-            f"({ALLOCATION_RULES['min_positions']})"
-        )
-    if pos_count > ALLOCATION_RULES['max_positions']:
-        violations.append(
-            f"Position count ({pos_count}) exceeds maximum "
-            f"({ALLOCATION_RULES['max_positions']})"
-        )
-    
-    # Check asset class allocations
-    asset_class_allocs = {}
-    for holding in portfolio:
-        asset_class = holding.get('asset_class', 'us_stock')
-        asset_class_allocs[asset_class] = (
-            asset_class_allocs.get(asset_class, 0) + 
-            holding.get('allocation_pct', 0)
-        )
-    
-    # Map to rule categories
-    us_stocks = asset_class_allocs.get('us_stock', 0)
-    rules = ALLOCATION_RULES['us_stocks']
-    if us_stocks < rules['min'] * 100 or us_stocks > rules['max'] * 100:
-        warnings.append(
-            f"US stocks allocation {us_stocks:.1f}% outside target range "
-            f"({rules['min']*100:.0f}%-{rules['max']*100:.0f}%)"
-        )
-    
-    # Check bonds/cash
-    bonds_cash = cash.get('allocation_pct', 0) + asset_class_allocs.get('bond_etf', 0)
-    rules = ALLOCATION_RULES['bonds_cash']
-    if bonds_cash < rules['min'] * 100 or bonds_cash > rules['max'] * 100:
-        warnings.append(
-            f"Bonds/Cash allocation {bonds_cash:.1f}% outside target range "
-            f"({rules['min']*100:.0f}%-{rules['max']*100:.0f}%)"
-        )
-    
-    return {
-        'is_valid': len(violations) == 0,
-        'violations': violations,
-        'warnings': warnings,
-        'sector_allocations': sector_allocs,
-        'asset_class_allocations': asset_class_allocs
-    }
+# NOTE: calculate_portfolio_value() was removed - use get_actual_portfolio_value() instead
+# NOTE: validate_allocations() was removed - use validate_allocation_rules() instead
 
 
 def update_history_with_month(history: Dict, analysis_result: Dict, 
@@ -422,30 +331,73 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
                 'return_pct': round(actual_return_pct, 2),
                 'hold_period_days': _calculate_hold_days(original.get('recommended_date')),
                 'reason': sell.get('reason', ''),
-                'lesson_learned': sell.get('lesson_learned', '')
+                'lesson_learned': sell.get('lesson_learned', ''),
+                'action_type': 'FULL_SELL'
             })
-    
-    # Update closed positions
-    history['closed_positions'].extend(closed_this_month)
     
     # Build new portfolio from review + new recommendations
     new_portfolio = []
     sold_tickers = [s.get('ticker') for s in sells]
     reviewed_tickers = set()
     
-    # Process portfolio review (holds and trims)
+    # Process portfolio review (holds, trims, adds)
     portfolio_review = analysis_result.get('portfolio_review', [])
     for review in portfolio_review:
-        if review.get('action') in ['HOLD', 'TRIM', 'ADD']:
+        action = review.get('action', 'HOLD').upper()
+        if action in ['HOLD', 'TRIM', 'ADD']:
             ticker = review.get('ticker')
             reviewed_tickers.add(ticker)
             original = next((h for h in old_portfolio if h['ticker'] == ticker), None)
             if original:
+                old_alloc = original.get('allocation_pct', 0)
+                new_alloc = review.get('new_allocation_pct', old_alloc)
+                
+                # Handle TRIM - record partial sale P&L
+                if action == 'TRIM' and new_alloc < old_alloc:
+                    trimmed_pct = old_alloc - new_alloc
+                    buy_price = original.get('recommended_price', 0)
+                    current_price = sold_prices.get(ticker) or original.get('current_price') or buy_price
+                    trim_return_pct = ((current_price / buy_price) - 1) * 100 if buy_price > 0 else 0
+                    
+                    # Record the trimmed portion as a partial sale
+                    closed_this_month.append({
+                        'ticker': ticker,
+                        'company_name': original.get('company_name', ''),
+                        'buy_date': original.get('recommended_date'),
+                        'buy_price': round(buy_price, 2),
+                        'sell_date': datetime.now().strftime('%Y-%m-%d'),
+                        'sell_price': round(current_price, 2),
+                        'return_pct': round(trim_return_pct, 2),
+                        'hold_period_days': _calculate_hold_days(original.get('recommended_date')),
+                        'reason': f"TRIM: Reduced from {old_alloc:.1f}% to {new_alloc:.1f}%",
+                        'allocation_trimmed_pct': round(trimmed_pct, 2),
+                        'action_type': 'TRIM'
+                    })
+                
+                # Handle ADD - update cost basis with weighted average
+                if action == 'ADD' and new_alloc > old_alloc:
+                    added_pct = new_alloc - old_alloc
+                    old_price = original.get('recommended_price', 0)
+                    current_price = sold_prices.get(ticker) or original.get('current_price') or old_price
+                    
+                    # Calculate new weighted average cost basis
+                    if old_alloc > 0 and old_price > 0:
+                        new_cost_basis = ((old_alloc * old_price) + (added_pct * current_price)) / new_alloc
+                        original['recommended_price'] = round(new_cost_basis, 2)
+                        original['add_history'] = original.get('add_history', []) + [{
+                            'date': datetime.now().strftime('%Y-%m-%d'),
+                            'added_pct': added_pct,
+                            'price': round(current_price, 2)
+                        }]
+                
                 updated = {**original}
-                updated['allocation_pct'] = review.get('new_allocation_pct', original['allocation_pct'])
-                updated['status'] = review.get('action')
+                updated['allocation_pct'] = new_alloc
+                updated['status'] = action
                 updated['last_reviewed'] = datetime.now().strftime('%Y-%m-%d')
                 new_portfolio.append(updated)
+    
+    # Update closed positions AFTER TRIM processing so partial sales are included
+    history['closed_positions'].extend(closed_this_month)
     
     # Keep existing holdings that weren't explicitly reviewed or sold (default to HOLD)
     for holding in old_portfolio:
@@ -498,12 +450,31 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
     
     # Add month to history - calculate return from OLD portfolio (what we held this month)
     sp500_return = market_data.get('indexes', {}).get('S&P 500', {}).get('returns', {}).get('1mo', 0)
-    portfolio_return = _calculate_portfolio_return(old_portfolio)
+    
+    # Get cash info for proper return calculation
+    cash_alloc = history.get('cash', {}).get('allocation_pct', 0)
+    cash_yield = history.get('cash', {}).get('yield_pct', 5.0)  # Default 5% annual yield
+    portfolio_return = _calculate_portfolio_return(old_portfolio, cash_alloc, cash_yield)
+    
+    # FIXED: Calculate ending value by compounding from previous month's ending value
+    # Not from starting capital (which would ignore previous gains/losses)
+    monthly_history = history.get('monthly_history', [])
+    starting_capital = history['metadata'].get('starting_capital', 100000)
+    
+    if monthly_history:
+        # Get the previous month's ending value as this month's starting value
+        previous_ending = monthly_history[-1].get('ending_value', starting_capital)
+    else:
+        # First month - start from initial capital
+        previous_ending = starting_capital
+    
+    # This month's ending value compounds from previous month
+    current_ending = previous_ending * (1 + portfolio_return / 100)
     
     month_record = {
         'month': current_month,
-        'starting_value': history['metadata'].get('starting_capital', 100000),
-        'ending_value': history['metadata'].get('starting_capital', 100000) * (1 + portfolio_return/100),
+        'starting_value': round(previous_ending, 2),
+        'ending_value': round(current_ending, 2),
         'portfolio_return_pct': round(portfolio_return, 2),
         'sp500_return_pct': round(sp500_return, 2),
         'alpha_pct': round(portfolio_return - sp500_return, 2),
@@ -537,18 +508,23 @@ def _calculate_hold_days(buy_date_str: str) -> int:
         return 0
 
 
-def _calculate_portfolio_return(portfolio: List[Dict]) -> float:
+def _calculate_portfolio_return(portfolio: List[Dict], cash_allocation_pct: float = 0.0, cash_yield_pct: float = 0.0) -> float:
     """
     Calculate portfolio return based on recommended prices vs current prices.
+    Properly accounts for cash position to avoid overstating returns.
     
     Args:
         portfolio: List of holdings with recommended_price and allocation_pct
+        cash_allocation_pct: Percentage of portfolio in cash (0-100)
+        cash_yield_pct: Annual yield on cash (e.g., 5.0 for 5%)
     
     Returns:
-        Weighted portfolio return percentage
+        Weighted portfolio return percentage (properly weighted against 100%)
     """
     if not portfolio:
-        return 0.0
+        # If all cash, return cash yield (prorated for the period)
+        # Assuming monthly reporting, divide annual yield by 12
+        return (cash_yield_pct / 12) if cash_yield_pct > 0 else 0.0
     
     # Get current prices for all holdings
     tickers = [h['ticker'] for h in portfolio if h.get('ticker')]
@@ -558,7 +534,7 @@ def _calculate_portfolio_return(portfolio: List[Dict]) -> float:
     current_prices = get_current_prices(tickers)
     
     total_weighted_return = 0.0
-    total_weight = 0.0
+    total_stock_allocation = 0.0
     
     for holding in portfolio:
         ticker = holding.get('ticker')
@@ -573,17 +549,24 @@ def _calculate_portfolio_return(portfolio: List[Dict]) -> float:
         # Calculate return for this position
         position_return = ((current_price / rec_price) - 1) * 100
         
-        # Add weighted contribution
+        # Add weighted contribution (weight is percentage of total portfolio)
         total_weighted_return += weight * position_return
-        total_weight += weight
+        total_stock_allocation += weight
     
-    if total_weight > 0:
-        return total_weighted_return / total_weight
-    return 0.0
+    # Calculate cash contribution (cash earns money market yield, prorated monthly)
+    # Use provided cash_allocation_pct, or calculate from remaining allocation
+    actual_cash_pct = cash_allocation_pct if cash_allocation_pct > 0 else (100 - total_stock_allocation)
+    if actual_cash_pct > 0:
+        monthly_cash_return = (cash_yield_pct / 12) if cash_yield_pct > 0 else 0.0
+        total_weighted_return += actual_cash_pct * monthly_cash_return
+    
+    # Divide by 100 (total portfolio) not by total_stock_allocation
+    # This properly accounts for cash drag on returns
+    return total_weighted_return / 100.0
 
 
 def _update_performance_summary(history: Dict) -> Dict:
-    """Update cumulative performance summary."""
+    """Update cumulative performance summary using proper compound returns."""
     closed = history.get('closed_positions', [])
     monthly = history.get('monthly_history', [])
     
@@ -594,8 +577,21 @@ def _update_performance_summary(history: Dict) -> Dict:
     losses = [c for c in closed if c.get('return_pct', 0) < -breakeven_threshold]
     # Note: trades between -0.5% and +0.5% are breakeven and don't count toward win/loss
     
-    total_return = sum(m.get('portfolio_return_pct', 0) for m in monthly)
-    sp500_return = sum(m.get('sp500_return_pct', 0) for m in monthly)
+    # FIXED: Use compound returns instead of simple sum
+    # Compound formula: (1 + r1) * (1 + r2) * ... * (1 + rn) - 1
+    portfolio_compound = 1.0
+    sp500_compound = 1.0
+    
+    for m in monthly:
+        portfolio_return = m.get('portfolio_return_pct', 0) / 100  # Convert to decimal
+        sp500_return_month = m.get('sp500_return_pct', 0) / 100
+        
+        portfolio_compound *= (1 + portfolio_return)
+        sp500_compound *= (1 + sp500_return_month)
+    
+    # Convert back to percentage
+    total_return = (portfolio_compound - 1) * 100
+    sp500_return = (sp500_compound - 1) * 100
     
     avg_win = sum(w.get('return_pct', 0) for w in wins) / len(wins) if wins else 0
     avg_loss = sum(l.get('return_pct', 0) for l in losses) / len(losses) if losses else 0
@@ -840,3 +836,187 @@ def get_portfolio_summary(history: Dict) -> str:
     ])
     
     return "\n".join(lines)
+
+
+def validate_allocation_rules(recommendations: Dict, history: Dict) -> Dict:
+    """
+    Validate that Claude's recommendations follow allocation rules.
+    Auto-corrects issues and returns validation report.
+    
+    Args:
+        recommendations: Claude's parsed recommendations
+        history: Current portfolio history
+        
+    Returns:
+        Dictionary with validation results and corrected recommendations
+    """
+    issues = []
+    warnings = []
+    corrections = []
+    
+    buys = recommendations.get('buys', [])
+    sells = recommendations.get('sells', [])
+    trims = recommendations.get('trims', [])
+    adds = recommendations.get('adds', [])
+    
+    current_portfolio = history.get('current_portfolio', [])
+    current_cash = history.get('cash', {}).get('allocation_pct', 0)
+    
+    # Rule 1: Total allocation must equal 100%
+    total_alloc = sum(b.get('allocation_pct', 0) for b in buys)
+    total_alloc += sum(h.get('allocation_pct', 0) for h in current_portfolio 
+                       if h['ticker'] not in [s['ticker'] for s in sells])
+    # Account for trims (reduce allocation)
+    for trim in trims:
+        ticker = trim['ticker']
+        new_alloc = trim.get('new_allocation_pct', 0)
+        for h in current_portfolio:
+            if h['ticker'] == ticker:
+                total_alloc -= h.get('allocation_pct', 0)
+                total_alloc += new_alloc
+    # Account for adds (increase allocation)
+    for add in adds:
+        ticker = add['ticker']
+        add_amount = add.get('add_pct', 0)
+        total_alloc += add_amount
+    
+    # Calculate cash after transactions
+    cash_freed = sum(s.get('allocation_pct', 0) for s in sells)
+    for trim in trims:
+        ticker = trim['ticker']
+        new_alloc = trim.get('new_allocation_pct', 0)
+        for h in current_portfolio:
+            if h['ticker'] == ticker:
+                cash_freed += h.get('allocation_pct', 0) - new_alloc
+    
+    cash_used = sum(b.get('allocation_pct', 0) for b in buys)
+    cash_used += sum(a.get('add_pct', 0) for a in adds)
+    
+    projected_cash = current_cash + cash_freed - cash_used
+    
+    if projected_cash < 0:
+        issues.append(f"Insufficient cash: would need {abs(projected_cash):.1f}% more")
+    
+    # ONE RULE: No single position exceeds 15%
+    max_position_pct = ALLOCATION_RULES.get('single_stock_max', 0.15) * 100
+    for buy in buys:
+        if buy.get('allocation_pct', 0) > max_position_pct:
+            issues.append(f"Position {buy['ticker']} exceeds {max_position_pct:.0f}% max ({buy['allocation_pct']}%)")
+            # Auto-correct
+            old_alloc = buy['allocation_pct']
+            buy['allocation_pct'] = max_position_pct
+            corrections.append(f"Reduced {buy['ticker']} from {old_alloc}% to {max_position_pct:.0f}%")
+    
+    # Helpful warnings (not enforced, just informational)
+    existing_tickers = {h['ticker'] for h in current_portfolio}
+    for buy in buys:
+        if buy['ticker'] in existing_tickers and buy['ticker'] not in [a['ticker'] for a in adds]:
+            warnings.append(f"BUY {buy['ticker']} already in portfolio - should this be ADD?")
+    
+    for sell in sells:
+        if sell['ticker'] not in existing_tickers:
+            issues.append(f"SELL {sell['ticker']} not in current portfolio")
+    
+    return {
+        'valid': len(issues) == 0,
+        'issues': issues,
+        'warnings': warnings,
+        'corrections': corrections,
+        'corrected_recommendations': recommendations,
+        'projected_cash': round(projected_cash, 2)
+    }
+
+
+def auto_generate_sells_from_alerts(triggered_alerts: List[Dict], 
+                                    current_portfolio: List[Dict]) -> List[Dict]:
+    """
+    Auto-generate SELL recommendations for positions that hit stop-loss.
+    
+    Args:
+        triggered_alerts: List of triggered stop-loss/target alerts
+        current_portfolio: Current portfolio holdings
+        
+    Returns:
+        List of sell recommendations
+    """
+    auto_sells = []
+    
+    for alert in triggered_alerts:
+        if alert['alert_type'] == 'stop_loss':
+            # Find the holding
+            holding = next((h for h in current_portfolio if h['ticker'] == alert['ticker']), None)
+            if holding:
+                auto_sells.append({
+                    'ticker': alert['ticker'],
+                    'allocation_pct': holding.get('allocation_pct', 0),
+                    'reason': f"STOP-LOSS TRIGGERED at ${alert['current_price']:.2f} (loss: {alert['gain_loss_pct']:.1f}%)",
+                    'auto_generated': True
+                })
+                print(f"  🔴 Auto-generated SELL for {alert['ticker']} (stop-loss hit)")
+    
+    return auto_sells
+
+
+def get_actual_portfolio_value(history: Dict, starting_capital: float = 100000) -> Dict:
+    """
+    Calculate the actual portfolio value based on current prices.
+    Accounts for compounded returns over time.
+    
+    Args:
+        history: Portfolio history dictionary
+        starting_capital: Initial capital
+        
+    Returns:
+        Dictionary with actual value metrics
+    """
+    # Calculate compounded return from closed positions
+    closed_positions = history.get('closed_positions', [])
+    
+    # Track capital through time
+    running_capital = starting_capital
+    
+    # Group closed positions by month to properly compound
+    monthly_returns = defaultdict(list)
+    for pos in closed_positions:
+        sell_date = pos.get('sell_date', pos.get('closed_date', ''))
+        if sell_date:
+            month = sell_date[:7]  # YYYY-MM
+            return_pct = pos.get('return_pct', 0)
+            allocation = pos.get('allocation_pct', 0)
+            # Weighted return contribution
+            contribution = (return_pct * allocation) / 100
+            monthly_returns[month].append(contribution)
+    
+    # Apply compounded returns
+    for month in sorted(monthly_returns.keys()):
+        month_return = sum(monthly_returns[month])
+        running_capital *= (1 + month_return / 100)
+    
+    # Calculate current unrealized value
+    current_portfolio = history.get('current_portfolio', [])
+    unrealized_value = 0
+    
+    for holding in current_portfolio:
+        allocation = holding.get('allocation_pct', 0)
+        gain_loss = holding.get('gain_loss_pct', 0)
+        
+        # Value of this position based on current capital
+        position_value = (running_capital * allocation / 100) * (1 + gain_loss / 100)
+        unrealized_value += position_value
+    
+    # Cash portion
+    cash_allocation = history.get('cash', {}).get('allocation_pct', 0)
+    cash_value = running_capital * cash_allocation / 100
+    
+    total_value = unrealized_value + cash_value
+    total_return_pct = ((total_value / starting_capital) - 1) * 100
+    
+    return {
+        'starting_capital': starting_capital,
+        'current_value': round(total_value, 2),
+        'realized_gains': round(running_capital - starting_capital, 2),
+        'unrealized_value': round(unrealized_value, 2),
+        'cash_value': round(cash_value, 2),
+        'total_return_pct': round(total_return_pct, 2)
+    }
+

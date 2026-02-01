@@ -1,458 +1,13 @@
 """
-HTML email builder for stock analysis reports.
-Constructs professional email content from analysis results.
+Stock Pulse Email Builder - Gmail Compatible (Biweekly Edition)
+Matches the Stock Pulse design with TABLE-based layout and inline styles.
 """
-
 from datetime import datetime
-from typing import Dict, List, Any
-from jinja2 import Template
+from typing import Dict, Any, List, Optional, Tuple
 
 
-def build_email_html(analysis_result: Dict, history: Dict, email_context: Dict = None) -> str:
-    """
-    Build complete HTML email from analysis results.
-    
-    Args:
-        analysis_result: Claude's analysis output
-        history: Portfolio history data
-        email_context: Additional context (VIX, earnings, sentiment)
-    
-    Returns:
-        Complete HTML email string
-    """
-    # Extract additional context
-    email_context = email_context or {}
-    vix_data = email_context.get('vix_data', {})
-    earnings_calendar = email_context.get('earnings_calendar', {})
-    news_sentiment = email_context.get('news_sentiment', {})
-    portfolio_performance = email_context.get('portfolio_performance', [])
-    
-    # Extract data
-    macro = analysis_result.get('macro_assessment', {})
-    portfolio_review = analysis_result.get('portfolio_review', [])
-    sells = analysis_result.get('sells', [])
-    new_recs = analysis_result.get('new_recommendations', [])
-    metals = analysis_result.get('metals_commodities_outlook', {})
-    politician_analysis = analysis_result.get('politician_trade_analysis', {})
-    allocation = analysis_result.get('allocation_summary', {})
-    risks = analysis_result.get('risks_to_portfolio', [])
-    watchlist = analysis_result.get('watchlist', [])
-    
-    perf = history.get('performance_summary', {}) or {}
-    monthly = history.get('monthly_history', []) or []
-    # Use portfolio_performance (with live prices) if available, otherwise fall back to history
-    current_portfolio = portfolio_performance if portfolio_performance else (history.get('current_portfolio', []) or [])
-    cash = history.get('cash', {}) or {}
-    total_months = history.get('metadata', {}).get('total_months', 0)
-    
-    # Calculate current month returns safely
-    this_month_return = _safe_float(monthly[-1].get('portfolio_return_pct') if monthly else 0)
-    sp500_return = _safe_float(monthly[-1].get('sp500_return_pct') if monthly else 0)
-    total_return = _safe_float(perf.get('total_return_pct'))
-    sp500_total_return = _safe_float(perf.get('sp500_total_return_pct'))
-    total_alpha = _safe_float(perf.get('total_alpha_pct'))
-    win_rate = _safe_float(perf.get('win_rate_pct'))
-    win_count = int(_safe_float(perf.get('win_count')))
-    loss_count = int(_safe_float(perf.get('loss_count')))
-    
-    # Determine if this is the first report (no history yet)
-    is_first_report = total_months <= 1 and not monthly
-    
-    # Build HTML - Modern dark-mode friendly design
-    html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light dark">
-    <meta name="supported-color-schemes" content="light dark">
-    <title>Stock Insight Report</title>
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            background-color: #0d1117;
-            color: #e6edf3;
-            padding: 16px;
-        }}
-        .container {{
-            max-width: 680px;
-            margin: 0 auto;
-            background: #161b22;
-            border-radius: 16px;
-            border: 1px solid #30363d;
-            overflow: hidden;
-        }}
-        .header {{
-            background: linear-gradient(135deg, #238636 0%, #1f6feb 100%);
-            padding: 32px 24px;
-            text-align: center;
-        }}
-        .header h1 {{
-            font-size: 28px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }}
-        .header .subtitle {{
-            color: rgba(255,255,255,0.85);
-            font-size: 14px;
-        }}
-        .section {{
-            padding: 28px;
-            border-bottom: 1px solid #30363d;
-        }}
-        .section:last-child {{ border-bottom: none; }}
-        .section-title {{
-            font-size: 20px;
-            font-weight: 700;
-            color: #58a6ff;
-            margin-bottom: 20px;
-            letter-spacing: -0.3px;
-        }}
-        .card {{
-            background: #21262d;
-            border: 1px solid #30363d;
-            border-radius: 14px;
-            padding: 20px;
-            margin-bottom: 16px;
-        }}
-        .scorecard {{
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-        }}
-        .score-box {{
-            background: #21262d;
-            border: 1px solid #30363d;
-            border-radius: 14px;
-            padding: 20px;
-            text-align: center;
-        }}
-        .score-box.positive {{ border-left: 5px solid #238636; }}
-        .score-box.negative {{ border-left: 5px solid #f85149; }}
-        .score-box.neutral {{ border-left: 5px solid #d29922; }}
-        .score-value {{
-            font-size: 32px;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -1px;
-            margin-bottom: 6px;
-        }}
-        .score-label {{
-            font-size: 12px;
-            color: #8b949e;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-weight: 500;
-        }}
-        .regime-badge {{
-            display: inline-block;
-            background: #238636;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }}
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-        }}
-        th, td {{
-            padding: 12px 8px;
-            text-align: left;
-            border-bottom: 1px solid #30363d;
-        }}
-        th {{
-            font-size: 11px;
-            font-weight: 600;
-            color: #8b949e;
-            text-transform: uppercase;
-        }}
-        td {{ color: #e6edf3; }}
-        .gain {{ color: #3fb950; font-weight: 600; }}
-        .loss {{ color: #f85149; font-weight: 600; }}
-        .badge {{
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-        }}
-        .badge-buy {{ background: #238636; color: white; }}
-        .badge-sell {{ background: #f85149; color: white; }}
-        .badge-hold {{ background: #1f6feb; color: white; }}
-        .badge-trim {{ background: #d29922; color: white; }}
-        .rec-card {{
-            background: #21262d;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-        }}
-        .rec-ticker {{
-            font-size: 24px;
-            font-weight: 700;
-            color: #58a6ff;
-        }}
-        .rec-company {{
-            color: #8b949e;
-            font-size: 14px;
-        }}
-        .tag {{
-            display: inline-block;
-            background: #30363d;
-            color: #e6edf3;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            margin-right: 6px;
-            margin-bottom: 6px;
-        }}
-        .metrics {{
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            background: #161b22;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 12px 0;
-        }}
-        .metric {{ text-align: center; }}
-        .metric-label {{
-            font-size: 10px;
-            color: #8b949e;
-            text-transform: uppercase;
-        }}
-        .metric-value {{
-            font-size: 16px;
-            font-weight: 700;
-            color: #e6edf3;
-        }}
-        .thesis-box {{
-            background: #0d419d;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 12px 0;
-            color: #e6edf3;
-            font-size: 14px;
-        }}
-        .risk-box {{
-            background: #5d1f1f;
-            border-radius: 8px;
-            padding: 12px;
-            color: #ffa198;
-            font-size: 13px;
-        }}
-        .footer {{
-            padding: 24px;
-            text-align: center;
-            color: #8b949e;
-            font-size: 12px;
-        }}
-        .disclaimer {{
-            background: #3d2a00;
-            border: 1px solid #d29922;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
-            color: #e6edf3;
-            font-size: 11px;
-        }}
-        @media (max-width: 600px) {{
-            body {{ padding: 8px; }}
-            .header {{ padding: 20px 16px; }}
-            .header h1 {{ font-size: 22px; }}
-            .section {{ padding: 16px; }}
-            .scorecard {{ grid-template-columns: 1fr 1fr; gap: 8px; }}
-            .score-value {{ font-size: 22px; }}
-            .metrics {{ grid-template-columns: 1fr; }}
-        }}
-        .vix-banner {{
-            background: linear-gradient(135deg, #5d1f1f 0%, #8b2500 100%);
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            color: #ffa198;
-            font-weight: 600;
-            font-size: 14px;
-        }}
-        .vix-banner.elevated {{
-            background: linear-gradient(135deg, #5d4a1f 0%, #8b6914 100%);
-            color: #ffd666;
-        }}
-        .vix-banner.extreme {{
-            background: linear-gradient(135deg, #5d1f1f 0%, #8b2500 100%);
-            color: #ffa198;
-        }}
-        .badge {{
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 600;
-            vertical-align: middle;
-            margin-left: 4px;
-        }}
-        .badge-earnings {{
-            background: #5d4a1f;
-            color: #ffd666;
-        }}
-        .badge-sentiment-bullish {{
-            background: #1f4a3d;
-            color: #3fb950;
-        }}
-        .badge-sentiment-bearish {{
-            background: #5d1f1f;
-            color: #ffa198;
-        }}
-        .badge-sentiment-neutral {{
-            background: #30363d;
-            color: #8b949e;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>📊 Stock Insight</h1>
-            <div class="subtitle">{datetime.now().strftime('%B %d, %Y')} • Bi-Weekly Report #{history.get('metadata', {}).get('total_months', 1)}</div>
-        </div>
-        
-        {_build_vix_banner(vix_data)}
-        
-        <!-- Performance Scorecard -->
-        <div class="section">
-            <div class="section-title">📈 Performance</div>
-            {f'''<div class="card" style="text-align: center; padding: 24px;">
-                <div style="font-size: 40px; margin-bottom: 8px;">🚀</div>
-                <div style="font-size: 16px; font-weight: 600; color: #3fb950;">Welcome to Your First Report!</div>
-                <div style="color: #8b949e; font-size: 13px; margin-top: 8px;">Performance tracking begins next period after positions are established.</div>
-            </div>''' if is_first_report else f'''
-            <div style="margin-bottom: 12px; color: #8b949e; font-size: 13px; text-align: center;">This Period vs Since Inception</div>
-            <div class="scorecard" style="grid-template-columns: repeat(3, 1fr);">
-                <div class="score-box {'positive' if this_month_return > 0 else 'negative' if this_month_return < 0 else 'neutral'}">
-                    <div class="score-value">{this_month_return:+.1f}%</div>
-                    <div class="score-label">Portfolio (Period)</div>
-                </div>
-                <div class="score-box {'positive' if sp500_return > 0 else 'negative' if sp500_return < 0 else 'neutral'}">
-                    <div class="score-value">{sp500_return:+.1f}%</div>
-                    <div class="score-label">S&P 500 (Period)</div>
-                </div>
-                <div class="score-box {'positive' if (this_month_return - sp500_return) > 0 else 'negative' if (this_month_return - sp500_return) < 0 else 'neutral'}">
-                    <div class="score-value">{(this_month_return - sp500_return):+.1f}%</div>
-                    <div class="score-label">Alpha (Period)</div>
-                </div>
-                <div class="score-box {'positive' if total_return > 0 else 'negative' if total_return < 0 else 'neutral'}">
-                    <div class="score-value">{total_return:+.1f}%</div>
-                    <div class="score-label">Portfolio (Total)</div>
-                </div>
-                <div class="score-box {'positive' if sp500_total_return > 0 else 'negative' if sp500_total_return < 0 else 'neutral'}">
-                    <div class="score-value">{sp500_total_return:+.1f}%</div>
-                    <div class="score-label">S&P 500 (Total)</div>
-                </div>
-                <div class="score-box {'positive' if total_alpha > 0 else 'negative' if total_alpha < 0 else 'neutral'}">
-                    <div class="score-value">{total_alpha:+.1f}%</div>
-                    <div class="score-label">Alpha (Total)</div>
-                </div>
-            </div>
-            <div style="margin-top: 16px; text-align: center;">
-                <span class="score-box neutral" style="display: inline-block; padding: 12px 24px;">
-                    <span class="score-value" style="font-size: 24px;">{win_rate:.0f}%</span>
-                    <span class="score-label" style="margin-left: 8px;">Win Rate ({win_count}W/{loss_count}L)</span>
-                </span>
-            </div>'''}
-        </div>
-        
-        <!-- Macro Assessment -->
-        <div class="section">
-            <div class="section-title">🌍 Market Regime</div>
-            <div class="card">
-                <div class="regime-badge">{(macro.get('regime', 'Unknown') or 'Unknown').upper()}</div>
-                <p style="color: #e6edf3; margin-bottom: 12px;">{macro.get('summary', 'No assessment available.') or 'No assessment available.'}</p>
-                <div style="font-size: 13px; color: #8b949e;">
-                    <strong style="color: #e6edf3;">Key Implications:</strong>
-                    <ul style="margin-left: 20px; margin-top: 8px; color: #e6edf3;">
-                        {''.join(f'<li style="margin-bottom: 4px;">{imp}</li>' for imp in (macro.get('implications', []) or []))}
-                    </ul>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Current Holdings Review -->
-        <div class="section">
-            <div class="section-title">📋 Current Holdings</div>
-            {_build_holdings_table(current_portfolio, portfolio_review, earnings_calendar, news_sentiment)}
-        </div>
-        
-        <!-- Sells This Month -->
-        {_build_sells_section(sells) if sells else ''}
-        
-        <!-- New Recommendations -->
-        <div class="section">
-            <div class="section-title">✨ New Recommendations</div>
-            {_build_recommendations_section(new_recs)}
-        </div>
-        
-        <!-- Metals & Commodities -->
-        <div class="section">
-            <div class="section-title">🥇 Commodities</div>
-            {_build_metals_section(metals)}
-        </div>
-        
-        <!-- Allocation Summary -->
-        <div class="section">
-            <div class="section-title">📊 Allocation</div>
-            {_build_allocation_section(allocation, current_portfolio, cash)}
-        </div>
-        
-        <!-- Politician Trades -->
-        {_build_politician_section(politician_analysis)}
-        
-        <!-- Risks -->
-        <div class="section">
-            <div class="section-title">⚠️ Risks</div>
-            {_build_risks_table(risks)}
-        </div>
-        
-        <!-- Watchlist -->
-        <div class="section">
-            <div class="section-title">👀 Watchlist</div>
-            {_build_watchlist_section(watchlist)}
-        </div>
-        
-        <!-- Action Summary -->
-        <div class="section">
-            <div class="section-title">📝 Actions</div>
-            {_build_action_summary(sells, portfolio_review, new_recs, cash)}
-        </div>
-        
-        <!-- Footer -->
-        <div class="footer">
-            <div class="disclaimer">
-                ⚠️ <strong>DISCLAIMER:</strong> This is not financial advice. For educational purposes only. 
-                Past performance does not guarantee future results. Consult a licensed financial advisor.
-            </div>
-            <p>Next report: {_get_next_report_date()}</p>
-            <p style="margin-top: 8px; color: #6e7681;">Generated by Stock Insight Agent</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
-    
-    return html
-
-
-def _safe_float(val, default=0):
-    """Safely convert value to float."""
+def _safe_float(val: Any, default: float = 0.0) -> float:
+    """Safely convert a value to float."""
     if val is None:
         return default
     try:
@@ -461,684 +16,2241 @@ def _safe_float(val, default=0):
         return default
 
 
-def _build_vix_banner(vix_data: Dict) -> str:
-    """Build VIX warning banner if volatility is elevated."""
-    if not vix_data:
-        return ''
-    
-    vix_level = _safe_float(vix_data.get('level'))
-    warning_level = vix_data.get('warning_level', 'normal')
-    
-    if warning_level == 'normal' or vix_level < 25:
-        return ''
-    
-    # Determine banner class and message
-    if warning_level == 'extreme' or vix_level >= 30:
-        banner_class = 'extreme'
-        emoji = '🚨'
-        message = f'HIGH FEAR: VIX at {vix_level:.1f} (Extreme volatility - consider defensive positioning)'
-    else:
-        banner_class = 'elevated'
-        emoji = '⚠️'
-        message = f'ELEVATED VIX: {vix_level:.1f} (Above average volatility - exercise caution)'
-    
-    return f'''
-        <div class="vix-banner {banner_class}">
-            <span>{emoji}</span>
-            <span>{message}</span>
-        </div>
-    '''
-
-
-def _build_holdings_table(holdings: List[Dict], reviews: List[Dict], earnings_calendar: Dict = None, news_sentiment: Dict = None) -> str:
-    """Build HTML table for current holdings with earnings and sentiment badges."""
-    # Show all holdings in current_portfolio - they are existing positions
-    # The 'status' field indicates Claude's recommended action (HOLD/BUY/SELL), not whether it's new
-    existing_holdings = holdings
-    earnings_calendar = earnings_calendar or {}
-    news_sentiment = news_sentiment or {}
-    
-    if not existing_holdings:
-        return '''<div class="card" style="text-align: center; padding: 24px;">
-            <div style="font-size: 40px; margin-bottom: 8px;">🚀</div>
-            <div style="font-size: 16px; font-weight: 600; color: #3fb950;">Portfolio Starting Fresh!</div>
-            <div style="color: #8b949e; font-size: 13px; margin-top: 8px;">New recommendations below will establish your initial positions.</div>
-        </div>'''
-    
-    # Create lookup for review actions
-    review_lookup = {r.get('ticker'): r for r in reviews}
-    
-    rows = []
-    for h in existing_holdings:
-        ticker = h.get('ticker', '') or ''
-        review = review_lookup.get(ticker, {})
-        action = review.get('action', h.get('status', 'HOLD')) or 'HOLD'
-        gain = _safe_float(h.get('gain_loss_pct'))
-        rec_price = _safe_float(h.get('recommended_price'))
-        cur_price = _safe_float(h.get('current_price'))
-        alloc = _safe_float(h.get('allocation_pct'))
-        
-        # Risk level tag
-        risk = (h.get('risk_level', 'moderate') or 'moderate').lower()
-        risk_emoji = '🟢' if risk == 'conservative' else '🟡' if risk == 'moderate' else '🔴'
-        
-        # Build badges for ticker cell
-        badges = ''
-        
-        # Earnings badge
-        if ticker in earnings_calendar:
-            earnings_info = earnings_calendar[ticker]
-            earnings_date = earnings_info.get('earnings_date', 'Soon')
-            badges += f'<span class="badge badge-earnings" title="Earnings: {earnings_date}">⚠️ EARNINGS</span>'
-        
-        # Sentiment badge
-        if ticker in news_sentiment:
-            sentiment_info = news_sentiment[ticker]
-            sentiment_status = sentiment_info.get('status', 'neutral')
-            sentiment_emoji = sentiment_info.get('emoji', '⚪')
-            if sentiment_status == 'bullish':
-                badges += f'<span class="badge badge-sentiment-bullish">{sentiment_emoji}</span>'
-            elif sentiment_status == 'bearish':
-                badges += f'<span class="badge badge-sentiment-bearish">{sentiment_emoji}</span>'
-            elif sentiment_status in ['neutral', 'mixed']:
-                badges += f'<span class="badge badge-sentiment-neutral">{sentiment_emoji}</span>'
-        
-        # Badge styling for action
-        badge_bg = '#1f6feb'  # hold
-        if action == 'SELL':
-            badge_bg = '#f85149'
-        elif action == 'TRIM':
-            badge_bg = '#d29922'
-        elif action == 'ADD':
-            badge_bg = '#238636'
-        
-        gain_color = '#3fb950' if gain > 0 else '#f85149' if gain < 0 else '#8b949e'
-        
-        rows.append(f'''
-            <tr>
-                <td style="color: #58a6ff; font-weight: 600;">{ticker} {risk_emoji}{badges}</td>
-                <td style="color: #e6edf3;">${rec_price:.2f}</td>
-                <td style="color: #e6edf3;">${cur_price:.2f}</td>
-                <td style="color: {gain_color}; font-weight: 600;">{gain:+.2f}%</td>
-                <td style="color: #e6edf3;">{alloc:.1f}%</td>
-                <td><span style="background: {badge_bg}; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">{action}</span></td>
-            </tr>
-        ''')
-    
-    return f'''
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="border-bottom: 1px solid #30363d;">
-                    <th style="padding: 12px 8px; text-align: left; font-size: 11px; color: #8b949e; text-transform: uppercase;">Ticker</th>
-                    <th style="padding: 12px 8px; text-align: left; font-size: 11px; color: #8b949e; text-transform: uppercase;">Entry</th>
-                    <th style="padding: 12px 8px; text-align: left; font-size: 11px; color: #8b949e; text-transform: uppercase;">Current</th>
-                    <th style="padding: 12px 8px; text-align: left; font-size: 11px; color: #8b949e; text-transform: uppercase;">P&L</th>
-                    <th style="padding: 12px 8px; text-align: left; font-size: 11px; color: #8b949e; text-transform: uppercase;">Weight</th>
-                    <th style="padding: 12px 8px; text-align: left; font-size: 11px; color: #8b949e; text-transform: uppercase;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {''.join(rows)}
-            </tbody>
-        </table>
-    '''
-
-
-def _build_sells_section(sells: List[Dict]) -> str:
-    """Build sells section HTML."""
-    if not sells:
-        return ''
-    
-    rows = []
-    for s in sells:
-        loss_pct = _safe_float(s.get('loss_pct'))
-        rows.append(f"""
-            <tr>
-                <td><strong>{s.get('ticker', '') or ''}</strong></td>
-                <td class="loss">{loss_pct:+.2f}%</td>
-                <td>{s.get('reason', 'N/A') or 'N/A'}</td>
-                <td style="font-style: italic; color: #666;">{s.get('lesson_learned', '') or ''}</td>
-            </tr>
-        """)
-    
-    return f"""
-        <div class="section">
-            <div class="section-title">🚨 Sells This Period</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Ticker</th>
-                        <th>Return</th>
-                        <th>Reason</th>
-                        <th>Lesson</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {''.join(rows)}
-                </tbody>
-            </table>
-        </div>
+def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = None, email_context: Dict[str, Any] = None) -> str:
     """
+    Build Gmail-compatible HTML email matching the Stock Pulse design.
+    """
+    if history is None:
+        history = {}
+    if email_context is None:
+        email_context = {}
+    
+    # Extract data from various possible structures
+    market_overview = analysis_result.get("market_overview", {})
+    holdings_analysis = analysis_result.get("holdings_analysis", [])
+    recommendations = analysis_result.get("recommendations", analysis_result.get("new_recommendations", []))
+    market_signals = analysis_result.get("market_signals", {})
+    news_sentiment = email_context.get("news_sentiment", {})  # Get from email_context, not analysis_result
+    sentiment_summary = email_context.get("sentiment_summary", {})
+    politicians = analysis_result.get("politician_trades", [])
+    
+    # Extract new context data
+    triggered_alerts = email_context.get("triggered_alerts", [])
+    dividend_calendar = email_context.get("dividend_calendar", {})
+    is_first_run = email_context.get("is_first_run", False)
+    
+    # Also check for alternative data structures
+    if not recommendations:
+        recommendations = analysis_result.get("portfolio_review", [])
+    
+    # Get allocation summary
+    allocation = analysis_result.get("allocation_summary", {})
+    
+    # Get current date
+    current_date = datetime.now().strftime("%B %d, %Y")
+    
+    # Calculate portfolio value for position sizing
+    starting_capital = _safe_float(history.get('metadata', {}).get('starting_capital', 100000))
+    monthly = history.get('monthly_history', [])
+    current_value = monthly[-1].get('ending_value', starting_capital) if monthly else starting_capital
+    
+    # Get current portfolio for attribution
+    current_portfolio = history.get('current_portfolio', [])
+    this_month_return = monthly[-1].get('portfolio_return_pct', 0) if monthly else 0
+    
+    # Build all sections
+    header_html = _build_header(current_date)
+    welcome_html = _build_welcome_section(is_first_run, len(recommendations))
+    urgent_alerts_html = _build_urgent_alerts_section(triggered_alerts, current_value)
+    market_pulse_html = _build_market_pulse(market_overview, email_context)
+    news_sentiment_html = _build_news_sentiment_section(news_sentiment, sentiment_summary)
+    performance_attribution_html = _build_performance_attribution_section(current_portfolio, this_month_return, current_value)
+    holdings_analysis_html = _build_holdings_analysis_section(current_portfolio, current_value)
+    action_plan_html = _build_action_plan(recommendations, allocation, analysis_result)
+    stock_picks_html = _build_stock_picks(recommendations, analysis_result, current_value)
+    dividend_calendar_html = _build_dividend_calendar_section(dividend_calendar, current_portfolio, current_value)
+    retail_insights_html = _build_retail_investor_section(email_context.get('retail_analysis', {}), current_value)
+    politicians_html = _build_politicians_section(politicians)
+    tracker_html = _build_recommendation_tracker(history, current_value)
+    comparison_html = _build_sp500_comparison(history)
+    footer_html = _build_footer()
+    
+    html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Pulse | Biweekly Advisor</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0f; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #0a0a0f;">
+        <tr>
+            <td align="center" style="padding: 0;">
+                <!-- Main Container -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="700" style="max-width: 700px; background-color: #12121a; border-left: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08);">
+                    
+                    {header_html}
+                    
+                    {welcome_html}
+                    
+                    {urgent_alerts_html}
+                    
+                    {market_pulse_html}
+                    
+                    {news_sentiment_html}
+                    
+                    {performance_attribution_html}
+                    
+                    {holdings_analysis_html}
+                    
+                    {action_plan_html}
+                    
+                    {stock_picks_html}
+                    
+                    {dividend_calendar_html}
+                    
+                    {retail_insights_html}
+                    
+                    {politicians_html}
+                    
+                    {tracker_html}
+                    
+                    {comparison_html}
+                    
+                    {footer_html}
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>'''
+    
+    return html
 
 
-def _build_recommendations_section(recs: List[Dict]) -> str:
-    """Build new recommendations section HTML."""
-    if not recs:
-        return '<p style="color: #8b949e; font-style: italic;">No new recommendations this period. Maintaining current positions.</p>'
-    
-    # Group by time horizon
-    short_term = [r for r in recs if r.get('time_horizon') == 'short_term']
-    medium_term = [r for r in recs if r.get('time_horizon') == 'medium_term']
-    long_term = [r for r in recs if r.get('time_horizon') == 'long_term']
-    
-    sections = []
-    
-    if short_term:
-        sections.append(_build_horizon_section('⚡ Short-term (1-3mo)', short_term))
-    if medium_term:
-        sections.append(_build_horizon_section('📊 Medium-term (3-12mo)', medium_term))
-    if long_term:
-        sections.append(_build_horizon_section('🏔️ Long-term (1-3yr)', long_term))
-    
-    return ''.join(sections)
+def _build_header(current_date: str) -> str:
+    """Build the header section with logo and title."""
+    return f'''
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 40px 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(212,175,55,0.05) 0%, transparent 100%);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="vertical-align: middle;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                                        <tr>
+                                                            <td style="width: 44px; height: 44px; background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border-radius: 10px; text-align: center; vertical-align: middle;">
+                                                                <span style="font-family: Georgia, serif; font-weight: 700; font-size: 22px; color: #0a0a0f;">SP</span>
+                                                            </td>
+                                                            <td style="padding-left: 12px;">
+                                                                <span style="font-family: Georgia, serif; font-size: 26px; font-weight: 600; color: #f5f5f7; letter-spacing: -0.5px;">Stock Pulse</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                                <td align="right" style="vertical-align: middle;">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #d4af37; background: rgba(212,175,55,0.15); padding: 6px 12px; border-radius: 4px;">Biweekly Edition</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 24px;">
+                                        <span style="font-family: Georgia, serif; font-size: 36px; font-weight: 700; color: #f5f5f7; letter-spacing: -1px; display: block;">Market Intelligence Report</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 8px;">
+                                        <span style="color: #d4af37; font-weight: 500; font-size: 15px;">{current_date}</span>
+                                        <span style="color: #a0a0b0; font-size: 15px;"> · Your biweekly edge in the market</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
 
 
-def _build_horizon_section(title: str, recs: List[Dict]) -> str:
-    """Build recommendation cards for a time horizon using table-based layouts for email compatibility."""
-    cards = []
-    for r in recs:
-        entry = r.get('entry_zone', {}) or {}
+def _build_welcome_section(is_first_run: bool, num_recommendations: int) -> str:
+    """Build welcome section for first-time users."""
+    if not is_first_run:
+        return ""
+    
+    return f'''
+                    <!-- Welcome Section for First Run -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(0,212,170,0.05) 100%);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                        <span style="font-size: 48px;">🎉</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding-top: 16px;">
+                                        <span style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #f5f5f7;">Welcome to Stock Pulse!</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding-top: 12px; padding-left: 40px; padding-right: 40px;">
+                                        <span style="font-size: 15px; color: #a0a0b0; line-height: 1.7;">This is your first portfolio analysis. We've analyzed 1,500+ stocks across all sectors and identified <strong style="color: #00d4aa;">{num_recommendations} opportunities</strong> to build your diversified portfolio.</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 24px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td width="33%" style="padding: 0 8px;">
+                                                    <div style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; text-align: center;">
+                                                        <span style="display: block; font-size: 24px;">📊</span>
+                                                        <span style="display: block; font-size: 12px; color: #d4af37; font-weight: 600; padding-top: 8px;">STEP 1</span>
+                                                        <span style="display: block; font-size: 13px; color: #f5f5f7; padding-top: 4px;">Review the picks below</span>
+                                                    </div>
+                                                </td>
+                                                <td width="33%" style="padding: 0 8px;">
+                                                    <div style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; text-align: center;">
+                                                        <span style="display: block; font-size: 24px;">💰</span>
+                                                        <span style="display: block; font-size: 12px; color: #d4af37; font-weight: 600; padding-top: 8px;">STEP 2</span>
+                                                        <span style="display: block; font-size: 13px; color: #f5f5f7; padding-top: 4px;">Invest per allocation %</span>
+                                                    </div>
+                                                </td>
+                                                <td width="33%" style="padding: 0 8px;">
+                                                    <div style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; text-align: center;">
+                                                        <span style="display: block; font-size: 24px;">📈</span>
+                                                        <span style="display: block; font-size: 12px; color: #d4af37; font-weight: 600; padding-top: 8px;">STEP 3</span>
+                                                        <span style="display: block; font-size: 13px; color: #f5f5f7; padding-top: 4px;">Check back in 2 weeks</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding-top: 20px;">
+                                        <div style="background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 8px; padding: 12px 20px; display: inline-block;">
+                                            <span style="font-size: 13px; color: #d4af37;">💡 <strong>Pro tip:</strong> Start with a small amount to get comfortable, then scale up</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_news_sentiment_section(news_sentiment: Dict, sentiment_summary: Dict) -> str:
+    """Build the news sentiment summary section."""
+    if not news_sentiment and not sentiment_summary:
+        return ""
+    
+    # Get overall market sentiment
+    overall_bullish = sentiment_summary.get('overall_bullish_pct', 50)
+    overall_label = sentiment_summary.get('overall_label', 'NEUTRAL')
+    analyzed_count = len(news_sentiment) if news_sentiment else 0
+    
+    if analyzed_count == 0:
+        return ""
+    
+    # Determine sentiment styling
+    if overall_bullish >= 60:
+        sentiment_color = "#00d4aa"
+        sentiment_bg = "rgba(0,212,170,0.12)"
+        sentiment_emoji = "🟢"
+        sentiment_text = "Bullish"
+    elif overall_bullish <= 40:
+        sentiment_color = "#ff6b6b"
+        sentiment_bg = "rgba(255,107,107,0.12)"
+        sentiment_emoji = "🔴"
+        sentiment_text = "Bearish"
+    else:
+        sentiment_color = "#ffd93d"
+        sentiment_bg = "rgba(255,217,61,0.12)"
+        sentiment_emoji = "⚪"
+        sentiment_text = "Neutral"
+    
+    # Build individual stock sentiment badges
+    stock_badges = ""
+    sorted_sentiment = sorted(news_sentiment.items(), key=lambda x: x[1].get('bullish_pct', 50), reverse=True)
+    
+    for ticker, data in sorted_sentiment[:8]:
+        bullish = data.get('bullish_pct', 50)
+        emoji = data.get('emoji', '⚪')
         
-        entry_low = _safe_float(entry.get('low'))
-        entry_high = _safe_float(entry.get('high'))
-        price_target = _safe_float(r.get('price_target'))
-        stop_loss = _safe_float(r.get('stop_loss'))
-        allocation = _safe_float(r.get('allocation_pct'))
-        current_market_price = _safe_float(r.get('current_market_price'))  # Real price from yfinance
-        
-        # Calculate upside potential from current price if available, otherwise from entry zone
-        if current_market_price > 0 and price_target > 0:
-            upside = ((price_target - current_market_price) / current_market_price) * 100
-        elif entry_low > 0 and price_target > 0:
-            upside = ((price_target - entry_low) / entry_low) * 100
+        if bullish >= 60:
+            badge_color = "#00d4aa"
+            badge_bg = "rgba(0,212,170,0.15)"
+        elif bullish <= 40:
+            badge_color = "#ff6b6b"
+            badge_bg = "rgba(255,107,107,0.15)"
         else:
-            upside = 0
+            badge_color = "#a0a0b0"
+            badge_bg = "rgba(255,255,255,0.08)"
         
-        # Risk level colors
-        risk = (r.get('risk_level', 'moderate') or 'moderate').lower()
-        risk_bg = '#238636' if risk == 'conservative' else '#d29922' if risk == 'moderate' else '#f85149'
+        stock_badges += f'''
+                                            <td style="padding: 4px;">
+                                                <div style="background: {badge_bg}; border-radius: 6px; padding: 8px 12px; text-align: center; white-space: nowrap;">
+                                                    <span style="font-family: 'Consolas', monospace; font-size: 12px; font-weight: 600; color: {badge_color};">{ticker}</span>
+                                                    <span style="font-size: 12px; color: {badge_color}; padding-left: 4px;">{emoji} {bullish:.0f}%</span>
+                                                </div>
+                                            </td>'''
+    
+    return f'''
+                    <!-- News Sentiment Section -->
+                    <tr>
+                        <td style="padding: 24px 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: {sentiment_bg};">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📰</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">News Sentiment</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 24px; vertical-align: middle;">{sentiment_emoji}</span>
+                                                    <span style="font-size: 14px; font-weight: 600; color: {sentiment_color}; padding-left: 8px; vertical-align: middle;">{sentiment_text} ({overall_bullish:.0f}% Bullish)</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 12px;">
+                                        <span style="font-size: 12px; color: #6b6b7b;">AI-analyzed sentiment from {analyzed_count} stocks based on recent news coverage:</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 12px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                            <tr>
+                                                {stock_badges}
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_holdings_analysis_section(current_portfolio: List[Dict], current_value: float) -> str:
+    """Build detailed holdings analysis section showing each position's status."""
+    if not current_portfolio:
+        return ""
+    
+    holdings_rows = ""
+    total_invested = 0
+    total_gain_loss = 0
+    
+    for holding in current_portfolio:
+        ticker = holding.get('ticker', 'N/A')
+        company = holding.get('company_name', ticker)
+        entry_price = _safe_float(holding.get('recommended_price', holding.get('entry_price', 0)))
+        current_price = _safe_float(holding.get('current_price', 0))
+        gain_loss_pct = _safe_float(holding.get('gain_loss_pct', 0))
+        allocation = _safe_float(holding.get('allocation_pct', 0))
+        stop_loss = _safe_float(holding.get('stop_loss', 0))
+        price_target = _safe_float(holding.get('price_target', 0))
         
-        # Sentiment badge (fetched AFTER Claude's selection - no bias)
-        sentiment_html = ''
-        sentiment_data = r.get('sentiment', {})
-        if sentiment_data:
-            sentiment_label = sentiment_data.get('label', 'NEUTRAL')
-            sentiment_emoji = sentiment_data.get('emoji', '⚪')
-            sentiment_pct = sentiment_data.get('bullish_pct', 50)
-            sentiment_bg = '#238636' if sentiment_label == 'BULLISH' else '#f85149' if sentiment_label == 'BEARISH' else '#6e7681'
-            sentiment_html = f'<span style="background: {sentiment_bg}; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 8px;">{sentiment_emoji} {sentiment_label} ({sentiment_pct:.0f}%)</span>'
+        # FIXED: Calculate dollar P&L correctly
+        # Original investment = current_value * allocation / (1 + gain_loss_pct/100)
+        # This gives us what we originally put in, not inflated by gains
+        # Alternatively: dollar_gain = original_investment * gain_loss_pct / 100
+        if gain_loss_pct != 0 and allocation > 0:
+            # Current position value
+            position_value = current_value * (allocation / 100)
+            # Work backwards to find original investment
+            # current_value_of_position = original_investment * (1 + gain/100)
+            # original_investment = current_value_of_position / (1 + gain/100)
+            original_investment = position_value / (1 + gain_loss_pct / 100)
+            # Dollar gain = current - original
+            dollar_gain = position_value - original_investment
+        else:
+            position_value = current_value * (allocation / 100) if allocation > 0 else 0
+            original_investment = position_value
+            dollar_gain = 0
         
-        # Email-compatible table-based card layout
-        cards.append(f'''
-            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #21262d; border: 1px solid #30363d; border-radius: 16px; margin-bottom: 20px;">
+        total_invested += original_investment
+        total_gain_loss += dollar_gain
+        
+        # Determine status
+        if current_price > 0 and stop_loss > 0 and current_price <= stop_loss * 1.05:
+            status = "⚠️ Near Stop"
+            status_color = "#ff6b6b"
+        elif current_price > 0 and price_target > 0 and current_price >= price_target * 0.95:
+            status = "🎯 Near Target"
+            status_color = "#00d4aa"
+        elif gain_loss_pct >= 20:
+            status = "🚀 Strong"
+            status_color = "#00d4aa"
+        elif gain_loss_pct >= 5:
+            status = "✅ Healthy"
+            status_color = "#00d4aa"
+        elif gain_loss_pct <= -15:
+            status = "🔴 Review"
+            status_color = "#ff6b6b"
+        elif gain_loss_pct <= -5:
+            status = "⚠️ Watch"
+            status_color = "#ffd93d"
+        else:
+            status = "➖ Flat"
+            status_color = "#a0a0b0"
+        
+        # P&L styling
+        pnl_color = "#00d4aa" if gain_loss_pct >= 0 else "#ff6b6b"
+        pnl_sign = "+" if gain_loss_pct >= 0 else ""
+        dollar_sign = "+" if dollar_gain >= 0 else "-"
+        
+        holdings_rows += f'''
+                                    <tr>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                                <tr>
+                                                    <td>
+                                                        <span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #f5f5f7;">{ticker}</span>
+                                                        <span style="display: block; font-size: 11px; color: #6b6b7b; padding-top: 2px;">{company[:20]}</span>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;">
+                                            <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #a0a0b0;">${entry_price:.2f}</span>
+                                        </td>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;">
+                                            <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #f5f5f7;">${current_price:.2f}</span>
+                                        </td>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;">
+                                            <span style="font-family: 'Consolas', monospace; font-size: 13px; font-weight: 600; color: {pnl_color};">{pnl_sign}{gain_loss_pct:.1f}%</span>
+                                            <span style="display: block; font-size: 11px; color: {pnl_color};">{dollar_sign}${abs(dollar_gain):,.0f}</span>
+                                        </td>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;">
+                                            <span style="font-size: 12px; color: {status_color};">{status}</span>
+                                        </td>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: right;">
+                                            <span style="font-size: 12px; color: #6b6b7b;">Stop: ${stop_loss:.2f}</span>
+                                            <span style="display: block; font-size: 12px; color: #6b6b7b;">Target: ${price_target:.2f}</span>
+                                        </td>
+                                    </tr>'''
+    
+    # Summary styling
+    total_pnl_color = "#00d4aa" if total_gain_loss >= 0 else "#ff6b6b"
+    total_sign = "+" if total_gain_loss >= 0 else "-"
+    
+    return f'''
+                    <!-- Holdings Analysis Section -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💼</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Current Holdings</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">{len(current_portfolio)} Positions</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 20px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;">
+                                            <tr style="background: rgba(0,0,0,0.3);">
+                                                <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Stock</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Entry</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Current</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">P&L</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Status</th>
+                                                <th style="padding: 12px; text-align: right; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Levels</th>
+                                            </tr>
+                                            {holdings_rows}
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 16px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #22222e; border-radius: 8px; padding: 12px 16px;">
+                                            <tr>
+                                                <td>
+                                                    <span style="font-size: 13px; color: #6b6b7b;">Total Unrealized P&L:</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-family: 'Consolas', monospace; font-size: 18px; font-weight: 700; color: {total_pnl_color};">{total_sign}${abs(total_gain_loss):,.0f}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_urgent_alerts_section(triggered_alerts: List[Dict], current_value: float) -> str:
+    """
+    Build the URGENT ALERTS section for stop-loss and target hits.
+    This appears at the TOP of the email for immediate visibility.
+    """
+    if not triggered_alerts:
+        return ""
+    
+    stop_losses = [a for a in triggered_alerts if a.get('alert_type') == 'STOP_LOSS']
+    targets_hit = [a for a in triggered_alerts if a.get('alert_type') == 'TARGET_HIT']
+    
+    alerts_html = ""
+    
+    # Build stop-loss alerts (urgent/red)
+    for alert in stop_losses:
+        ticker = alert.get('ticker', 'N/A')
+        company = alert.get('company_name', ticker)
+        current_price = _safe_float(alert.get('current_price'))
+        entry_price = _safe_float(alert.get('entry_price'))
+        trigger_price = _safe_float(alert.get('trigger_price'))
+        loss_pct = _safe_float(alert.get('gain_loss_pct'))
+        allocation = _safe_float(alert.get('allocation_pct'))
+        
+        # Calculate dollar loss
+        position_value = current_value * (allocation / 100) if allocation > 0 else 0
+        dollar_loss = position_value * (loss_pct / 100) if loss_pct != 0 else 0
+        
+        alerts_html += f'''
+                                <tr>
+                                    <td style="padding: 12px 0;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(90deg, rgba(255,107,107,0.15) 0%, #1a1a24 100%); border-left: 4px solid #ff6b6b; border-radius: 8px;">
+                                            <tr>
+                                                <td style="padding: 16px;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="40" style="vertical-align: top; font-size: 28px;">🔴</td>
+                                                            <td style="padding-left: 12px;">
+                                                                <span style="display: block; font-weight: 700; font-size: 16px; color: #ff6b6b;">{ticker} - STOP-LOSS TRIGGERED</span>
+                                                                <span style="display: block; font-size: 14px; color: #a0a0b0; padding-top: 4px;">{company} dropped to ${current_price:.2f} (entry: ${entry_price:.2f})</span>
+                                                                <span style="display: block; font-size: 14px; color: #ff6b6b; padding-top: 4px;">Loss: {loss_pct:.1f}% (${abs(dollar_loss):,.0f})</span>
+                                                                <span style="display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 12px; border-radius: 4px; color: #ff6b6b; background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.3);">⚡ SELL to limit losses</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>'''
+    
+    # Build target-hit alerts (green/celebration)
+    for alert in targets_hit:
+        ticker = alert.get('ticker', 'N/A')
+        company = alert.get('company_name', ticker)
+        current_price = _safe_float(alert.get('current_price'))
+        entry_price = _safe_float(alert.get('entry_price'))
+        trigger_price = _safe_float(alert.get('trigger_price'))
+        gain_pct = _safe_float(alert.get('gain_loss_pct'))
+        allocation = _safe_float(alert.get('allocation_pct'))
+        
+        # Calculate dollar gain
+        position_value = current_value * (allocation / 100) if allocation > 0 else 0
+        dollar_gain = position_value * (gain_pct / 100) if gain_pct != 0 else 0
+        
+        alerts_html += f'''
+                                <tr>
+                                    <td style="padding: 12px 0;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(90deg, rgba(0,212,170,0.15) 0%, #1a1a24 100%); border-left: 4px solid #00d4aa; border-radius: 8px;">
+                                            <tr>
+                                                <td style="padding: 16px;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="40" style="vertical-align: top; font-size: 28px;">🎯</td>
+                                                            <td style="padding-left: 12px;">
+                                                                <span style="display: block; font-weight: 700; font-size: 16px; color: #00d4aa;">{ticker} - TARGET REACHED! 🎉</span>
+                                                                <span style="display: block; font-size: 14px; color: #a0a0b0; padding-top: 4px;">{company} hit ${current_price:.2f} (target was ${trigger_price:.2f})</span>
+                                                                <span style="display: block; font-size: 14px; color: #00d4aa; padding-top: 4px;">Profit: +{gain_pct:.1f}% (+${dollar_gain:,.0f})</span>
+                                                                <span style="display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 12px; border-radius: 4px; color: #00d4aa; background: rgba(0,212,170,0.12); border: 1px solid rgba(0,212,170,0.3);">🎯 Consider taking profits</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>'''
+    
+    alert_count = len(triggered_alerts)
+    badge_color = "#ff6b6b" if stop_losses else "#00d4aa"
+    badge_bg = "rgba(255,107,107,0.12)" if stop_losses else "rgba(0,212,170,0.12)"
+    
+    return f'''
+                    <!-- URGENT ALERTS Section -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(135deg, rgba(255,107,107,0.08) 0%, rgba(255,217,61,0.05) 100%); border-left: 4px solid {badge_color};">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🚨</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Urgent Alerts</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: {badge_color}; background: {badge_bg}; padding: 6px 10px; border-radius: 4px; border: 1px solid {badge_color};">{alert_count} Alert{"s" if alert_count != 1 else ""}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                {alerts_html}
+                                <tr>
+                                    <td style="padding-top: 12px;">
+                                        <div style="font-size: 13px; color: #6b6b7b; padding: 12px 16px; background: #22222e; border-radius: 8px;">
+                                            💡 <strong>What this means:</strong> These positions have hit pre-set price levels. Review and take action to protect your portfolio.
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_performance_attribution_section(current_portfolio: List[Dict], this_month_return: float, current_value: float) -> str:
+    """
+    Build the Performance Attribution section showing what moved your portfolio.
+    Shows contributors and detractors with dollar amounts.
+    """
+    if not current_portfolio:
+        return ""
+    
+    # Calculate dollar return for portfolio
+    portfolio_dollar_change = current_value * (this_month_return / 100) if this_month_return != 0 else 0
+    
+    # Sort positions by contribution (gain_loss_pct * allocation_pct = weighted contribution)
+    positions_with_contrib = []
+    for pos in current_portfolio:
+        ticker = pos.get('ticker', '')
+        gain_pct = _safe_float(pos.get('gain_loss_pct', 0))
+        allocation = _safe_float(pos.get('allocation_pct', 0))
+        
+        # FIXED: Calculate dollar change correctly from original investment
+        # Current position value
+        current_position_value = current_value * (allocation / 100) if allocation > 0 else 0
+        
+        if gain_pct != 0 and gain_pct != -100:
+            # Work backwards: original * (1 + gain/100) = current
+            original_investment = current_position_value / (1 + gain_pct / 100)
+            dollar_change = current_position_value - original_investment
+        else:
+            dollar_change = 0
+        
+        positions_with_contrib.append({
+            'ticker': ticker,
+            'gain_pct': gain_pct,
+            'dollar_change': dollar_change,
+            'allocation': allocation
+        })
+    
+    # Sort by dollar contribution
+    positions_with_contrib.sort(key=lambda x: x['dollar_change'], reverse=True)
+    
+    # Top contributors (positive) and detractors (negative)
+    contributors = [p for p in positions_with_contrib if p['dollar_change'] > 0][:3]
+    detractors = [p for p in positions_with_contrib if p['dollar_change'] < 0][:3]
+    
+    # Build contributors HTML
+    contributors_html = ""
+    for pos in contributors:
+        contributors_html += f'''
+                                            <tr>
+                                                <td style="padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.08);">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td><span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #f5f5f7;">{pos['ticker']}</span></td>
+                                                            <td align="right">
+                                                                <span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #00d4aa;">+${pos['dollar_change']:,.0f}</span>
+                                                                <span style="font-size: 12px; color: #6b6b7b; padding-left: 6px;">({pos['gain_pct']:+.1f}%)</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>'''
+    
+    if not contributors_html:
+        contributors_html = '<tr><td style="padding: 12px 0; font-size: 13px; color: #6b6b7b; font-style: italic;">No positive contributors this period</td></tr>'
+    
+    # Build detractors HTML
+    detractors_html = ""
+    for pos in detractors:
+        detractors_html += f'''
+                                            <tr>
+                                                <td style="padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.08);">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td><span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #f5f5f7;">{pos['ticker']}</span></td>
+                                                            <td align="right">
+                                                                <span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #ff6b6b;">-${abs(pos['dollar_change']):,.0f}</span>
+                                                                <span style="font-size: 12px; color: #6b6b7b; padding-left: 6px;">({pos['gain_pct']:+.1f}%)</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>'''
+    
+    if not detractors_html:
+        detractors_html = '<tr><td style="padding: 12px 0; font-size: 13px; color: #6b6b7b; font-style: italic;">No detractors this period 🎉</td></tr>'
+    
+    # Determine overall color
+    return_color = "#00d4aa" if this_month_return >= 0 else "#ff6b6b"
+    dollar_sign = "+" if portfolio_dollar_change >= 0 else "-"
+    
+    return f'''
+                    <!-- Performance Attribution Section -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📊</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">What Moved Your Portfolio</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">This Period</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Summary Card -->
+                                <tr>
+                                    <td style="padding-top: 20px;" align="center">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #1a1a24; border: 1px solid {'rgba(0,212,170,0.3)' if this_month_return >= 0 else 'rgba(255,107,107,0.3)'}; border-radius: 12px; padding: 20px 40px;">
+                                            <tr>
+                                                <td align="center">
+                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 32px; font-weight: 700; color: {return_color};">{this_month_return:+.1f}%</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">This Period Return</span>
+                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 16px; color: {return_color}; padding-top: 8px;">{dollar_sign}${abs(portfolio_dollar_change):,.0f}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Two Column Grid -->
+                                <tr>
+                                    <td style="padding-top: 20px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td width="48%" style="vertical-align: top;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-top: 3px solid #00d4aa; border-radius: 10px; padding: 16px;">
+                                                        <tr>
+                                                            <td style="font-weight: 600; font-size: 14px; color: #00d4aa; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">📈 Top Contributors</td>
+                                                        </tr>
+                                                        {contributors_html}
+                                                    </table>
+                                                </td>
+                                                <td width="4%"></td>
+                                                <td width="48%" style="vertical-align: top;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-top: 3px solid #ff6b6b; border-radius: 10px; padding: 16px;">
+                                                        <tr>
+                                                            <td style="font-weight: 600; font-size: 14px; color: #ff6b6b; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">📉 Detractors</td>
+                                                        </tr>
+                                                        {detractors_html}
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_dividend_calendar_section(dividend_calendar: Dict, current_portfolio: List[Dict], current_value: float) -> str:
+    """
+    Build the Dividend Calendar section showing upcoming ex-dividend dates.
+    """
+    if not dividend_calendar:
+        return ""
+    
+    # Build portfolio allocation lookup
+    allocation_lookup = {pos.get('ticker', ''): _safe_float(pos.get('allocation_pct', 0)) for pos in current_portfolio}
+    
+    rows_html = ""
+    total_expected_income = 0
+    
+    for ticker, div_data in dividend_calendar.items():
+        ex_date = div_data.get('ex_dividend_display', 'TBD')
+        days_until = div_data.get('days_until', '?')
+        div_per_share = _safe_float(div_data.get('dividend_per_share', 0))
+        yield_pct = _safe_float(div_data.get('dividend_yield_pct', 0))
+        
+        # Get allocation and calculate expected income
+        allocation = allocation_lookup.get(ticker, 0)
+        position_value = current_value * (allocation / 100) if allocation > 0 else 0
+        
+        # Estimate shares (rough - need price for exact)
+        current_price = div_data.get('current_price', 100)  # Fallback
+        shares = int(position_value / current_price) if current_price > 0 else 0
+        expected_income = shares * div_per_share
+        total_expected_income += expected_income
+        
+        # Urgency styling
+        is_urgent = isinstance(days_until, int) and days_until <= 3
+        row_bg = "rgba(255,217,61,0.08)" if is_urgent else "transparent"
+        urgent_badge = '<span style="font-size: 10px; font-weight: 600; color: #ffd93d; background: rgba(255,217,61,0.12); padding: 2px 6px; border-radius: 3px; margin-left: 8px;">SOON</span>' if is_urgent else ""
+        
+        rows_html += f'''
+                                <tr style="background: {row_bg};">
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <span style="font-family: 'Consolas', monospace; font-weight: 600; color: #f5f5f7;">{ticker}</span>
+                                        {urgent_badge}
+                                    </td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); color: #a0a0b0;">{ex_date}</td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); color: #6b6b7b;">{days_until} days</td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Consolas', monospace; color: #a0a0b0;">${div_per_share:.2f}</td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Consolas', monospace; font-weight: 600; color: #00d4aa;">${expected_income:.0f}</td>
+                                </tr>'''
+    
+    return f'''
+                    <!-- Dividend Calendar Section -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📅</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Dividend Calendar</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Next 14 Days</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 20px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px;">
+                                            <tr style="background: #1a1a24;">
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Stock</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Ex-Date</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Days</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Per Share</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Expected</th>
+                                            </tr>
+                                            {rows_html}
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 16px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #22222e; border-radius: 8px; padding: 12px 16px;">
+                                            <tr>
+                                                <td>
+                                                    <span style="font-size: 13px; color: #6b6b7b;">Total Expected Dividend Income:</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-family: 'Consolas', monospace; font-size: 18px; font-weight: 700; color: #00d4aa;">${total_expected_income:,.0f}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 12px;">
+                                        <span style="font-size: 12px; color: #6b6b7b; line-height: 1.5;">💡 <strong>Tip:</strong> You must own shares BEFORE the ex-dividend date to receive the dividend. Consider holding these positions until after the ex-date.</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_market_pulse(market_overview: Dict[str, Any], email_context: Dict[str, Any]) -> str:
+    """Build the market pulse strip with major indices."""
+    indices = market_overview.get("indices", {})
+    
+    # Try to get from email_context if not in market_overview
+    if not indices and email_context:
+        market_data = email_context.get("market_data", {})
+        indices = market_data.get("indexes", {})
+    
+    # Get VIX data
+    vix_data = email_context.get("vix_data", {})
+    vix_value = vix_data.get("current", "N/A")
+    vix_change = vix_data.get("change_pct", 0)
+    
+    # Default indices if not provided
+    default_indices = [
+        ("S&P 500", 5847.21, 1.24),
+        ("NASDAQ", 18392.44, 1.87),
+        ("DOW", 43284.12, -0.32),
+    ]
+    
+    pulse_cells = ""
+    
+    # Process provided indices or use defaults
+    if indices:
+        for name, data in list(indices.items())[:3]:
+            if isinstance(data, dict):
+                value = data.get("value", data.get("price", data.get("current", "N/A")))
+                change_pct = data.get("change_pct", data.get("change_percent", 0))
+            else:
+                value = data
+                change_pct = 0
+            
+            pulse_cells += _create_pulse_item(name, value, change_pct)
+    else:
+        for name, value, change_pct in default_indices:
+            pulse_cells += _create_pulse_item(name, value, change_pct)
+    
+    # Add VIX
+    pulse_cells += _create_pulse_item("VIX", vix_value, vix_change if vix_change else 0)
+    
+    return f'''
+                    <!-- Market Pulse Strip -->
+                    <tr>
+                        <td style="background-color: #0a0a0f; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 32px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    {pulse_cells}
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _create_pulse_item(name: str, value: Any, change_pct: float) -> str:
+    """Create a single pulse item cell."""
+    # Format value
+    if isinstance(value, (int, float)):
+        if value > 100:
+            value_str = f"{value:,.2f}"
+        else:
+            value_str = f"{value:.2f}"
+    else:
+        value_str = str(value)
+    
+    # Determine color and direction
+    if isinstance(change_pct, (int, float)):
+        is_positive = change_pct >= 0
+        color = "#00d4aa" if is_positive else "#ff6b6b"
+        bg_color = "rgba(0,212,170,0.12)" if is_positive else "rgba(255,107,107,0.12)"
+        sign = "+" if is_positive else ""
+        change_str = f"{sign}{change_pct:.2f}%"
+    else:
+        color = "#a0a0b0"
+        bg_color = "rgba(255,255,255,0.08)"
+        change_str = str(change_pct)
+    
+    return f'''
+                                    <td width="25%" style="padding: 0 8px;">
+                                        <span style="display: block; font-size: 12px; color: #6b6b7b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">{name}</span>
+                                        <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 500; color: #f5f5f7; padding-top: 4px;">{value_str}</span>
+                                        <span style="display: inline-block; font-family: 'Consolas', monospace; font-size: 12px; color: {color}; background: {bg_color}; padding: 2px 6px; border-radius: 3px; margin-top: 4px;">{change_str}</span>
+                                    </td>'''
+
+
+def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_result: Dict) -> str:
+    """Build the This Week's Action Plan section with allocation bar."""
+    
+    # Calculate allocations from recommendations
+    buy_stocks = []
+    hold_stocks = []
+    sell_stocks = []
+    trim_stocks = []  # New: separate list for TRIM actions
+    cash_pct = allocation.get("cash_pct", allocation.get("cash", {}).get("allocation_pct", 15))
+    
+    for rec in recommendations:
+        action = rec.get("action", rec.get("recommendation", rec.get("type", "HOLD"))).upper()
+        ticker = rec.get("symbol", rec.get("ticker", ""))
+        company = rec.get("company", rec.get("company_name", ticker))
+        alloc = rec.get("allocation_pct", rec.get("allocation", 10))
+        new_alloc = rec.get("new_allocation_pct", alloc)
+        
+        if "BUY" in action or "STRONG" in action or "ADD" in action:
+            buy_stocks.append({"ticker": ticker, "company": company, "allocation": alloc})
+        elif "SELL" in action:
+            sell_stocks.append({"ticker": ticker, "company": company, "allocation": alloc})
+        elif "TRIM" in action:
+            # Calculate trim percentage
+            old_alloc = rec.get("current_allocation_pct", alloc)
+            trim_pct = old_alloc - new_alloc if old_alloc > new_alloc else 0
+            trim_stocks.append({
+                "ticker": ticker,
+                "company": company,
+                "old_allocation": old_alloc,
+                "new_allocation": new_alloc,
+                "trim_pct": trim_pct
+            })
+        else:
+            hold_stocks.append({"ticker": ticker, "company": company, "allocation": alloc})
+    
+    # Also check portfolio_review for holds and trims
+    portfolio_review = analysis_result.get("portfolio_review", [])
+    for holding in portfolio_review:
+        action = holding.get("recommendation", holding.get("action", "HOLD")).upper()
+        ticker = holding.get("ticker", holding.get("symbol", ""))
+        
+        if "TRIM" in action:
+            old_alloc = holding.get("allocation_pct", holding.get("current_allocation_pct", 15))
+            new_alloc = holding.get("new_allocation_pct", old_alloc)
+            if not any(t["ticker"] == ticker for t in trim_stocks):
+                trim_stocks.append({
+                    "ticker": ticker,
+                    "company": holding.get("company_name", ticker),
+                    "old_allocation": old_alloc,
+                    "new_allocation": new_alloc,
+                    "trim_pct": old_alloc - new_alloc
+                })
+        elif "HOLD" in action:
+            if not any(h["ticker"] == ticker for h in hold_stocks):
+                hold_stocks.append({
+                    "ticker": ticker,
+                    "company": holding.get("company_name", ticker),
+                    "allocation": holding.get("allocation_pct", 15)
+                })
+    
+    # Calculate percentages
+    buy_total = sum(s["allocation"] for s in buy_stocks) if buy_stocks else 45
+    hold_total = sum(s["allocation"] for s in hold_stocks) if hold_stocks else 35
+    sell_total = sum(s["allocation"] for s in sell_stocks) if sell_stocks else 5
+    
+    # Normalize if needed
+    total = buy_total + hold_total + sell_total + cash_pct
+    if total > 0 and total != 100:
+        factor = 100 / total
+        buy_total = int(buy_total * factor)
+        hold_total = int(hold_total * factor)
+        sell_total = int(sell_total * factor)
+        cash_pct = 100 - buy_total - hold_total - sell_total
+    
+    # Build allocation bar
+    allocation_bar = f'''
+                                        <tr>
+                                            <td style="padding: 0;">
+                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-radius: 10px; overflow: hidden;">
+                                                    <tr>
+                                                        <td width="{buy_total}%" style="background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%); padding: 14px 0; text-align: center;">
+                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Buy</span>
+                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{buy_total}%</span>
+                                                        </td>
+                                                        <td width="{hold_total}%" style="background: linear-gradient(135deg, #ffd93d 0%, #f4c430 100%); padding: 14px 0; text-align: center;">
+                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Hold</span>
+                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{hold_total}%</span>
+                                                        </td>
+                                                        <td width="{cash_pct}%" style="background: linear-gradient(135deg, #6b6b7b 0%, #505060 100%); padding: 14px 0; text-align: center;">
+                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(255,255,255,0.7);">Cash</span>
+                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85);">{cash_pct}%</span>
+                                                        </td>
+                                                        <td width="{sell_total}%" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%); padding: 14px 0; text-align: center;">
+                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Sell</span>
+                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{sell_total}%</span>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>'''
+    
+    # Build action cards
+    action_cards = ""
+    
+    # BUY card
+    if buy_stocks:
+        buy_rows = ""
+        for stock in buy_stocks:
+            buy_rows += f'''
+                                                    <tr>
+                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px; margin-bottom: 8px;">
+                                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                                <tr>
+                                                                    <td width="40%" style="font-weight: 600; font-size: 14px; color: #f5f5f7;">{stock["ticker"]} ({stock["company"][:15]})</td>
+                                                                    <td width="30%" style="font-family: 'Consolas', monospace; font-size: 13px; color: #d4af37;">{stock["allocation"]}% of your money</td>
+                                                                    <td width="30%" align="right" style="font-size: 12px; color: #6b6b7b;">= ${stock["allocation"] * 10} of every $1,000</td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                    <tr><td style="height: 8px;"></td></tr>'''
+        
+        action_cards += f'''
+                                        <tr><td style="height: 16px;"></td></tr>
+                                        <tr>
+                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #00d4aa;">
+                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                    <tr>
+                                                        <td style="padding-bottom: 16px;">
+                                                            <span style="font-size: 20px; vertical-align: middle;">🟢</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">BUY — Put {buy_total}% Here</span>
+                                                        </td>
+                                                    </tr>
+                                                    {buy_rows}
+                                                </table>
+                                            </td>
+                                        </tr>'''
+    
+    # HOLD card
+    if hold_stocks:
+        hold_rows = ""
+        for stock in hold_stocks:
+            hold_rows += f'''
+                                                    <tr>
+                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px; margin-bottom: 8px;">
+                                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                                <tr>
+                                                                    <td width="40%" style="font-weight: 600; font-size: 14px; color: #f5f5f7;">{stock["ticker"]} ({stock["company"][:15]})</td>
+                                                                    <td width="30%" style="font-family: 'Consolas', monospace; font-size: 13px; color: #d4af37;">{stock["allocation"]}% of your money</td>
+                                                                    <td width="30%" align="right" style="font-size: 12px; color: #6b6b7b;">Don't buy more, keep what you have</td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                    <tr><td style="height: 8px;"></td></tr>'''
+        
+        action_cards += f'''
+                                        <tr><td style="height: 16px;"></td></tr>
+                                        <tr>
+                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #ffd93d;">
+                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                    <tr>
+                                                        <td style="padding-bottom: 16px;">
+                                                            <span style="font-size: 20px; vertical-align: middle;">🟡</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">HOLD — Keep {hold_total}% In These</span>
+                                                        </td>
+                                                    </tr>
+                                                    {hold_rows}
+                                                </table>
+                                            </td>
+                                        </tr>'''
+    
+    # TRIM card (new: shows specific trim percentages)
+    if trim_stocks:
+        trim_rows = ""
+        total_trim_freed = 0
+        for stock in trim_stocks:
+            trim_pct = stock.get("trim_pct", 0)
+            total_trim_freed += trim_pct
+            trim_rows += f'''
+                                                    <tr>
+                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px; margin-bottom: 8px;">
+                                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                                <tr>
+                                                                    <td width="40%" style="font-weight: 600; font-size: 14px; color: #f5f5f7;">{stock["ticker"]} ({stock["company"][:15]})</td>
+                                                                    <td width="30%" style="font-family: 'Consolas', monospace; font-size: 13px; color: #ff9f43;">Sell {trim_pct:.0f}% of position</td>
+                                                                    <td width="30%" align="right" style="font-size: 12px; color: #6b6b7b;">{stock["old_allocation"]:.0f}% → {stock["new_allocation"]:.0f}%</td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                    <tr><td style="height: 8px;"></td></tr>'''
+        
+        action_cards += f'''
+                                        <tr><td style="height: 16px;"></td></tr>
+                                        <tr>
+                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #ff9f43;">
+                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                    <tr>
+                                                        <td style="padding-bottom: 16px;">
+                                                            <span style="font-size: 20px; vertical-align: middle;">✂️</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">TRIM — Reduce These Positions (Take {total_trim_freed:.0f}% profits)</span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 8px 16px; background-color: rgba(255,159,67,0.1); border-radius: 8px; margin-bottom: 12px;">
+                                                            <span style="font-size: 13px; color: #ff9f43; line-height: 1.5;">💡 Trimming means selling a portion to lock in profits while keeping exposure. The freed cash goes to your cash reserve.</span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr><td style="height: 8px;"></td></tr>
+                                                    {trim_rows}
+                                                </table>
+                                            </td>
+                                        </tr>'''
+    
+    # CASH card
+    action_cards += f'''
+                                        <tr><td style="height: 16px;"></td></tr>
+                                        <tr>
+                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #6b6b7b;">
+                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                    <tr>
+                                                        <td style="padding-bottom: 16px;">
+                                                            <span style="font-size: 20px; vertical-align: middle;">💵</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">CASH — Keep {cash_pct}% Safe</span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px;">
+                                                            <span style="font-size: 14px; color: #a0a0b0; line-height: 1.6;">Keep this in your bank or a high-yield savings account. This is your safety net and lets you buy quickly when opportunities appear.</span>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>'''
+    
+    # SELL card
+    if sell_stocks:
+        sell_rows = ""
+        for stock in sell_stocks:
+            sell_rows += f'''
+                                                    <tr>
+                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px; margin-bottom: 8px;">
+                                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                                <tr>
+                                                                    <td width="40%" style="font-weight: 600; font-size: 14px; color: #f5f5f7;">{stock["ticker"]} ({stock["company"][:15]})</td>
+                                                                    <td width="60%" align="right" style="font-family: 'Consolas', monospace; font-size: 13px; color: #ff6b6b;">Sell — exit position</td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                    <tr><td style="height: 8px;"></td></tr>'''
+        
+        action_cards += f'''
+                                        <tr><td style="height: 16px;"></td></tr>
+                                        <tr>
+                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #ff6b6b;">
+                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                    <tr>
+                                                        <td style="padding-bottom: 16px;">
+                                                            <span style="font-size: 20px; vertical-align: middle;">🔴</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">SELL — Remove {sell_total}% From These</span>
+                                                        </td>
+                                                    </tr>
+                                                    {sell_rows}
+                                                </table>
+                                            </td>
+                                        </tr>'''
+    
+    return f'''
+                    <!-- This Week's Action Plan -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background-color: #0a0a0f;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🎯</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">This Week's Action Plan</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">What To Do With Your Money</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 20px; padding-bottom: 24px;">
+                                        <span style="font-size: 16px; color: #a0a0b0; line-height: 1.6;">If you have <strong style="color: #f5f5f7;">$1,000 to invest</strong> (or any amount), here's exactly how we recommend splitting it up this week:</span>
+                                    </td>
+                                </tr>
+                                {allocation_bar}
+                                {action_cards}
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_stock_picks(recommendations: List[Dict], analysis_result: Dict, current_value: float = 100000) -> str:
+    """Build the This Week's Picks section with detailed stock cards."""
+    
+    # Combine recommendations from different sources
+    all_recs = list(recommendations)
+    new_recs = analysis_result.get("new_recommendations", [])
+    for rec in new_recs:
+        ticker = rec.get("ticker", rec.get("symbol", ""))
+        if not any(r.get("ticker", r.get("symbol", "")) == ticker for r in all_recs):
+            all_recs.append(rec)
+    
+    if not all_recs:
+        return ""
+    
+    stock_cards = ""
+    for rec in all_recs[:5]:  # Limit to 5 picks
+        stock_cards += _build_stock_card(rec, current_value)
+    
+    return f'''
+                    <!-- This Week's Picks -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📊</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">This Week's Picks</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">{len(all_recs)} Calls</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                {stock_cards}
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
+    """Build a single stock card with position sizing guidance."""
+    ticker = rec.get("ticker", rec.get("symbol", "N/A"))
+    company = rec.get("company_name", rec.get("company", rec.get("name", ticker)))
+    action = rec.get("action", rec.get("recommendation", rec.get("type", "HOLD"))).upper()
+    price = rec.get("current_market_price", rec.get("current_price", rec.get("price", 0)))
+    target = rec.get("price_target", rec.get("target_price", rec.get("target", None)))
+    stop_loss = rec.get("stop_loss", None)
+    thesis = rec.get("thesis", rec.get("reason", rec.get("rationale", rec.get("summary", ""))))
+    allocation = rec.get("allocation_pct", rec.get("allocation", 10))
+    pe_ratio = rec.get("pe_ratio", rec.get("pe", "N/A"))
+    market_cap = rec.get("market_cap", rec.get("marketCap", "N/A"))
+    ytd_return = rec.get("ytd_return", rec.get("ytd", rec.get("change_pct", 0)))
+    
+    # Badge styling based on action
+    if "BUY" in action or "STRONG" in action:
+        badge_color = "#00d4aa"
+        badge_bg = "rgba(0,212,170,0.12)"
+        badge_border = "rgba(0,212,170,0.3)"
+        badge_text = "Strong Buy" if "STRONG" in action else "Buy"
+        tag_text = f"Recommended allocation: <strong>{allocation}% of your investment money</strong>"
+    elif "SELL" in action:
+        badge_color = "#ff6b6b"
+        badge_bg = "rgba(255,107,107,0.12)"
+        badge_border = "rgba(255,107,107,0.3)"
+        badge_text = "Sell"
+        tag_text = "Action: <strong>Sell — exit this stock completely</strong>"
+    else:
+        badge_color = "#ffd93d"
+        badge_bg = "rgba(255,217,61,0.12)"
+        badge_border = "rgba(255,217,61,0.3)"
+        badge_text = "Hold"
+        tag_text = f"If you already own it: <strong>Keep your {allocation}% position, don't add more</strong>"
+    
+    # Format price
+    price_str = f"${price:,.2f}" if isinstance(price, (int, float)) and price > 0 else "N/A"
+    
+    # Format target
+    if target and isinstance(target, (int, float)):
+        target_str = f"${target:,.2f}"
+        if price and isinstance(price, (int, float)) and price > 0:
+            potential = ((target - price) / price) * 100
+            potential_str = f"+{potential:.1f}%" if potential >= 0 else f"{potential:.1f}%"
+            potential_color = "#00d4aa" if potential >= 0 else "#ff6b6b"
+        else:
+            potential_str = "N/A"
+            potential_color = "#a0a0b0"
+    else:
+        target_str = "N/A"
+        potential_str = "N/A"
+        potential_color = "#a0a0b0"
+    
+    # Format stop loss
+    stop_loss_str = f"${stop_loss:,.2f}" if stop_loss and isinstance(stop_loss, (int, float)) else None
+    
+    # Position sizing calculations
+    position_sizing_box = ""
+    if "BUY" in action and price and isinstance(price, (int, float)) and price > 0:
+        investment_amount = current_value * (allocation / 100)
+        shares_to_buy = int(investment_amount / price)
+        actual_investment = shares_to_buy * price
+        
+        # Calculate potential profit if target hit
+        if target and isinstance(target, (int, float)) and target > 0:
+            profit_if_target = (target - price) * shares_to_buy
+            profit_str = f"${profit_if_target:,.0f}"
+        else:
+            profit_str = "N/A"
+        
+        # Calculate max loss at stop-loss
+        if stop_loss and isinstance(stop_loss, (int, float)) and stop_loss > 0:
+            max_loss = (price - stop_loss) * shares_to_buy
+            loss_str = f"${max_loss:,.0f}"
+        else:
+            loss_str = "N/A"
+        
+        position_sizing_box = f'''
+                                            <!-- Position Sizing Guidance -->
+                                            <tr>
+                                                <td style="padding-top: 16px;">
+                                                    <div style="background-color: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25); border-radius: 8px; padding: 16px;">
+                                                        <span style="display: block; font-size: 13px; font-weight: 600; color: #d4af37; margin-bottom: 12px;">🎯 Position Sizing (Based on ${current_value:,.0f} Portfolio)</span>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td width="25%">
+                                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase;">Invest</span>
+                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #f5f5f7; padding-top: 2px;">${actual_investment:,.0f}</span>
+                                                                </td>
+                                                                <td width="25%">
+                                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase;">Buy Shares</span>
+                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #f5f5f7; padding-top: 2px;">{shares_to_buy:,}</span>
+                                                                </td>
+                                                                <td width="25%">
+                                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase;">If Target Hit</span>
+                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #00d4aa; padding-top: 2px;">+{profit_str}</span>
+                                                                </td>
+                                                                <td width="25%">
+                                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase;">Max Loss</span>
+                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #ff6b6b; padding-top: 2px;">-{loss_str}</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>'''
+    
+    # Format YTD
+    if isinstance(ytd_return, (int, float)):
+        ytd_color = "#00d4aa" if ytd_return >= 0 else "#ff6b6b"
+        ytd_str = f"+{ytd_return:.1f}%" if ytd_return >= 0 else f"{ytd_return:.1f}%"
+    else:
+        ytd_color = "#a0a0b0"
+        ytd_str = str(ytd_return)
+    
+    # Build target row
+    target_row = f'''
+                                            <tr>
+                                                <td style="padding-top: 16px; border-top: 1px dashed rgba(255,255,255,0.08);">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="33%">
+                                                                <span style="display: block; font-size: 12px; color: #6b6b7b;">We think it will reach:</span>
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: {potential_color}; padding-top: 2px;">{target_str}</span>
+                                                            </td>
+                                                            <td width="33%">
+                                                                <span style="display: block; font-size: 12px; color: #6b6b7b;">Potential profit:</span>
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: {potential_color}; padding-top: 2px;">{potential_str}</span>
+                                                            </td>'''
+    
+    if stop_loss_str:
+        target_row += f'''
+                                                            <td width="33%">
+                                                                <span style="display: block; font-size: 12px; color: #6b6b7b;">Stop loss:</span>
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #ff6b6b; padding-top: 2px;">{stop_loss_str}</span>
+                                                            </td>'''
+    
+    target_row += '''
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>'''
+    
+    return f'''
+                                <tr><td style="height: 16px;"></td></tr>
+                                <tr>
+                                    <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <!-- Stock Header -->
+                                            <tr>
+                                                <td style="padding-bottom: 16px;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="48" style="vertical-align: top;">
+                                                                <div style="width: 48px; height: 48px; background-color: #22222e; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); text-align: center; line-height: 48px; font-weight: 700; font-size: 14px; color: #d4af37;">{ticker[:4]}</div>
+                                                            </td>
+                                                            <td style="padding-left: 14px; vertical-align: top;">
+                                                                <span style="display: block; font-weight: 600; font-size: 16px; color: #f5f5f7;">{company}</span>
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 13px; color: #6b6b7b; padding-top: 2px;">{ticker}</span>
+                                                            </td>
+                                                            <td align="right" style="vertical-align: top;">
+                                                                <span style="display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 8px 16px; border-radius: 6px; color: {badge_color}; background: {badge_bg}; border: 1px solid {badge_border};">{badge_text}</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <!-- Metrics -->
+                                            <tr>
+                                                <td style="padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="25%" align="center">
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #f5f5f7;">{price_str}</span>
+                                                                <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">Current Price</span>
+                                                            </td>
+                                                            <td width="25%" align="center">
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #f5f5f7;">{pe_ratio}</span>
+                                                                <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">P/E Ratio</span>
+                                                            </td>
+                                                            <td width="25%" align="center">
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #f5f5f7;">{market_cap}</span>
+                                                                <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">Market Cap</span>
+                                                            </td>
+                                                            <td width="25%" align="center">
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: {ytd_color};">{ytd_str}</span>
+                                                                <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">YTD Return</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <!-- Thesis -->
+                                            <tr>
+                                                <td style="padding-top: 16px;">
+                                                    <span style="display: block; font-size: 13px; font-weight: 600; color: #a0a0b0; margin-bottom: 8px;">💡 Why we {"like it" if "BUY" in action else "say " + badge_text.lower()} (in plain English):</span>
+                                                    <span style="display: block; font-size: 14px; color: #a0a0b0; line-height: 1.7;">{thesis[:400] if thesis else "Analysis pending."}</span>
+                                                </td>
+                                            </tr>
+                                            {target_row}
+                                            {position_sizing_box}
+                                            <!-- Allocation Tag -->
+                                            <tr>
+                                                <td style="padding-top: 16px;">
+                                                    <div style="background: {badge_bg}; border: 1px solid {badge_border}; border-radius: 8px; padding: 12px 16px; font-size: 14px; color: {badge_color};">
+                                                        📊 {tag_text}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>'''
+
+
+def _build_politicians_section(politicians: List[Dict]) -> str:
+    """Build the Politicians' Stock Trades section."""
+    if not politicians:
+        return ""
+    
+    trade_rows = ""
+    for trade in politicians[:5]:
+        name = trade.get("politician", trade.get("name", "Unknown"))
+        role = trade.get("role", trade.get("position", "Representative"))
+        party = trade.get("party", "")
+        symbol = trade.get("symbol", trade.get("ticker", "N/A"))
+        action = trade.get("action", trade.get("type", "Unknown")).upper()
+        amount = trade.get("amount", trade.get("value", "N/A"))
+        date = trade.get("date", trade.get("trade_date", "N/A"))
+        
+        # Party styling
+        if party and party.upper().startswith("D"):
+            party_bg = "rgba(100,149,237,0.15)"
+            party_color = "#7db3ff"
+            party_text = "D"
+        elif party and party.upper().startswith("R"):
+            party_bg = "rgba(255,107,107,0.15)"
+            party_color = "#ff8888"
+            party_text = "R"
+        else:
+            party_bg = "rgba(255,255,255,0.1)"
+            party_color = "#a0a0b0"
+            party_text = ""
+        
+        # Action styling
+        if "BUY" in action or "PURCHASE" in action:
+            action_color = "#00d4aa"
+            action_text = "Purchased"
+        else:
+            action_color = "#ff6b6b"
+            action_text = "Sold"
+        
+        # Format amount
+        if isinstance(amount, (int, float)):
+            if amount >= 1000000:
+                amount_str = f"${amount/1000000:.1f}M"
+            elif amount >= 1000:
+                amount_str = f"${amount/1000:.0f}K"
+            else:
+                amount_str = f"${amount:,.0f}"
+        else:
+            amount_str = str(amount)
+        
+        party_html = f'<span style="background: {party_bg}; color: {party_color}; padding: 2px 6px; border-radius: 3px; font-weight: 500; margin-left: 6px;">{party_text}</span>' if party_text else ""
+        
+        trade_rows += f'''
+                                <tr><td style="height: 12px;"></td></tr>
+                                <tr>
+                                    <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px 20px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td width="60%" style="vertical-align: middle;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                                        <tr>
+                                                            <td width="44" style="vertical-align: middle;">
+                                                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #3b3b4f 0%, #2a2a3a 100%); border-radius: 50%; border: 2px solid rgba(255,255,255,0.08); text-align: center; line-height: 44px; font-size: 18px;">👤</div>
+                                                            </td>
+                                                            <td style="padding-left: 14px; vertical-align: middle;">
+                                                                <span style="display: block; font-weight: 600; font-size: 15px; color: #f5f5f7;">{name}</span>
+                                                                <span style="display: block; font-size: 12px; color: #6b6b7b; padding-top: 2px;">{role}{party_html}</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                                <td width="40%" align="right" style="vertical-align: middle;">
+                                                    <span style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: {action_color};">{action_text}</span>
+                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #f5f5f7; padding-top: 4px;">{symbol}</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b6b7b; padding-top: 2px;">{amount_str} · {date}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>'''
+    
+    return f'''
+                    <!-- Politicians Trades -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🏛️</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Politicians' Stock Trades</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Latest Filings</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 20px;">
+                                        <div style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px 20px;">
+                                            <span style="display: block; font-weight: 600; font-size: 14px; color: #f5f5f7; margin-bottom: 8px;">🤔 Why does this matter?</span>
+                                            <span style="display: block; font-size: 14px; color: #a0a0b0; line-height: 1.6;">Members of Congress are required by law to report their stock trades. Some investors watch these trades because politicians may have access to information before the public does.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {trade_rows}
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_recommendation_tracker(history: Dict, current_value: float = 100000) -> str:
+    """Build the Recommendation Tracker section with dollar amounts."""
+    if not history:
+        return ""
+    
+    # Get performance data
+    perf = history.get("performance_summary", {})
+    win_rate = perf.get("win_rate_pct", perf.get("win_rate", 0))
+    avg_return = perf.get("avg_return_pct", perf.get("total_return_pct", 0))
+    win_count = perf.get("win_count", 0)
+    loss_count = perf.get("loss_count", 0)
+    total_trades = win_count + loss_count
+    
+    # Calculate dollar returns
+    total_dollar_gain = current_value * (avg_return / 100) if avg_return else 0
+    
+    # Get current portfolio for tracking
+    current_portfolio = history.get("current_portfolio", [])
+    monthly_history = history.get("monthly_history", [])
+    
+    active_positions = len(current_portfolio)
+    
+    # Build portfolio rows with dollar amounts
+    portfolio_rows = ""
+    for holding in current_portfolio[:5]:
+        ticker = holding.get("ticker", holding.get("symbol", "N/A"))
+        company = holding.get("company_name", holding.get("company", ticker))
+        rec_price = holding.get("recommended_price", holding.get("entry_price", 0))
+        current_price = holding.get("current_price", holding.get("price", 0))
+        gain_loss = holding.get("gain_loss_pct", 0)
+        allocation = holding.get("allocation_pct", holding.get("allocation", 10))
+        rec_type = holding.get("recommendation", holding.get("action", "Buy"))
+        rec_date = holding.get("date", holding.get("entry_date", ""))
+        
+        # FIXED: Calculate dollar gain/loss correctly from original investment
+        # Current position value in the portfolio
+        current_position_value = current_value * (allocation / 100)
+        
+        if isinstance(gain_loss, (int, float)) and isinstance(rec_price, (int, float)) and rec_price > 0 and isinstance(current_price, (int, float)):
+            # Work backwards to find original investment
+            # original_investment * (1 + gain/100) = current_position_value
+            original_investment = current_position_value / (1 + gain_loss / 100) if gain_loss != -100 else current_position_value
+            # Dollar gain = current value - original investment
+            dollar_gain_loss = current_position_value - original_investment
+            dollar_str = f"+${dollar_gain_loss:,.0f}" if dollar_gain_loss >= 0 else f"-${abs(dollar_gain_loss):,.0f}"
+        else:
+            dollar_str = "N/A"
+        
+        # Format prices
+        rec_price_str = f"${rec_price:,.2f}" if isinstance(rec_price, (int, float)) and rec_price > 0 else "N/A"
+        current_price_str = f"${current_price:,.2f}" if isinstance(current_price, (int, float)) and current_price > 0 else "N/A"
+        
+        # Return styling
+        if isinstance(gain_loss, (int, float)):
+            return_color = "#00d4aa" if gain_loss >= 0 else "#ff6b6b"
+            return_str = f"+{gain_loss:.1f}%" if gain_loss >= 0 else f"{gain_loss:.1f}%"
+        else:
+            return_color = "#a0a0b0"
+            return_str = str(gain_loss)
+        
+        # Recommendation badge
+        rec_upper = rec_type.upper() if isinstance(rec_type, str) else "HOLD"
+        if "BUY" in rec_upper:
+            rec_bg = "rgba(0,212,170,0.12)"
+            rec_color = "#00d4aa"
+        elif "SELL" in rec_upper:
+            rec_bg = "rgba(255,107,107,0.12)"
+            rec_color = "#ff6b6b"
+        else:
+            rec_bg = "rgba(255,217,61,0.12)"
+            rec_color = "#ffd93d"
+        
+        portfolio_rows += f'''
+                                    <tr>
+                                        <td style="padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td width="30%">
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                                            <tr>
+                                                                <td width="36" style="vertical-align: middle;">
+                                                                    <div style="width: 36px; height: 36px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 36px; font-size: 11px; font-weight: 700; color: #d4af37;">{ticker[:4]}</div>
+                                                                </td>
+                                                                <td style="padding-left: 12px; vertical-align: middle;">
+                                                                    <span style="display: block; font-weight: 600; font-size: 14px; color: #f5f5f7;">{company[:18]}</span>
+                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 12px; color: #6b6b7b;">{rec_date}</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                    <td width="12%" align="center">
+                                                        <span style="font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; color: {rec_color}; background: {rec_bg};">{rec_upper[:4]}</span>
+                                                    </td>
+                                                    <td width="13%" align="center">
+                                                        <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #f5f5f7;">{rec_price_str}</span>
+                                                    </td>
+                                                    <td width="13%" align="center">
+                                                        <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #f5f5f7;">{current_price_str}</span>
+                                                    </td>
+                                                    <td width="15%" align="center">
+                                                        <span style="font-family: 'Consolas', monospace; font-size: 13px; font-weight: 600; color: {return_color};">{return_str}</span>
+                                                    </td>
+                                                    <td width="17%" align="right">
+                                                        <span style="font-family: 'Consolas', monospace; font-size: 13px; font-weight: 600; color: {return_color};">{dollar_str}</span>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>'''
+    
+    return f'''
+                    <!-- Recommendation Tracker -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📈</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Recommendation Tracker</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Past 90 Days</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Performance Summary -->
+                                <tr>
+                                    <td style="padding-top: 24px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td width="33%" style="padding: 0 8px 0 0;">
+                                                    <div style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 20px; text-align: center;">
+                                                        <span style="display: block; font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #00d4aa;">{win_rate:.0f}%</span>
+                                                        <span style="display: block; font-size: 12px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Win Rate ({win_count}/{total_trades})</span>
+                                                    </div>
+                                                </td>
+                                                <td width="33%" style="padding: 0 8px;">
+                                                    <div style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 20px; text-align: center;">
+                                                        <span style="display: block; font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #00d4aa;">+{avg_return:.1f}%</span>
+                                                        <span style="display: block; font-size: 12px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Avg Return</span>
+                                                    </div>
+                                                </td>
+                                                <td width="33%" style="padding: 0 0 0 8px;">
+                                                    <div style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 20px; text-align: center;">
+                                                        <span style="display: block; font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #d4af37;">{active_positions}</span>
+                                                        <span style="display: block; font-size: 12px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Active Positions</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Tracking Table -->
+                                <tr>
+                                    <td style="padding-top: 24px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;">
+                                            <tr>
+                                                <td style="padding: 12px 16px; background-color: #1a1a24; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="30%" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Stock</td>
+                                                            <td width="12%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Call</td>
+                                                            <td width="13%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Entry</td>
+                                                            <td width="13%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Current</td>
+                                                            <td width="15%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Return</td>
+                                                            <td width="17%" align="right" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">$ P/L</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            {portfolio_rows}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_sp500_comparison(history: Dict) -> str:
+    """Build the S&P 500 comparison section."""
+    if not history:
+        return ""
+    
+    perf = history.get("performance_summary", {})
+    our_return = perf.get("total_return_pct", 0)
+    sp500_return = perf.get("sp500_total_return_pct", perf.get("benchmark_return_pct", 0))
+    
+    if our_return == 0 and sp500_return == 0:
+        return ""
+    
+    outperformance = our_return - sp500_return
+    
+    return f'''
+                    <!-- S&P 500 Comparison -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(212,175,55,0.03) 0%, transparent 100%);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">⚡</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">How We Compare to the Market</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Since We Started</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Comparison Cards -->
+                                <tr>
+                                    <td style="padding-top: 24px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td width="45%" style="background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, #1a1a24 100%); border: 1px solid rgba(212,175,55,0.4); border-radius: 16px; padding: 28px 20px; text-align: center;">
+                                                    <span style="display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #d4af37;">Stock Pulse Picks</span>
+                                                    <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: #00d4aa; padding-top: 8px;">+{our_return:.1f}%</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b6b7b; padding-top: 4px;">Total Return</span>
+                                                </td>
+                                                <td width="10%" align="center">
+                                                    <span style="display: inline-block; font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #6b6b7b; background-color: #22222e; width: 48px; height: 48px; line-height: 48px; border-radius: 50%; text-align: center;">VS</span>
+                                                </td>
+                                                <td width="45%" style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 28px 20px; text-align: center;">
+                                                    <span style="display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b6b7b;">S&P 500 (Market)</span>
+                                                    <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: #a0a0b0; padding-top: 8px;">+{sp500_return:.1f}%</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b6b7b; padding-top: 4px;">Total Return</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Outperformance Banner -->
+                                <tr>
+                                    <td style="padding-top: 24px;">
+                                        <div style="background: linear-gradient(135deg, rgba(0,212,170,0.12) 0%, rgba(212,175,55,0.12) 100%); border: 1px solid rgba(0,212,170,0.3); border-radius: 10px; padding: 16px 24px; text-align: center;">
+                                            <span style="font-size: 24px; vertical-align: middle;">🏆</span>
+                                            <span style="font-size: 16px; color: #f5f5f7; padding-left: 12px; vertical-align: middle;">We've made <strong style="color: #00d4aa; font-weight: 700;">+{outperformance:.1f}% more</strong> than if you just bought the market average</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_retail_investor_section(retail_analysis: Dict[str, Any], portfolio_value: float) -> str:
+    """Build the retail investor insights section."""
+    if not retail_analysis:
+        return ''
+    
+    sections_html = []
+    
+    # Tax-Loss Harvesting
+    tlh = retail_analysis.get('tax_loss_harvesting', [])
+    high_priority_tlh = [t for t in tlh if t.get('priority') == 'HIGH']
+    
+    # Correlation Analysis
+    corr = retail_analysis.get('correlation_analysis', {})
+    div_score = corr.get('diversification_score', 0)
+    high_corr_pairs = corr.get('high_correlation_pairs', [])
+    
+    # Trailing Stops
+    trailing = retail_analysis.get('trailing_stops', [])
+    needs_update = [t for t in trailing if 'UNPROTECTED' in t.get('status', '') or 'TIGHTEN' in t.get('action', '')]
+    
+    # Short Interest
+    short = retail_analysis.get('short_interest', [])
+    squeeze_candidates = [s for s in short if s.get('potential_squeeze')]
+    
+    # Sector Rotation
+    rotation = retail_analysis.get('sector_rotation', {})
+    
+    # Fee Analysis
+    fees = retail_analysis.get('fee_analysis', {})
+    
+    # Priority Alerts
+    alerts = retail_analysis.get('priority_alerts', [])
+    
+    # Only show section if there's meaningful content
+    has_content = (high_priority_tlh or high_corr_pairs or needs_update or 
+                   squeeze_candidates or alerts)
+    
+    if not has_content:
+        return ''
+    
+    # Build Tax-Loss Harvesting subsection
+    tlh_html = ''
+    if high_priority_tlh:
+        tlh_rows = ''
+        for t in high_priority_tlh[:4]:
+            tax_benefit = _safe_float(t.get('estimated_tax_savings', 0))
+            loss_pct = _safe_float(t.get('loss_pct', 0))
+            similar = t.get('similar_securities', [])[:2]
+            similar_str = ', '.join(similar) if similar else 'SPY'
+            
+            tlh_rows += f'''
                 <tr>
-                    <td style="padding: 24px;">
-                        <!-- Header with ticker and allocation -->
-                        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 16px;">
+                    <td style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <span style="font-weight: 600; color: #f5f5f7;">{t.get('ticker', 'N/A')}</span>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #ff6b6b;">
+                        {loss_pct:.1f}%
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #4ade80;">
+                        ~${tax_benefit:.0f}
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #8b8b8e; font-size: 12px;">
+                        {similar_str}
+                    </td>
+                </tr>'''
+        
+        tlh_html = f'''
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 12px 16px; background: rgba(255,107,107,0.1); border-radius: 8px; border-left: 3px solid #ff6b6b;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                             <tr>
-                                <td style="vertical-align: top;">
-                                    <div style="font-size: 28px; font-weight: 800; color: #58a6ff; letter-spacing: -0.5px;">{r.get('ticker', '') or ''}</div>
-                                    <div style="color: #8b949e; font-size: 14px; margin-top: 4px;">{r.get('company_name', '') or ''}</div>
-                                </td>
-                                <td style="vertical-align: top; text-align: right; width: 80px;">
-                                    <div style="background: #238636; color: white; padding: 10px 18px; border-radius: 10px; font-size: 18px; font-weight: 800; display: inline-block;">{allocation:.0f}%</div>
+                                <td>
+                                    <span style="font-size: 14px; font-weight: 600; color: #ff6b6b;">🏦 TAX-LOSS HARVESTING ({len(high_priority_tlh)} High Priority)</span>
+                                    <p style="margin: 8px 0 12px 0; font-size: 12px; color: #8b8b8e;">Sell losers to offset capital gains. Estimated savings per $100K portfolio.</p>
                                 </td>
                             </tr>
-                        </table>
-                        
-                        <!-- Tags row -->
-                        <div style="margin-bottom: 20px;">
-                            <span style="background: #30363d; color: #e6edf3; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; margin-right: 8px; margin-bottom: 8px;">{r.get('sector', '') or ''}</span>
-                            <span style="background: #30363d; color: #e6edf3; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; margin-right: 8px; margin-bottom: 8px;">{(r.get('investment_style', '') or '').title()}</span>
-                            <span style="background: {risk_bg}; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; margin-right: 8px; margin-bottom: 8px;">{risk.title()} Risk</span>
-                            {sentiment_html}
-                        </div>
-                        
-                        <!-- Price metrics table -->
-                        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #161b22; border-radius: 12px; margin-bottom: 20px;">
                             <tr>
-                                <td style="padding: 20px;">
-                                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="font-size: 12px; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; padding-bottom: 14px; border-bottom: 1px solid #30363d;">Current Price</td>
-                                            <td style="font-size: 20px; font-weight: 700; color: #58a6ff; text-align: right; padding-bottom: 14px; border-bottom: 1px solid #30363d;">${current_market_price:.2f}</td>
+                                <td>
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 13px;">
+                                        <tr style="background: rgba(0,0,0,0.2);">
+                                            <td style="padding: 6px 12px; color: #8b8b8e; font-weight: 500;">Ticker</td>
+                                            <td style="padding: 6px 12px; color: #8b8b8e; font-weight: 500;">Loss</td>
+                                            <td style="padding: 6px 12px; color: #8b8b8e; font-weight: 500;">Tax Benefit</td>
+                                            <td style="padding: 6px 12px; color: #8b8b8e; font-weight: 500;">Alternatives</td>
                                         </tr>
-                                        <tr>
-                                            <td style="font-size: 12px; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; padding: 14px 0; border-bottom: 1px solid #30363d;">Buy Zone</td>
-                                            <td style="font-size: 20px; font-weight: 700; color: #e6edf3; text-align: right; padding: 14px 0; border-bottom: 1px solid #30363d;">${entry_low:.0f} – ${entry_high:.0f}</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="font-size: 12px; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; padding: 14px 0; border-bottom: 1px solid #30363d;">Target</td>
-                                            <td style="font-size: 20px; font-weight: 700; color: #3fb950; text-align: right; padding: 14px 0; border-bottom: 1px solid #30363d;">${price_target:.0f} <span style="font-size: 14px; font-weight: 500; opacity: 0.8;">(+{upside:.0f}%)</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="font-size: 12px; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; padding-top: 14px;">Stop Loss</td>
-                                            <td style="font-size: 20px; font-weight: 700; color: #f85149; text-align: right; padding-top: 14px;">${stop_loss:.0f}</td>
-                                        </tr>
+                                        {tlh_rows}
                                     </table>
                                 </td>
                             </tr>
                         </table>
-                        
-                        <!-- Thesis -->
-                        <div style="background: #0d419d; border-radius: 12px; padding: 16px; margin-bottom: 12px; color: #e6edf3; font-size: 14px; line-height: 1.6;">
-                            <div style="font-weight: 600; margin-bottom: 6px;">💡 Investment Thesis</div>
-                            {r.get('thesis', 'N/A') or 'N/A'}
-                        </div>
-                        
-                        <!-- Risks -->
-                        <div style="background: #5d1f1f; border-radius: 12px; padding: 16px; color: #ffa198; font-size: 14px; line-height: 1.6;">
-                            <div style="font-weight: 600; margin-bottom: 6px;">⚠️ Key Risks</div>
-                            {r.get('risks', 'N/A') or 'N/A'}
-                        </div>
                     </td>
                 </tr>
-            </table>
-        ''')
+            </table>'''
     
-    return f'''
-        <div style="margin-bottom: 20px;">
-            <div style="font-size: 14px; font-weight: 600; color: #8b949e; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #30363d;">{title}</div>
-            {''.join(cards)}
-        </div>
-    '''
-
-
-def _build_metals_section(metals: Dict) -> str:
-    """Build metals/commodities outlook section."""
-    if not metals:
-        return '<p style="color: #8b949e;">No commodities outlook available.</p>'
-    
-    items = []
-    emojis = {'gold': '🥇', 'silver': '🥈', 'copper': '🟤', 'oil': '🛢️'}
-    
-    for commodity, data in metals.items():
-        # Handle both dict and string formats
-        if isinstance(data, str):
-            items.append(f'''
-                <div style="padding: 12px; background: #21262d; border: 1px solid #30363d; border-radius: 8px; margin: 8px 0;">
-                    <strong style="color: #e6edf3;">{commodity.title()}</strong>: <span style="color: #8b949e;">{data}</span>
-                </div>
-            ''')
-        else:
-            stance = (data.get('stance', 'neutral') or 'neutral')
-            color = '#3fb950' if stance == 'bullish' else '#f85149' if stance == 'bearish' else '#d29922'
-            emoji = emojis.get(commodity.lower(), '📊')
-            rationale = data.get('rationale', '') or ''
-            
-            items.append(f'''
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #21262d; border: 1px solid #30363d; border-radius: 8px; margin: 8px 0;">
-                    <tr>
-                        <td style="padding: 12px;">
-                            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 8px;">
-                                <tr>
-                                    <td style="color: #e6edf3;">{emoji} <strong>{commodity.title()}</strong></td>
-                                    <td style="text-align: right;"><span style="color: {color}; font-weight: 600; background: #161b22; padding: 4px 12px; border-radius: 20px; font-size: 12px;">{stance.upper()}</span></td>
-                                </tr>
-                            </table>
-                            <p style="font-size: 13px; color: #8b949e; margin: 0;">{rationale}</p>
-                        </td>
-                    </tr>
-                </table>
-            ''')
-    
-    return ''.join(items)
-
-
-def _build_allocation_section(allocation: Dict, holdings: List[Dict], cash: Dict) -> str:
-    """Build allocation visualization section using email-compatible tables."""
-    # If no holdings, show a simplified message
-    if not holdings:
-        return '<p style="color: #8b949e; font-style: italic;">Allocation will be tracked after first recommendations are executed.</p>'
-    
-    # Sector allocation from holdings
-    sectors = {}
-    for h in holdings:
-        sector = h.get('sector', 'Other')
-        sectors[sector] = sectors.get(sector, 0) + h.get('allocation_pct', 0)
-    
-    # Add cash
-    cash_pct = cash.get('allocation_pct', 0)
-    if cash_pct > 0:
-        sectors['Cash'] = cash_pct
-    
-    # Color palette for dark mode
-    colors = ['#238636', '#1f6feb', '#8957e5', '#d29922', '#f85149', '#58a6ff', '#3fb950', '#db61a2', '#79c0ff', '#7ee787']
-    
-    bars = []
-    for i, (sector, pct) in enumerate(sorted(sectors.items(), key=lambda x: x[1], reverse=True)):
-        color = colors[i % len(colors)]
-        # Use table for email compatibility instead of flexbox
-        bars.append(f'''
-            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #21262d; border: 1px solid #30363d; border-radius: 10px; margin-bottom: 12px;">
+    # Build Correlation Warning subsection
+    corr_html = ''
+    if high_corr_pairs:
+        pairs_list = ''
+        for p in high_corr_pairs[:3]:
+            corr_val = _safe_float(p.get('correlation', 0))
+            pairs_list += f'''
                 <tr>
-                    <td style="padding: 16px;">
-                        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 10px;">
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <span style="color: #f5f5f7;">{p['pair'][0]}</span> / <span style="color: #f5f5f7;">{p['pair'][1]}</span>
+                    </td>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #fbbf24;">
+                        {corr_val:.0%}
+                    </td>
+                </tr>'''
+        
+        grade = corr.get('diversification_grade', 'N/A')
+        corr_html = f'''
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 12px 16px; background: rgba(251,191,36,0.1); border-radius: 8px; border-left: 3px solid #fbbf24;">
+                        <span style="font-size: 14px; font-weight: 600; color: #fbbf24;">📊 CORRELATION WARNING</span>
+                        <p style="margin: 8px 0; font-size: 12px; color: #8b8b8e;">Diversification Score: {div_score:.0f}/100 ({grade})</p>
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 13px; margin-top: 8px;">
+                            <tr style="background: rgba(0,0,0,0.2);">
+                                <td style="padding: 6px 12px; color: #8b8b8e;">Correlated Pairs</td>
+                                <td style="padding: 6px 12px; color: #8b8b8e;">Correlation</td>
+                            </tr>
+                            {pairs_list}
+                        </table>
+                        <p style="margin: 8px 0 0 0; font-size: 11px; color: #fbbf24;">⚠️ Consider reducing one position in each highly correlated pair</p>
+                    </td>
+                </tr>
+            </table>'''
+    
+    # Build Trailing Stop Updates subsection
+    stop_html = ''
+    if needs_update:
+        stop_rows = ''
+        for t in needs_update[:4]:
+            ticker = t.get('ticker', 'N/A')
+            gain = _safe_float(t.get('gain_pct', 0))
+            old_stop = _safe_float(t.get('original_stop', 0))
+            new_stop = _safe_float(t.get('trailing_stop', 0))
+            
+            stop_rows += f'''
+                <tr>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <span style="font-weight: 600; color: #f5f5f7;">{ticker}</span>
+                    </td>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #4ade80;">
+                        +{gain:.1f}%
+                    </td>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #8b8b8e;">
+                        ${old_stop:.2f}
+                    </td>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #4ade80; font-weight: 600;">
+                        ${new_stop:.2f}
+                    </td>
+                </tr>'''
+        
+        stop_html = f'''
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 12px 16px; background: rgba(74,222,128,0.1); border-radius: 8px; border-left: 3px solid #4ade80;">
+                        <span style="font-size: 14px; font-weight: 600; color: #4ade80;">🛡️ TRAILING STOP UPDATES</span>
+                        <p style="margin: 8px 0 12px 0; font-size: 12px; color: #8b8b8e;">Lock in profits by raising stop-loss levels</p>
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 13px;">
+                            <tr style="background: rgba(0,0,0,0.2);">
+                                <td style="padding: 6px 12px; color: #8b8b8e;">Ticker</td>
+                                <td style="padding: 6px 12px; color: #8b8b8e;">Gain</td>
+                                <td style="padding: 6px 12px; color: #8b8b8e;">Current Stop</td>
+                                <td style="padding: 6px 12px; color: #8b8b8e;">New Stop</td>
+                            </tr>
+                            {stop_rows}
+                        </table>
+                    </td>
+                </tr>
+            </table>'''
+    
+    # Build Short Squeeze subsection
+    squeeze_html = ''
+    if squeeze_candidates:
+        squeeze_rows = ''
+        for s in squeeze_candidates[:3]:
+            ticker = s.get('ticker', 'N/A')
+            short_pct = _safe_float(s.get('short_pct_of_float', 0))
+            price_chg = _safe_float(s.get('price_change_1mo', 0))
+            
+            squeeze_rows += f'''
+                <tr>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <span style="font-weight: 600; color: #f5f5f7;">{ticker}</span>
+                    </td>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #ff6b6b;">
+                        {short_pct:.1f}%
+                    </td>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #4ade80;">
+                        +{price_chg:.1f}%
+                    </td>
+                </tr>'''
+        
+        squeeze_html = f'''
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 12px 16px; background: rgba(139,92,246,0.1); border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                        <span style="font-size: 14px; font-weight: 600; color: #8b5cf6;">🚀 POTENTIAL SHORT SQUEEZES</span>
+                        <p style="margin: 8px 0 12px 0; font-size: 12px; color: #8b8b8e;">High short interest + rising price = shorts covering</p>
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 13px;">
+                            <tr style="background: rgba(0,0,0,0.2);">
+                                <td style="padding: 6px 12px; color: #8b8b8e;">Ticker</td>
+                                <td style="padding: 6px 12px; color: #8b8b8e;">Short %</td>
+                                <td style="padding: 6px 12px; color: #8b8b8e;">1mo Change</td>
+                            </tr>
+                            {squeeze_rows}
+                        </table>
+                        <p style="margin: 8px 0 0 0; font-size: 11px; color: #ff6b6b;">⚠️ High risk/reward. Use tight stops if trading squeezes.</p>
+                    </td>
+                </tr>
+            </table>'''
+    
+    # Build Sector Rotation subsection
+    rotation_html = ''
+    if rotation.get('status') == 'SUCCESS':
+        phase = rotation.get('current_phase', 'Unknown')
+        rec_sectors = ', '.join(rotation.get('recommended_sectors', [])[:3])
+        avoid_sectors = ', '.join(rotation.get('sectors_to_avoid', [])[:2])
+        
+        rotation_html = f'''
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 12px 16px; background: rgba(96,165,250,0.1); border-radius: 8px; border-left: 3px solid #60a5fa;">
+                        <span style="font-size: 14px; font-weight: 600; color: #60a5fa;">🔄 SECTOR ROTATION: {phase}</span>
+                        <p style="margin: 8px 0; font-size: 12px; color: #8b8b8e;">{rotation.get('phase_description', '')}</p>
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="font-size: 12px; margin-top: 8px;">
                             <tr>
-                                <td style="color: #e6edf3; font-size: 14px; font-weight: 500;">{sector}</td>
-                                <td style="text-align: right;"><span style="font-weight: 700; color: #ffffff; font-size: 16px; background: #30363d; padding: 4px 12px; border-radius: 6px;">{pct:.1f}%</span></td>
+                                <td style="padding: 4px 0;"><span style="color: #4ade80;">✓ Favor:</span> <span style="color: #f5f5f7;">{rec_sectors}</span></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 0;"><span style="color: #ff6b6b;">✗ Avoid:</span> <span style="color: #f5f5f7;">{avoid_sectors}</span></td>
                             </tr>
                         </table>
-                        <div style="height: 10px; background: #30363d; border-radius: 6px; overflow: hidden;">
-                            <div style="height: 100%; width: {min(pct, 100)}%; background: {color}; border-radius: 6px;"></div>
-                        </div>
                     </td>
                 </tr>
-            </table>
-        ''')
+            </table>'''
     
-    validation = allocation.get('validation', 'Unknown')
-    validation_color = '#3fb950' if 'All within' in validation else '#f85149'
-    
+    # Combine all subsections
     return f'''
-        <div style="margin-bottom: 20px;">
-            {''.join(bars)}
-        </div>
-        <div style="background: #21262d; border: 1px solid #30363d; padding: 12px; border-radius: 8px; font-size: 13px;">
-            <strong style="color: #8b949e;">Validation:</strong> <span style="color: {validation_color};">{validation}</span>
-        </div>
-    '''
+                    <!-- Retail Investor Insights -->
+                    <tr>
+                        <td style="padding: 32px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7;">💰 Retail Investor Insights</span>
+                                        <p style="margin: 8px 0 24px 0; font-size: 13px; color: #8b8b8e;">Actionable intelligence specifically for individual investors</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        {tlh_html}
+                                        {corr_html}
+                                        {stop_html}
+                                        {squeeze_html}
+                                        {rotation_html}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
 
 
-def _build_politician_section(analysis: Dict) -> str:
-    """Build politician trades section with improved UI."""
-    if not analysis:
-        return ''
-    
-    notable = analysis.get('notable_trades', [])
-    suspicious = analysis.get('suspicious_patterns', [])
-    overlap = analysis.get('overlap_with_portfolio', [])
-    summary = analysis.get('summary', '')
-    
-    # Ensure these are lists, not strings
-    if isinstance(notable, str):
-        notable = [notable] if notable else []
-    if isinstance(suspicious, str):
-        suspicious = [suspicious] if suspicious else []
-    if isinstance(overlap, str):
-        overlap = [overlap] if overlap else []
-    
-    content = []
-    
-    # Summary section if available
-    if summary and isinstance(summary, str) and len(summary) > 10:
-        content.append(f'''
-            <div style="background: #21262d; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                <p style="margin: 0; color: #e6edf3; font-size: 14px; line-height: 1.5;">{summary}</p>
-            </div>
-        ''')
-    
-    # Suspicious patterns - high priority alerts
-    if suspicious and isinstance(suspicious, list):
-        for s in suspicious[:5]:
-            if isinstance(s, dict):
-                politician = s.get('politician', 'Unknown')
-                party = s.get('party', '')
-                ticker = s.get('ticker', '')
-                transaction = s.get('transaction_type', '')
-                company = s.get('company', '')
-                reason = s.get('correlation_reason', s.get('reason', ''))
-                
-                party_color = '#1f6feb' if 'D' in party else '#f85149' if 'R' in party else '#8b949e'
-                
-                content.append(f'''
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #3d1f1f; border: 1px solid #f85149; border-radius: 12px; margin-bottom: 12px;">
-                        <tr>
-                            <td style="padding: 16px;">
-                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 10px;">
-                                    <tr>
-                                        <td>
-                                            <span style="font-weight: 700; font-size: 16px; color: #f85149;">🚨 {politician}</span>
-                                            <span style="background: {party_color}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px; margin-left: 8px;">{party}</span>
-                                        </td>
-                                        <td style="text-align: right;">
-                                            <span style="background: #f85149; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">{transaction}</span>
-                                        </td>
-                                    </tr>
-                                </table>
-                                <div style="font-size: 16px; font-weight: 600; color: #58a6ff; margin-bottom: 8px;">{ticker} — <span style="color: #8b949e; font-weight: 400;">{company}</span></div>
-                                <div style="font-size: 13px; color: #ffa198; background: #2d1515; padding: 10px; border-radius: 6px;">{reason}</div>
-                            </td>
-                        </tr>
-                    </table>
-                ''')
-            elif isinstance(s, str) and len(s) > 5:
-                content.append(f'''
-                    <div style="background: #3d1f1f; border: 1px solid #f85149; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
-                        <span style="color: #ffa198;">🚨 {s}</span>
-                    </div>
-                ''')
-    
-    # Notable trades
-    if notable and isinstance(notable, list):
-        for n in notable[:5]:
-            if isinstance(n, dict):
-                politician = n.get('politician', 'Unknown')
-                party = n.get('party', '')
-                ticker = n.get('ticker', '')
-                transaction = n.get('transaction_type', '')
-                amount = n.get('amount', '')
-                insight = n.get('insight', n.get('implication', ''))
-                
-                party_color = '#1f6feb' if 'D' in party else '#f85149' if 'R' in party else '#8b949e'
-                txn_color = '#238636' if 'buy' in transaction.lower() or 'purchase' in transaction.lower() else '#f85149'
-                
-                content.append(f'''
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #21262d; border: 1px solid #30363d; border-radius: 12px; margin-bottom: 12px;">
-                        <tr>
-                            <td style="padding: 16px;">
-                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 10px;">
-                                    <tr>
-                                        <td>
-                                            <span style="font-weight: 600; font-size: 15px; color: #e6edf3;">👤 {politician}</span>
-                                            <span style="background: {party_color}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px; margin-left: 8px;">{party}</span>
-                                        </td>
-                                        <td style="text-align: right;">
-                                            <span style="background: {txn_color}; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">{transaction}</span>
-                                        </td>
-                                    </tr>
-                                </table>
-                                <div style="font-size: 18px; font-weight: 700; color: #58a6ff; margin-bottom: 6px;">{ticker}</div>
-                                {f'<div style="font-size: 13px; color: #8b949e; margin-bottom: 8px;">Amount: {amount}</div>' if amount else ''}
-                                {f'<div style="font-size: 13px; color: #e6edf3; background: #161b22; padding: 10px; border-radius: 6px;">{insight}</div>' if insight else ''}
-                            </td>
-                        </tr>
-                    </table>
-                ''')
-            elif isinstance(n, str) and len(n) > 5:
-                content.append(f'''
-                    <div style="background: #21262d; border: 1px solid #30363d; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
-                        <span style="color: #e6edf3;">📋 {n}</span>
-                    </div>
-                ''')
-    
-    # Overlap with portfolio
-    if overlap and isinstance(overlap, list):
-        overlap_items = []
-        for o in overlap[:5]:
-            if isinstance(o, dict):
-                ticker = o.get('ticker', '')
-                politician = o.get('politician', '')
-                implication = o.get('implication', '')
-                overlap_items.append(f'''
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #161b22; border-radius: 6px; margin-bottom: 8px;">
-                        <tr>
-                            <td style="padding: 10px; width: 60px; font-weight: 700; color: #58a6ff;">{ticker}</td>
-                            <td style="padding: 10px; color: #e6edf3; font-size: 13px;">{politician} — {implication}</td>
-                        </tr>
-                    </table>
-                ''')
-            elif isinstance(o, str) and len(o) > 5:
-                overlap_items.append(f'''
-                    <div style="padding: 10px; background: #161b22; border-radius: 6px; margin-bottom: 6px; font-size: 13px; color: #e6edf3;">{o}</div>
-                ''')
-        
-        if overlap_items:
-            content.append(f'''
-                <div style="background: #0d2d49; border: 1px solid #1f6feb; border-radius: 12px; padding: 16px; margin-top: 15px;">
-                    <div style="font-weight: 600; color: #58a6ff; margin-bottom: 12px;">🔗 Overlap with Your Portfolio</div>
-                    {''.join(overlap_items)}
-                </div>
-            ''')
-    
-    if not content:
-        content.append('''
-            <div style="text-align: center; padding: 24px; background: #21262d; border: 1px solid #30363d; border-radius: 8px;">
-                <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
-                <div style="color: #8b949e; font-size: 14px;">No notable politician trades affecting portfolio this period.</div>
-            </div>
-        ''')
-    
-    return f'''
-        <div class="section">
-            <div class="section-title">🏛️ Congressional Trading</div>
-            {''.join(content)}
-        </div>
-    '''
+def _build_footer() -> str:
+    """Build the footer section."""
+    return '''
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 32px; background-color: #0a0a0f; text-align: center;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                            <tr>
+                                                <td style="width: 32px; height: 32px; background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border-radius: 6px; text-align: center; vertical-align: middle;">
+                                                    <span style="font-family: Georgia, serif; font-weight: 700; font-size: 16px; color: #0a0a0f;">SP</span>
+                                                </td>
+                                                <td style="padding-left: 10px;">
+                                                    <span style="font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #f5f5f7;">Stock Pulse</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding-top: 20px;">
+                                        <span style="font-size: 11px; color: #6b6b7b; line-height: 1.6; max-width: 500px; display: inline-block;">This newsletter is for informational purposes only and should not be considered financial advice. Past performance does not guarantee future results. Always conduct your own research before making investment decisions.</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding-top: 16px;">
+                                        <span style="font-size: 11px; color: #505060;">© 2026 Stock Pulse. All rights reserved.</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
 
 
-def _build_risks_table(risks: List[Dict]) -> str:
-    """Build risks table."""
-    if not risks:
-        return '<p style="color: #8b949e;">No significant risks identified.</p>'
+# For testing
+if __name__ == "__main__":
+    sample_data = {
+        "market_overview": {
+            "indices": {
+                "S&P 500": {"value": 5847.21, "change_pct": 1.24},
+                "NASDAQ": {"value": 18392.44, "change_pct": 1.87},
+                "DOW": {"value": 43284.12, "change_pct": -0.32}
+            }
+        },
+        "new_recommendations": [
+            {
+                "ticker": "NVDA",
+                "company_name": "NVIDIA Corporation",
+                "action": "STRONG BUY",
+                "current_market_price": 892.45,
+                "price_target": 1050.00,
+                "stop_loss": 780.00,
+                "allocation_pct": 25,
+                "pe_ratio": "32.4x",
+                "market_cap": "$2.2T",
+                "ytd_return": 127,
+                "thesis": "NVIDIA makes the computer chips that power artificial intelligence. Every major tech company needs their products, and demand is growing fast."
+            },
+            {
+                "ticker": "AAPL",
+                "company_name": "Apple Inc.",
+                "action": "HOLD",
+                "current_market_price": 227.63,
+                "price_target": 240.00,
+                "allocation_pct": 20,
+                "pe_ratio": "29.1x",
+                "market_cap": "$3.5T",
+                "ytd_return": 18,
+                "thesis": "Apple is a great company, but the stock price already reflects expectations for the new iPhone."
+            }
+        ],
+        "politician_trades": [
+            {"politician": "Nancy Pelosi", "role": "Representative, CA-11", "party": "D", "symbol": "GOOGL", "action": "BUY", "amount": 750000, "date": "Jan 24"},
+            {"politician": "Tommy Tuberville", "role": "Senator, Alabama", "party": "R", "symbol": "RTX", "action": "SELL", "amount": 175000, "date": "Jan 22"}
+        ]
+    }
     
-    rows = []
-    for r in risks:
-        # Handle both dict and string risk formats
-        if isinstance(r, str):
-            rows.append(f"""
-                <tr>
-                    <td colspan="4" style="padding: 12px; color: #e6edf3; border-bottom: 1px solid #30363d;">{r}</td>
-                </tr>
-            """)
-        else:
-            exposure = _safe_float(r.get('exposure_pct'))
-            rows.append(f"""
-                <tr>
-                    <td style="padding: 12px; color: #e6edf3; border-bottom: 1px solid #30363d;"><strong>{r.get('risk', '') or ''}</strong></td>
-                    <td style="padding: 12px; color: #8b949e; border-bottom: 1px solid #30363d;">{r.get('impact', '') or ''}</td>
-                    <td style="padding: 12px; color: #ffa198; border-bottom: 1px solid #30363d; font-weight: 600;">{exposure:.0f}%</td>
-                    <td style="padding: 12px; color: #8b949e; border-bottom: 1px solid #30363d;">{r.get('mitigation', '') or ''}</td>
-                </tr>
-            """)
+    sample_history = {
+        "performance_summary": {
+            "total_return_pct": 142.8,
+            "sp500_total_return_pct": 67.4,
+            "win_rate_pct": 78
+        },
+        "current_portfolio": [
+            {"ticker": "META", "company_name": "Meta Platforms", "recommended_price": 485.20, "current_price": 612.45, "gain_loss_pct": 26.2, "recommendation": "BUY", "date": "Dec 15, 2025"},
+            {"ticker": "MSFT", "company_name": "Microsoft", "recommended_price": 380.00, "current_price": 420.50, "gain_loss_pct": 10.7, "recommendation": "BUY", "date": "Nov 1, 2025"}
+        ]
+    }
     
-    return f"""
-        <table style="width: 100%; border-collapse: collapse; background: #161b22; border-radius: 8px; overflow: hidden;">
-            <thead>
-                <tr style="background: #21262d;">
-                    <th style="padding: 12px; text-align: left; color: #e6edf3; font-weight: 600; border-bottom: 2px solid #30363d;">Risk</th>
-                    <th style="padding: 12px; text-align: left; color: #e6edf3; font-weight: 600; border-bottom: 2px solid #30363d;">Impact</th>
-                    <th style="padding: 12px; text-align: left; color: #e6edf3; font-weight: 600; border-bottom: 2px solid #30363d;">Exposure</th>
-                    <th style="padding: 12px; text-align: left; color: #e6edf3; font-weight: 600; border-bottom: 2px solid #30363d;">Mitigation</th>
-                </tr>
-            </thead>
-            <tbody>
-                {''.join(rows)}
-            </tbody>
-        </table>
-    """
-
-
-def _build_watchlist_section(watchlist: List[Dict]) -> str:
-    """Build watchlist section."""
-    if not watchlist:
-        return '<p style="color: #8b949e;">No stocks on watchlist currently.</p>'
+    sample_context = {
+        "vix_data": {"current": 14.82, "change_pct": -8.4}
+    }
     
-    items = []
-    for w in watchlist:
-        # Handle both dict and string formats
-        if isinstance(w, str):
-            items.append(f"""
-                <div style="background: #161b22; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 3px solid #58a6ff;">
-                    <div style="color: #e6edf3;">{w}</div>
-                </div>
-            """)
-        else:
-            items.append(f"""
-                <div style="background: #161b22; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 3px solid #58a6ff;">
-                    <div>
-                        <strong style="color: #e6edf3; font-size: 16px;">{w.get('ticker', '') or ''}</strong>
-                        <span style="color: #8b949e; margin-left: 10px;">{w.get('why_watching', '') or ''}</span>
-                    </div>
-                    <div style="color: #58a6ff; font-size: 12px; margin-top: 8px;">
-                        🎯 Trigger: {w.get('entry_trigger', '') or ''}
-                    </div>
-                </div>
-            """)
+    html = build_email_html(sample_data, sample_history, sample_context)
+    print(f"Generated HTML length: {len(html)} characters")
     
-    return ''.join(items)
-
-
-def _build_action_summary(sells: List[Dict], reviews: List[Dict], 
-                          new_recs: List[Dict], cash: Dict) -> str:
-    """Build action summary box."""
-    sell_tickers = [s.get('ticker', '') for s in sells if s.get('ticker')]
-    trim_items = [(r.get('ticker', ''), _safe_float(r.get('new_allocation_pct'))) 
-                  for r in reviews if r.get('action') == 'TRIM']
-    buy_items = [(r.get('ticker', ''), _safe_float(r.get('allocation_pct'))) for r in new_recs if r.get('ticker')]
-    
-    # Calculate cash from allocation - it's 100% minus all buy allocations
-    total_buy_alloc = sum(_safe_float(r.get('allocation_pct')) for r in new_recs)
-    cash_pct = _safe_float(cash.get('allocation_pct') if cash else max(0, 100 - total_buy_alloc))
-    if cash_pct <= 0:
-        cash_pct = max(0, 100 - total_buy_alloc)
-    cash_vehicle = (cash.get('vehicle', 'SGOV') if cash else 'SGOV') or 'SGOV'
-    
-    # Build action items - dark theme friendly colors
-    action_items = []
-    
-    if sell_tickers:
-        action_items.append(f'''
-            <div style="background: #3d1f1f; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #f85149;">
-                <div style="font-weight: 600; color: #ffa198; margin-bottom: 5px;">🔴 SELL</div>
-                <div style="color: #e6edf3;">{', '.join(sell_tickers)}</div>
-            </div>
-        ''')
-    
-    if trim_items:
-        trim_str = ', '.join(f'{t} → {p:.0f}%' for t, p in trim_items if t)
-        action_items.append(f'''
-            <div style="background: #3d2e1f; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #d29922;">
-                <div style="font-weight: 600; color: #e3b341; margin-bottom: 5px;">🟡 TRIM</div>
-                <div style="color: #e6edf3;">{trim_str}</div>
-            </div>
-        ''')
-    
-    if buy_items:
-        buy_str = ', '.join(f'{t} ({p:.0f}%)' for t, p in buy_items if t)
-        action_items.append(f'''
-            <div style="background: #1f3d1f; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #3fb950;">
-                <div style="font-weight: 600; color: #3fb950; margin-bottom: 5px;">🟢 BUY</div>
-                <div style="color: #e6edf3;">{buy_str}</div>
-            </div>
-        ''')
-    
-    action_items.append(f'''
-        <div style="background: #1a3a4f; border-radius: 8px; padding: 12px; border-left: 4px solid #58a6ff;">
-            <div style="font-weight: 600; color: #58a6ff; margin-bottom: 5px;">💵 CASH RESERVE</div>
-            <div style="color: #e6edf3;">{cash_pct:.0f}% in {cash_vehicle}</div>
-        </div>
-    ''')
-    
-    return f'''
-        <div style="background: #161b22; border-radius: 12px; padding: 20px;">
-            {''.join(action_items)}
-        </div>
-    '''
-
-
-def _get_next_report_date() -> str:
-    """Get the date two weeks from now for next bi-weekly report."""
-    from datetime import timedelta
-    next_report = datetime.now() + timedelta(weeks=2)
-    return next_report.strftime('%B %d, %Y')
+    with open("../output/test_biweekly_email.html", "w", encoding="utf-8") as f:
+        f.write(html)
+    print("Saved to output/test_biweekly_email.html")

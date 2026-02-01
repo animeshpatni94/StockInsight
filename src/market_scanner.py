@@ -355,31 +355,144 @@ class MarketScanner:
     
     def get_growth_stocks(self) -> List[Dict]:
         """
-        Find growth stocks: Revenue growth > 20% YoY.
+        Find growth stocks with comprehensive criteria:
+        - Revenue growth > 20% YoY OR
+        - Earnings growth > 25% OR
+        - Strong forward PE with high growth (PEG < 2)
+        
+        Includes growth scores for ranking quality.
         
         Returns:
-            List of growth stock candidates
+            List of growth stock candidates with growth scores
         """
         results = []
         
         for stock in self.stock_info:
-            revenue_growth = stock.get('revenue_growth')
+            revenue_growth = stock.get('revenue_growth') or 0
+            earnings_growth = stock.get('earnings_growth') or 0
+            peg_ratio = stock.get('peg_ratio')
+            forward_pe = stock.get('forward_pe')
+            market_cap = stock.get('market_cap') or 0
+            roe = stock.get('roe') or 0
             
-            if (revenue_growth and 
-                revenue_growth > FUNDAMENTAL_PARAMS['growth_revenue_growth_min']):
+            # Growth score calculation (0-100)
+            growth_score = 0
+            growth_flags = []
+            
+            # Revenue growth component (max 40 points)
+            if revenue_growth > 0.50:  # 50%+
+                growth_score += 40
+                growth_flags.append("Hyper revenue growth (50%+)")
+            elif revenue_growth > 0.30:  # 30-50%
+                growth_score += 30
+                growth_flags.append("Strong revenue growth (30%+)")
+            elif revenue_growth > 0.20:  # 20-30%
+                growth_score += 20
+                growth_flags.append("Solid revenue growth (20%+)")
+            elif revenue_growth > 0.10:  # 10-20%
+                growth_score += 10
+            
+            # Earnings growth component (max 30 points)
+            if earnings_growth > 0.50:  # 50%+
+                growth_score += 30
+                growth_flags.append("Explosive EPS growth (50%+)")
+            elif earnings_growth > 0.30:  # 30-50%
+                growth_score += 20
+                growth_flags.append("Strong EPS growth (30%+)")
+            elif earnings_growth > 0.15:  # 15-30%
+                growth_score += 10
+            
+            # PEG ratio bonus (max 15 points) - growth at reasonable price
+            if peg_ratio and 0 < peg_ratio < 1:
+                growth_score += 15
+                growth_flags.append("Undervalued growth (PEG < 1)")
+            elif peg_ratio and peg_ratio < 1.5:
+                growth_score += 10
+                growth_flags.append("Reasonable PEG (< 1.5)")
+            elif peg_ratio and peg_ratio < 2:
+                growth_score += 5
+            
+            # ROE bonus (max 15 points) - quality of growth
+            if roe > 0.25:  # 25%+
+                growth_score += 15
+                growth_flags.append("High ROE (25%+)")
+            elif roe > 0.15:  # 15-25%
+                growth_score += 10
+            elif roe > 0.10:  # 10-15%
+                growth_score += 5
+            
+            # Only include stocks with meaningful growth score (at least one strong signal)
+            if growth_score >= 20:
+                # Determine growth category
+                if market_cap > 200_000_000_000:
+                    cap_category = "Mega Cap"
+                elif market_cap > 10_000_000_000:
+                    cap_category = "Large Cap"
+                elif market_cap > 2_000_000_000:
+                    cap_category = "Mid Cap"
+                elif market_cap > 300_000_000:
+                    cap_category = "Small Cap"
+                else:
+                    cap_category = "Micro Cap"
                 
                 results.append({
                     'ticker': stock.get('ticker'),
                     'name': stock.get('name'),
                     'sector': stock.get('sector'),
+                    'industry': stock.get('industry'),
                     'revenue_growth': round(revenue_growth * 100, 2),
-                    'earnings_growth': round((stock.get('earnings_growth') or 0) * 100, 2),
+                    'earnings_growth': round(earnings_growth * 100, 2),
+                    'peg_ratio': round(peg_ratio, 2) if peg_ratio else None,
+                    'roe': round(roe * 100, 2) if roe else None,
                     'current_price': stock.get('current_price'),
-                    'forward_pe': stock.get('forward_pe'),
-                    'peg_ratio': stock.get('peg_ratio')
+                    'forward_pe': round(forward_pe, 2) if forward_pe else None,
+                    'market_cap': market_cap,
+                    'cap_category': cap_category,
+                    'growth_score': growth_score,
+                    'growth_flags': growth_flags
                 })
         
-        results.sort(key=lambda x: x['revenue_growth'], reverse=True)
+        # Sort by growth score descending
+        results.sort(key=lambda x: x['growth_score'], reverse=True)
+        return results
+    
+    def get_garp_stocks(self) -> List[Dict]:
+        """
+        Find GARP (Growth at Reasonable Price) stocks:
+        - PEG ratio < 1.5 with positive growth
+        - Earnings growth > 15%
+        - Reasonable P/E for the sector
+        
+        Returns:
+            List of GARP candidates
+        """
+        results = []
+        
+        for stock in self.stock_info:
+            peg_ratio = stock.get('peg_ratio')
+            earnings_growth = stock.get('earnings_growth') or 0
+            pe_ratio = stock.get('pe_ratio')
+            forward_pe = stock.get('forward_pe')
+            
+            # GARP criteria: PEG < 1.5 with real growth
+            if (peg_ratio and 0 < peg_ratio < 1.5 and 
+                earnings_growth > 0.15 and
+                pe_ratio and pe_ratio < 35):
+                
+                results.append({
+                    'ticker': stock.get('ticker'),
+                    'name': stock.get('name'),
+                    'sector': stock.get('sector'),
+                    'peg_ratio': round(peg_ratio, 2),
+                    'pe_ratio': round(pe_ratio, 2),
+                    'forward_pe': round(forward_pe, 2) if forward_pe else None,
+                    'earnings_growth': round(earnings_growth * 100, 2),
+                    'revenue_growth': round((stock.get('revenue_growth') or 0) * 100, 2),
+                    'current_price': stock.get('current_price'),
+                    'market_cap': stock.get('market_cap')
+                })
+        
+        results.sort(key=lambda x: x['peg_ratio'])
         return results
     
     def get_dividend_stocks(self) -> List[Dict]:
@@ -833,6 +946,7 @@ class MarketScanner:
 def run_all_screens() -> Dict:
     """
     Run all market screens and return compiled results.
+    Covers all industries, sectors, and asset classes.
     
     Returns:
         Dictionary with all screening results
@@ -858,10 +972,11 @@ def run_all_screens() -> Dict:
         'unusual_volume': scanner.get_unusual_volume()[:60]
     }
     
-    print("  Running fundamental screens...")
+    print("  Running fundamental screens (growth, value, GARP, dividend)...")
     results['fundamental'] = {
         'value_stocks': scanner.get_value_stocks()[:75],
-        'growth_stocks': scanner.get_growth_stocks()[:75],
+        'growth_stocks': scanner.get_growth_stocks()[:100],  # More growth stocks
+        'garp_stocks': scanner.get_garp_stocks()[:50],       # NEW: Growth at Reasonable Price
         'dividend_stocks': scanner.get_dividend_stocks()[:60],
         'insider_buying': scanner.get_insider_buying_clusters()[:40]
     }

@@ -8,7 +8,7 @@ import json
 from typing import Dict, Any, Optional
 from anthropic import Anthropic
 
-from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, CLAUDE_THINKING_BUDGET, ALLOCATION_RULES
+from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, CLAUDE_THINKING_BUDGET, ALLOCATION_RULES, USER_PROFILE
 
 
 SYSTEM_PROMPT = """
@@ -20,6 +20,26 @@ The market data provided to you contains REAL-TIME PRICES from Yahoo Finance (yf
 - ALWAYS use the prices shown in the screen results (e.g., "AAPL: $195.50")
 - Your entry_zone, price_target, and stop_loss MUST be relative to the REAL price shown
 - Example: If GLD shows $313.45, use that price - NOT a stale $268 from training data
+
+## 🔴 IMPORTANT: RECOMMEND INDIVIDUAL STOCKS, NOT JUST ETFs
+- Prioritize **individual stock** recommendations over ETFs
+- For each sector or theme, prefer specific company picks (e.g., "AAPL" not "XLK")
+- ETFs are acceptable ONLY for:
+  - Commodities (GLD, SLV, USO) where direct stock exposure is limited
+  - Broad market hedges (SH, VXX)
+  - Fixed income exposure (SGOV, TLT)
+- For tech, healthcare, financials, consumer, industrials → pick individual companies
+- Mix of mega-cap stalwarts AND mid/small-cap opportunities
+
+## 🔴 CRITICAL: CONSIDER GEOPOLITICAL NEWS
+The Yahoo Finance news feed is provided to you. Consider:
+- Trade tensions, tariffs, sanctions affecting sectors/countries
+- Military conflicts impacting energy, defense, commodities
+- Currency fluctuations from central bank policies
+- Regulatory changes (antitrust, environmental, tech)
+- Elections and policy shifts in major economies
+- Supply chain disruptions (shipping, semiconductors, rare earth)
+Factor these into your thesis and risk assessment for each recommendation.
 
 ## YOUR INVESTMENT PHILOSOPHY
 - **Preservation First**: Capital preservation is paramount. Avoid catastrophic losses.
@@ -46,6 +66,16 @@ You have access to comprehensive market intelligence:
 7. **Politician Trading**: Congressional trades with committee correlation flags
 8. **Earnings Calendar**: Upcoming catalysts for watchlist stocks
 9. **5-Year Historical Context**: Long-term sector performance, market cycles
+10. **Retail Investor Analysis** (NEW - specifically for individual investors):
+    - Tax-Loss Harvesting opportunities (with priority ranking)
+    - Portfolio Correlation analysis (hidden concentration risks)
+    - Liquidity warnings (bid-ask spread costs for small caps)
+    - Trailing stop recommendations (lock in profits dynamically)
+    - Short interest data (squeeze candidates and warning flags)
+    - Institutional ownership trends (smart money signals)
+    - Sector rotation phase (early/mid/late cycle timing)
+    - Fee impact analysis (expense ratio drag on returns)
+    - Dividend timing optimization (ex-dividend capture)
 
 ## DECISION FRAMEWORK
 
@@ -87,35 +117,14 @@ Before recommending ANY stock, answer these questions:
 - **Allocation %**: Recommended portfolio weight
 - **Entry Zone**: Specific price range (e.g., $145-152)
 - **Price Target**: 12-month target with rationale
-- **Stop Loss**: Specific price level (typically -12% to -18%)
+- **Stop Loss**: Specific price level
 - **Thesis**: 3-5 sentences — the investment case
 - **Key Catalyst**: What will move the stock (earnings, product launch, etc.)
 - **Primary Risk**: The biggest concern
 
-### Diversification Rules (MUST Follow):
-- Maximum 20% in any single stock
-- Maximum 35% in any single sector
-- 5-15 total positions
-- Keep 5-15% in cash/short-term treasuries
+### ONE RULE: Max 15% in any single stock.
 
-**Asset Class Ranges:**
-- US Stocks: 40-70%
-- International/EM: 5-20%
-- Metals/Commodities: 5-15%
-- Bonds/Cash: 10-25%
-- REITs: 0-10%
-
-**Style Ranges:**
-- Growth: 20-40%
-- Value: 20-40%
-- Dividend/Income: 10-30%
-- Speculative: 0-10%
-- Hedges: 5-15%
-
-**Risk Level Ranges:**
-- Conservative: 30-40%
-- Moderate: 40-50%
-- Aggressive: 10-30%
+Everything else is your call. You're the financial advisor. Your job is to beat the S&P 500.
 
 ### Macro Regime Framework
 Identify the current regime and tilt accordingly:
@@ -124,6 +133,68 @@ Identify the current regime and tilt accordingly:
 - **Inflationary**: Favor commodities, TIPS, miners, real assets
 - **Deflationary**: Favor long bonds, quality growth, cash
 - **Stagflation**: Favor gold, energy, defensives; avoid growth
+
+## 💰 YOU ARE THE COMPLETE FINANCIAL ADVISOR
+The investor's age and retirement timeline are provided in the analysis data. You must:
+1. **Determine appropriate risk level** based on their time horizon
+2. **Set asset allocation** appropriate for their age (stocks vs bonds vs alternatives)
+3. **Make all decisions** a trusted financial advisor would make
+4. **Explain your reasoning** so they understand why
+
+Use standard advisor guidelines:
+- Longer time horizon = more aggressive (more stocks, growth, small-caps)
+- Shorter time horizon = more conservative (more bonds, dividends, large-caps)
+- Always maintain proper diversification
+- Consider tax efficiency (hold >1 year when possible, harvest losses)
+
+### Tax Efficiency
+- **Tax-Loss Harvesting**: Review provided TLH opportunities. Near year-end, prioritize selling losers to offset gains.
+- **Short vs Long-term**: Prefer holding 1+ year for lower capital gains tax (15% vs 32%).
+- **Wash Sale Rule**: If harvesting a loss, don't buy substantially identical security within 30 days.
+
+### Practical Execution Concerns
+- **Liquidity Warnings**: Check provided liquidity data. For illiquid stocks, recommend LIMIT orders and smaller position sizes.
+- **Spread Costs**: Factor bid-ask spread into recommendations. A 1% spread on a micro-cap erodes returns.
+- **Dollar-Cost Averaging**: For new positions, suggest staged entry (e.g., 1/3 now, 1/3 on pullback) to reduce timing risk.
+
+### Risk Management for Individuals
+- **Trailing Stops**: Review provided trailing stop data. Recommend updating stops to lock in profits.
+- **Correlation Risk**: Check diversification score. High correlation between holdings = false diversification.
+- **Position Sizing**: Retail investors can't absorb 20% drawdowns like institutions. Be conservative.
+
+### Smart Money Signals
+- **Institutional Ownership**: Low institutional = opportunity OR red flag. High institutional = crowded trade risk.
+- **Short Interest**: >20% short = potential squeeze OR fundamental problems. Analyze context.
+- **Insider Activity**: High insider ownership = management skin in game (bullish).
+
+### Sector Timing
+- **Rotation Phase**: Use provided sector rotation data. Don't fight the cycle.
+- **Early Cycle**: Financials, Discretionary, Industrials
+- **Mid Cycle**: Technology, Materials, Communication
+- **Late Cycle**: Energy, Healthcare, Staples
+- **Recession**: Utilities, Gold, Treasuries
+
+### Fee Awareness
+- **Expense Ratios**: Flag high-fee ETFs (>0.5%). Compound drag hurts retail investors most.
+- **Leveraged/Inverse ETFs**: WARN about daily rebalancing decay. Short-term only!
+
+**HOLD until ex-dividend if:**
+- Stock is within 2 weeks of ex-dividend date
+- Dividend yield is material (>0.5% for single payment)
+- Current thesis is neutral/positive (not a stop-loss situation)
+- Capital gains tax situation doesn't override
+
+**Consider selling BEFORE ex-dividend if:**
+- Stop-loss has been triggered (never hold for dividend if thesis is broken)
+- Dividend is immaterial (<0.2% yield)
+- Price drop post-ex-div historically exceeds dividend
+
+**NEVER let dividends override:**
+- Stop-loss discipline (capital preservation trumps income)
+- Major negative catalysts (earnings miss, guidance cut)
+- Broken technical support levels
+
+In your portfolio_review, note upcoming dividends when relevant to timing recommendations.
 
 ### Politician Trading Analysis
 - Flag trades that correlate with committee assignments
@@ -233,7 +304,40 @@ Structure your response as valid JSON:
       "why_watching": "Best-in-class retail",
       "entry_trigger": "Pullback to $850"
     }
-  ]
+  ],
+  "retail_investor_insights": {
+    "tax_actions": [
+      {
+        "ticker": "INTC",
+        "action": "HARVEST_LOSS",
+        "loss_pct": -18.5,
+        "tax_benefit_estimate": "$590 per $10k invested",
+        "replacement_suggestion": "XLK (sector ETF) or AMD (competitor)"
+      }
+    ],
+    "trailing_stop_updates": [
+      {
+        "ticker": "NVDA",
+        "current_stop": 850,
+        "recommended_stop": 920,
+        "reason": "Lock in 25% gain with tighter stop"
+      }
+    ],
+    "liquidity_warnings": [
+      {
+        "ticker": "SMCI",
+        "warning": "High spread costs (~0.3%). Use limit orders."
+      }
+    ],
+    "dca_suggestions": [
+      {
+        "ticker": "GOOGL",
+        "entry_strategy": "50% now at $175, 50% if drops to $165"
+      }
+    ],
+    "correlation_alert": "NVDA and AMD are 85% correlated. Consider reducing one.",
+    "sector_rotation_advice": "Late cycle detected. Rotate from growth to defensives."
+  }
 }
 
 ## IMPORTANT REMINDERS
@@ -337,10 +441,25 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
     # Current date
     sections.append(f"## ANALYSIS DATE: {analysis_input.get('current_date', 'Unknown')}\n")
     
+    # ==================== INVESTOR PROFILE ====================
+    years_to_retirement = USER_PROFILE.get('years_to_retirement', 33)
+    sections.append(f"""
+## 🎯 INVESTOR PROFILE
+
+**Age**: {USER_PROFILE.get('current_age', 32)} | **Retirement**: {USER_PROFILE.get('retirement_age', 65)} | **Years to Retirement**: {years_to_retirement}
+
+**Age**: {USER_PROFILE.get('current_age', 32)} | **Retirement**: {USER_PROFILE.get('retirement_age', 65)} | **Years to Retirement**: {years_to_retirement}
+
+**Financial Situation**: Strong - No debts, emergency fund covered, 401k handled separately.
+**Focus**: GROWTH. This portfolio is for aggressive wealth building. Go for growth stocks.
+
+You are the financial advisor. With {years_to_retirement} years until retirement and a strong financial foundation, prioritize growth and beating the S&P 500.
+""")
+    
     # Current Portfolio
     portfolio = analysis_input.get('current_portfolio', [])
     if portfolio:
-        sections.append("## CURRENT PORTFOLIO HOLDINGS")
+        sections.append("## CURRENT PORTFOLIO (Your previous recommendations)")
         for h in portfolio:
             sections.append(f"""
 **{h.get('ticker')}** - {h.get('company_name') or 'Unknown'}
@@ -355,15 +474,16 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
 - Status: {h.get('status') or 'HOLD'}
 """)
     else:
-        sections.append("## CURRENT PORTFOLIO: Empty (100% Cash)\n")
+        sections.append("## CURRENT PORTFOLIO: Empty (100% Cash) - First run, build the portfolio!\n")
     
     # Historical Performance
     perf = analysis_input.get('performance_summary', {})
     sections.append(f"""
-## HISTORICAL PERFORMANCE
-- Total Return: {perf.get('total_return_pct', 0):.2f}%
-- vs S&P 500: {perf.get('total_alpha_pct', 0):+.2f}%
-- Win Rate: {perf.get('win_rate_pct', 0):.1f}%
+## TRACK RECORD (Since Inception)
+- **Total Return**: {perf.get('total_return_pct', 0):.2f}%
+- **S&P 500 Return**: {perf.get('sp500_total_return_pct', 0):.2f}%
+- **Alpha (You vs S&P)**: {perf.get('total_alpha_pct', 0):+.2f}%
+- **Win Rate**: {perf.get('win_rate_pct', 0):.1f}%
 - Average Win: {perf.get('average_win_pct', 0):+.2f}%
 - Average Loss: {perf.get('average_loss_pct', 0):.2f}%
 """)
@@ -441,12 +561,26 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
             rs = data.get('relative_strength_3mo', 0)
             sections.append(f"- {sector} ({data.get('etf')}): 1mo {returns.get('1mo', 0):+.2f}% | RS: {rs:+.2f}")
     
-    # Commodities
+    # Commodities - Show dynamic data from screens
     if market.get('commodities'):
         sections.append("\n## COMMODITIES & METALS")
+        sections.append("For commodity exposure, consider both ETFs and individual miners/producers from the screens below:")
         for name, data in market['commodities'].items():
             returns = data.get('returns', {})
             sections.append(f"- {name}: ${data.get('current', 0):.2f} | 1mo: {returns.get('1mo', 0):+.2f}%")
+    
+    # Growth/Thematic ETFs
+    growth_etfs = market.get('growth_etfs', {})
+    if growth_etfs:
+        sections.append("\n## 🚀 GROWTH & THEMATIC ETF PERFORMANCE")
+        sections.append("Use these for sector trends - but prefer individual stocks within hot themes:")
+        for theme, etfs in growth_etfs.items():
+            etf_data = list(etfs.values())
+            if etf_data:
+                best_etf = max(etf_data, key=lambda x: x.get('returns', {}).get('1mo', 0))
+                ticker = [k for k, v in etfs.items() if v == best_etf][0]
+                returns = best_etf.get('returns', {})
+                sections.append(f"- {theme}: {ticker} @ ${best_etf.get('current', 0):.2f} | 1mo: {returns.get('1mo', 0):+.2f}%")
     
     # Macro indicators
     macro = market.get('macro', {})
@@ -465,6 +599,20 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
 ### Dollar & Yields
 - Dollar (UUP): {macro.get('dollar', {}).get('trend', 'N/A')}
 """)
+    
+    # Market News & Geopolitical Context (from Yahoo Finance)
+    market_news = market.get('market_news', [])
+    if market_news:
+        sections.append("\n## 📰 LATEST MARKET & GEOPOLITICAL NEWS (Yahoo Finance)")
+        sections.append("Consider these headlines when evaluating sectors and stocks:\n")
+        for news in market_news[:12]:
+            geo_tag = "🌍 " if news.get('is_geopolitical') else ""
+            title = news.get('title', 'No title')
+            publisher = news.get('publisher', 'Unknown')
+            related = news.get('related_tickers', [])
+            related_str = f" [{', '.join(related[:3])}]" if related else ""
+            sections.append(f"- {geo_tag}**{title}** — {publisher}{related_str}")
+        sections.append("\n⚠️ Factor these news items into your risk assessment and thesis.")
     
     # Historical context (5-year perspective to reduce recency bias)
     historical = market.get('historical_context', {})
@@ -638,17 +786,111 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
   🚨 {f.get('correlation_reason')}
 """)
     
-    # Diversification Rules Reminder
+    # Just one rule
     sections.append(f"""
-## DIVERSIFICATION RULES (MUST FOLLOW)
-- Single stock max: {ALLOCATION_RULES['single_stock_max']*100:.0f}%
-- Single sector max: {ALLOCATION_RULES['single_sector_max']*100:.0f}%
-- Positions: {ALLOCATION_RULES['min_positions']}-{ALLOCATION_RULES['max_positions']}
-- US Stocks: {ALLOCATION_RULES['us_stocks']['min']*100:.0f}-{ALLOCATION_RULES['us_stocks']['max']*100:.0f}%
-- International: {ALLOCATION_RULES['international']['min']*100:.0f}-{ALLOCATION_RULES['international']['max']*100:.0f}%
-- Metals/Commodities: {ALLOCATION_RULES['metals_commodities']['min']*100:.0f}-{ALLOCATION_RULES['metals_commodities']['max']*100:.0f}%
-- Bonds/Cash: {ALLOCATION_RULES['bonds_cash']['min']*100:.0f}-{ALLOCATION_RULES['bonds_cash']['max']*100:.0f}%
+## ⛔ ONE RULE
+Max {ALLOCATION_RULES['single_stock_max']*100:.0f}% in any single stock. That's it.
+
+You're the advisor. Make the calls. Beat the S&P 500.
 """)
+    
+    # Retail Investor Analysis Section
+    retail = analysis_input.get('retail_analysis', {})
+    if retail:
+        sections.append("\n## 💰 RETAIL INVESTOR ANALYSIS (ACTION REQUIRED)")
+        
+        # Tax-Loss Harvesting Opportunities
+        tlh = retail.get('tax_loss_harvesting', [])
+        if tlh:
+            high_priority = [t for t in tlh if t.get('priority') == 'HIGH']
+            sections.append(f"\n### 🏦 TAX-LOSS HARVESTING ({len(tlh)} opportunities, {len(high_priority)} HIGH priority)")
+            for t in tlh[:5]:
+                sections.append(f"""
+- **{t.get('ticker')}**: {t.get('loss_pct', 0):.1f}% loss | Est. tax savings: ${t.get('estimated_tax_savings', 0):.0f}
+  Priority: {t.get('priority')} | {'SHORT-TERM (32% tax benefit)' if t.get('is_short_term') else 'LONG-TERM (15% tax benefit)'}
+  Replacement options: {', '.join(t.get('similar_securities', [])[:3])}
+  {t.get('recommendation', '')}""")
+        
+        # Correlation Analysis
+        corr = retail.get('correlation_analysis', {})
+        if corr.get('status') == 'SUCCESS':
+            sections.append(f"\n### 📊 PORTFOLIO CORRELATION")
+            sections.append(f"- Diversification Score: {corr.get('diversification_score', 0):.0f}/100 ({corr.get('diversification_grade', 'N/A')})")
+            sections.append(f"- Average Correlation: {corr.get('average_correlation', 0):.2f}")
+            
+            high_corr = corr.get('high_correlation_pairs', [])
+            if high_corr:
+                sections.append("- ⚠️ HIGHLY CORRELATED PAIRS (>80%):")
+                for p in high_corr[:3]:
+                    sections.append(f"  - {p['pair'][0]} / {p['pair'][1]}: {p['correlation']:.0%} correlated")
+            
+            for rec in corr.get('recommendations', []):
+                sections.append(f"  {rec}")
+        
+        # Liquidity Warnings
+        liq_warnings = retail.get('liquidity_warnings', [])
+        if liq_warnings:
+            sections.append(f"\n### 💧 LIQUIDITY WARNINGS ({len(liq_warnings)} stocks)")
+            for w in liq_warnings[:5]:
+                sections.append(f"- {w.get('ticker')}: {w.get('warning', 'Low liquidity')}")
+        
+        # Trailing Stop Recommendations
+        trailing = retail.get('trailing_stops', [])
+        profitable_unprotected = [t for t in trailing if 'UNPROTECTED' in t.get('status', '')]
+        if profitable_unprotected:
+            sections.append(f"\n### 🛡️ TRAILING STOP UPDATES NEEDED")
+            for t in profitable_unprotected[:5]:
+                sections.append(f"- {t.get('ticker')}: +{t.get('gain_pct', 0):.1f}% gain, current stop ${t.get('original_stop', 0):.2f}")
+                sections.append(f"  → Recommended: Raise stop to ${t.get('trailing_stop', 0):.2f} ({t.get('action', '')})")
+        
+        # Short Interest Signals
+        short = retail.get('short_interest', [])
+        squeeze_candidates = [s for s in short if s.get('potential_squeeze')]
+        high_short = [s for s in short if s.get('short_pct_of_float', 0) >= 20]
+        if squeeze_candidates or high_short:
+            sections.append(f"\n### 🎯 SHORT INTEREST SIGNALS")
+            if squeeze_candidates:
+                sections.append("POTENTIAL SQUEEZES:")
+                for s in squeeze_candidates[:3]:
+                    sections.append(f"- 🚀 {s.get('ticker')}: {s.get('short_pct_of_float', 0):.1f}% short, +{s.get('price_change_1mo', 0):.1f}% this month")
+            if high_short:
+                sections.append("HIGH SHORT INTEREST (caution):")
+                for s in high_short[:3]:
+                    sections.append(f"- ⚠️ {s.get('ticker')}: {s.get('short_pct_of_float', 0):.1f}% short | {s.get('analysis', '')}")
+        
+        # Sector Rotation
+        rotation = retail.get('sector_rotation', {})
+        if rotation.get('status') == 'SUCCESS':
+            sections.append(f"\n### 🔄 SECTOR ROTATION PHASE: {rotation.get('current_phase', 'Unknown')}")
+            sections.append(f"{rotation.get('phase_description', '')}")
+            sections.append(f"- Recommended Sectors: {', '.join(rotation.get('recommended_sectors', []))}")
+            sections.append(f"- Avoid: {', '.join(rotation.get('sectors_to_avoid', []))}")
+        
+        # Fee Impact
+        fees = retail.get('fee_analysis', {})
+        if fees.get('status') == 'SUCCESS' and fees.get('high_fee_holdings'):
+            sections.append(f"\n### 💸 HIGH FEE ALERT")
+            sections.append(f"Portfolio weighted expense: {fees.get('portfolio_weighted_expense_pct', 0):.2f}%")
+            sections.append(f"5-year fee drag: {fees.get('5yr_total_fee_drag_pct', 0):.1f}%")
+            for h in fees.get('high_fee_holdings', [])[:3]:
+                sections.append(f"- {h.get('ticker')}: {h.get('expense_ratio', 0):.2f}% annual | {h.get('warning', '')}")
+        
+        # Dividend Timing
+        div = retail.get('dividend_timing', {})
+        hold_recs = div.get('hold_recommendations', [])
+        if hold_recs:
+            sections.append(f"\n### 📅 DIVIDEND TIMING ({len(hold_recs)} upcoming)")
+            for d in hold_recs[:3]:
+                sections.append(f"- {d.get('ticker')}: Ex-div {d.get('ex_div_date')} | ${d.get('quarterly_dividend', 0):.2f}/share")
+                sections.append(f"  → {d.get('action', 'HOLD')}: {d.get('reason', '')}")
+        
+        # Priority Alerts Summary
+        alerts = retail.get('priority_alerts', [])
+        if alerts:
+            sections.append(f"\n### 🚨 PRIORITY ALERTS FOR RETAIL INVESTOR")
+            for a in alerts[:5]:
+                sections.append(f"- [{a.get('priority')}] {a.get('title')}")
+                sections.append(f"  Action: {a.get('action', '')}")
     
     # Final instruction
     sections.append("""
@@ -659,6 +901,12 @@ Based on all the above data:
 3. Ensure all allocations comply with diversification rules
 4. Analyze politician trades for signals
 5. Assess macro regime and adjust accordingly
+6. **FOR RETAIL INVESTOR - Include in your response:**
+   - Tax-loss harvesting recommendations (if applicable)
+   - Trailing stop updates for profitable positions
+   - DCA entry suggestions for new positions
+   - Liquidity warnings for any illiquid recommendations
+   - Correlation concerns if adding correlated positions
 
 Respond with valid JSON following the output format specified in your instructions.
 """)

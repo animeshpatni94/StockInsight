@@ -284,32 +284,40 @@ def get_market_sentiment_summary(sentiments: Dict[str, Dict]) -> Dict:
     if not sentiments:
         return {
             'overall': 'unknown',
+            'overall_label': 'NEUTRAL',
+            'overall_bullish_pct': 50,
             'avg_bullish_pct': 50,
             'stocks_bullish': 0,
             'stocks_bearish': 0,
-            'stocks_neutral': 0
+            'stocks_neutral': 0,
+            'total_analyzed': 0
         }
     
-    bullish_pcts = [s['bullish_pct'] for s in sentiments.values()]
+    bullish_pcts = [s.get('bullish_pct', 50) for s in sentiments.values()]
     avg_bullish = sum(bullish_pcts) / len(bullish_pcts)
     
-    stocks_bullish = sum(1 for s in sentiments.values() if s['label'] in ['BULLISH', 'SLIGHTLY_BULLISH'])
-    stocks_bearish = sum(1 for s in sentiments.values() if s['label'] in ['BEARISH', 'SLIGHTLY_BEARISH'])
-    stocks_neutral = sum(1 for s in sentiments.values() if s['label'] == 'NEUTRAL')
+    stocks_bullish = sum(1 for s in sentiments.values() if s.get('label', '') in ['BULLISH', 'SLIGHTLY_BULLISH'])
+    stocks_bearish = sum(1 for s in sentiments.values() if s.get('label', '') in ['BEARISH', 'SLIGHTLY_BEARISH'])
+    stocks_neutral = sum(1 for s in sentiments.values() if s.get('label', '') == 'NEUTRAL')
     
     if avg_bullish >= 60:
         overall = 'bullish'
+        overall_label = 'BULLISH'
         overall_emoji = '🟢'
     elif avg_bullish <= 40:
         overall = 'bearish'
+        overall_label = 'BEARISH'
         overall_emoji = '🔴'
     else:
         overall = 'neutral'
+        overall_label = 'NEUTRAL'
         overall_emoji = '⚪'
     
     return {
         'overall': overall,
+        'overall_label': overall_label,
         'overall_emoji': overall_emoji,
+        'overall_bullish_pct': round(avg_bullish, 1),
         'avg_bullish_pct': round(avg_bullish, 1),
         'stocks_bullish': stocks_bullish,
         'stocks_bearish': stocks_bearish,
