@@ -1,9 +1,10 @@
 name: Bi-Weekly Stock Analysis
 
 on:
-  # Run every 2 weeks: 1st and 15th of each month at 9:00 AM UTC
+  # Run every Wednesday at 8:30 AM MST (15:30 UTC)
+  # Job condition filters to only 1st and 3rd Wednesday of each month
   schedule:
-    - cron: '0 9 1,15 * *'
+    - cron: '30 15 * * 3'
   
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
@@ -12,7 +13,29 @@ permissions:
   contents: write
 
 jobs:
+  check-week:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - name: Check if 1st or 3rd Wednesday
+        id: check
+        run: |
+          DAY=$(date -u +%d)
+          if [ "$DAY" -ge 1 ] && [ "$DAY" -le 7 ]; then
+            echo "Running on 1st Wednesday of the month (day $DAY)"
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          elif [ "$DAY" -ge 15 ] && [ "$DAY" -le 21 ]; then
+            echo "Running on 3rd Wednesday of the month (day $DAY)"
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "Skipping - not 1st or 3rd Wednesday (day $DAY)"
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+
   analyze:
+    needs: check-week
+    if: needs.check-week.outputs.should_run == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     
     steps:
