@@ -2,6 +2,7 @@
 Data fetching module for market data and prices.
 Uses yfinance for stock data retrieval.
 Dynamically fetches stock universe using Yahoo Finance Screener API.
+Fetches popular ETFs from web sources for dynamic ETF coverage.
 """
 
 import yfinance as yf
@@ -9,6 +10,8 @@ from yfinance import EquityQuery
 import pandas as pd
 import numpy as np
 import time
+import requests
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -16,6 +19,27 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from config import (
     INDEXES, SECTORS, TECHNICAL_PARAMS
 )
+
+# Configure logging for detailed stock tracking
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s',
+    datefmt='%H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
+# Flag to control verbose logging (set to True for debugging)
+VERBOSE_LOGGING = True
+
+def log_stocks(category: str, tickers: List[str], max_display: int = 20):
+    """Log stock tickers with truncation for readability."""
+    if not VERBOSE_LOGGING:
+        return
+    if len(tickers) <= max_display:
+        logger.info(f"  📋 {category}: {', '.join(tickers)}")
+    else:
+        displayed = tickers[:max_display]
+        logger.info(f"  📋 {category} ({len(tickers)} total): {', '.join(displayed)}... +{len(tickers)-max_display} more")
 
 
 def get_dynamic_stock_universe() -> Dict[str, List[str]]:
@@ -74,6 +98,7 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
             universe[category].extend(tickers)
             all_tickers.update(tickers)
             print(f"    {category}: {len(tickers)} stocks")
+            log_stocks(f"{category} tickers", tickers)
     
     # Sector based screening - lower market cap floor ($500M) to catch emerging companies
     # This covers: Mining (Materials), Space (Industrials), Biotech (Healthcare), etc.
@@ -98,6 +123,7 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
             universe[category].extend(tickers)
             all_tickers.update(tickers)
             print(f"    {category}: {len(tickers)} stocks")
+            log_stocks(f"{category} tickers", tickers)
     
     # Remove duplicates within each category
     for category in universe:
@@ -105,6 +131,11 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
     
     total = len(all_tickers)
     print(f"  Total unique tickers in universe: {total}")
+    
+    # Log a sample of the full universe
+    all_list = list(all_tickers)
+    logger.info(f"  🌐 FULL STOCK UNIVERSE ({total} stocks):")
+    log_stocks("Sample of all stocks", all_list[:50], max_display=50)
     
     if total < 50:
         print("  WARNING: Low ticker count, falling back to ETF holdings...")
@@ -354,13 +385,21 @@ def fetch_multiple_ticker_info(tickers: List[str],
     results = []
     total_batches = (len(tickers) + batch_size - 1) // batch_size
     failed_count = 0
+    successful_tickers = []
+    
+    logger.info(f"  🔄 BATCH PROCESSING: {len(tickers)} tickers in {total_batches} batches (batch_size={batch_size})")
     
     for batch_num in range(total_batches):
         start_idx = batch_num * batch_size
         end_idx = min(start_idx + batch_size, len(tickers))
         batch_tickers = tickers[start_idx:end_idx]
         
+        # Log each batch being processed
+        if VERBOSE_LOGGING and (batch_num % 5 == 0 or batch_num == total_batches - 1):
+            logger.info(f"  📦 Batch {batch_num+1}/{total_batches}: Processing {', '.join(batch_tickers[:10])}{'...' if len(batch_tickers) > 10 else ''}")
+        
         # Process batch with limited parallelism
+        batch_success = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_ticker = {
                 executor.submit(fetch_ticker_info, ticker): ticker 
@@ -372,6 +411,8 @@ def fetch_multiple_ticker_info(tickers: List[str],
                     info = future.result()
                     if info is not None:
                         results.append(info)
+                        successful_tickers.append(ticker)
+                        batch_success.append(ticker)
                     else:
                         failed_count += 1
                 except Exception as e:
@@ -595,81 +636,155 @@ def fetch_sector_performance() -> Dict[str, Dict]:
     return sector_data
 
 
-def _screen_etfs_by_category(category_keywords: List[str], min_aum: int = 100_000_000, count: int = 5) -> List[str]:
+# =============================================================================
+# ETF DATA FETCHING - DYNAMIC FROM WEB + FALLBACK
+# =============================================================================
+# Primary: Fetch popular ETFs from etfdb.com (largest ETF database)
+# Fallback: Use well-known benchmark ETFs if web fetch fails
+# All PRICES are fetched LIVE from Yahoo Finance
+
+
+def fetch_popular_etfs_from_web() -> Dict[str, List[str]]:
     """
-    Dynamically screen ETFs using Yahoo Finance based on category keywords.
-    
-    Args:
-        category_keywords: Keywords to search in ETF names (e.g., ["gold", "miners"])
-        min_aum: Minimum assets under management
-        count: Number of ETFs to return
+    Fetch popular ETFs dynamically from etfdb.com.
+    Falls back to curated list if web fetch fails.
     
     Returns:
-        List of ETF tickers
+        Dictionary with ETF categories and tickers
     """
+    print("    Fetching popular ETFs from web...")
+    
+    etf_categories = {
+        "total_market": [],
+        "growth": [],
+        "value": [],
+        "dividend": [],
+        "sector_tech": [],
+        "sector_healthcare": [],
+        "sector_financials": [],
+        "sector_energy": [],
+        "commodities": [],
+        "bonds": [],
+        "international": [],
+        "thematic": [],
+    }
+    
     try:
-        # Screen for ETFs with minimum AUM
-        query = EquityQuery('AND', [
-            EquityQuery('EQ', ['quoteType', 'ETF']),
-            EquityQuery('GT', ['totalAssets', min_aum])
-        ])
+        # Try to fetch from etfdb.com's most popular ETFs
+        # Using their public pages which list top ETFs by AUM
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
         
-        result = yf.screen(query, count=100)
-        quotes = result.get('quotes', [])
+        # Fetch top ETFs by AUM from etfdb
+        response = requests.get(
+            'https://etfdb.com/compare/market-cap/',
+            headers=headers,
+            timeout=10
+        )
         
-        # Filter by keywords in name
-        matching_etfs = []
-        for q in quotes:
-            name = (q.get('longName', '') or q.get('shortName', '') or '').lower()
-            ticker = q.get('symbol', '')
-            if ticker and any(kw.lower() in name for kw in category_keywords):
-                matching_etfs.append(ticker)
-                if len(matching_etfs) >= count:
-                    break
-        
-        return matching_etfs
+        if response.status_code == 200:
+            # Parse the page for ETF tickers
+            # Look for ticker symbols in the HTML
+            import re
+            # Find patterns like "/etf/VOO/" or ticker symbols
+            tickers = re.findall(r'/etf/([A-Z]{2,5})/', response.text)
+            unique_tickers = list(dict.fromkeys(tickers))[:100]  # Top 100 unique
+            
+            if len(unique_tickers) >= 20:
+                print(f"    Found {len(unique_tickers)} ETFs from web")
+                # Categorize them using yfinance info
+                for ticker in unique_tickers[:50]:  # Check top 50
+                    try:
+                        info = yf.Ticker(ticker).info
+                        category = info.get('category', '').lower()
+                        
+                        if 'total' in category or 'broad' in category:
+                            etf_categories["total_market"].append(ticker)
+                        elif 'growth' in category:
+                            etf_categories["growth"].append(ticker)
+                        elif 'value' in category:
+                            etf_categories["value"].append(ticker)
+                        elif 'dividend' in category:
+                            etf_categories["dividend"].append(ticker)
+                        elif 'tech' in category or 'semiconductor' in category:
+                            etf_categories["sector_tech"].append(ticker)
+                        elif 'health' in category or 'biotech' in category:
+                            etf_categories["sector_healthcare"].append(ticker)
+                        elif 'financ' in category or 'bank' in category:
+                            etf_categories["sector_financials"].append(ticker)
+                        elif 'energy' in category or 'oil' in category:
+                            etf_categories["sector_energy"].append(ticker)
+                        elif 'commodity' in category or 'gold' in category or 'metal' in category:
+                            etf_categories["commodities"].append(ticker)
+                        elif 'bond' in category or 'treasury' in category or 'fixed' in category:
+                            etf_categories["bonds"].append(ticker)
+                        elif 'international' in category or 'emerging' in category or 'foreign' in category:
+                            etf_categories["international"].append(ticker)
+                        else:
+                            etf_categories["thematic"].append(ticker)
+                    except:
+                        continue
+                
+                # If we got good data, return it
+                total = sum(len(v) for v in etf_categories.values())
+                if total >= 20:
+                    return etf_categories
+                    
     except Exception as e:
-        print(f"    ETF screen failed for {category_keywords}: {e}")
-        return []
+        print(f"    Web fetch failed: {e}, using fallback ETFs")
+    
+    # Fallback: Curated list of most popular ETFs (rarely changes)
+    print("    Using curated popular ETF list...")
+    fallback_etfs = {
+        "total_market": ["VOO", "VTI", "SPY", "IVV", "SPLG"],
+        "growth": ["VUG", "SCHG", "IWF", "VOOG", "MGK"],
+        "value": ["VTV", "SCHV", "IWD", "VOOV", "RPV"],
+        "dividend": ["SCHD", "VIG", "VYM", "DVY", "DGRO"],
+        "sector_tech": ["VGT", "XLK", "QQQ", "SMH", "SOXX"],
+        "sector_healthcare": ["VHT", "XLV", "XBI", "IBB", "ARKG"],
+        "sector_financials": ["VFH", "XLF", "KBE", "KRE", "IAI"],
+        "sector_energy": ["VDE", "XLE", "XOP", "OIH", "AMLP"],
+        "commodities": ["GLD", "SLV", "USO", "UNG", "DBA", "DBC", "PDBC"],
+        "bonds": ["BND", "AGG", "TLT", "SHY", "LQD", "HYG", "TIP"],
+        "international": ["VEA", "VWO", "VXUS", "EFA", "EEM", "VGK", "VPL", "FXI", "EWJ"],
+        "thematic": ["ARKK", "ARKW", "ARKG", "ICLN", "TAN", "CIBR", "BOTZ", "SKYY", "CLOU"],
+    }
+    
+    # Log all ETFs being used
+    all_etfs = []
+    for cat, etfs in fallback_etfs.items():
+        all_etfs.extend(etfs)
+        log_stocks(f"ETF {cat}", etfs)
+    logger.info(f"  📊 TOTAL ETFs: {len(all_etfs)} across {len(fallback_etfs)} categories")
+    
+    return fallback_etfs
 
 
 def fetch_commodity_data() -> Dict[str, Dict]:
     """
-    Fetch data for commodities and metals DYNAMICALLY.
-    Uses Yahoo Finance to find and track commodity ETFs.
+    Fetch live price data for commodity ETFs.
+    Uses hardcoded ETF tickers (GLD, SLV, USO, etc.) - Yahoo doesn't support ETF screening.
     
     Returns:
         Dictionary with commodity/metal data
     """
-    print("    Fetching commodity ETFs dynamically...")
+    print("    Fetching commodity ETFs (using standard benchmark tickers)...")
     commodity_data = {}
     
-    # Define commodity categories with search keywords
-    # Yahoo Finance will find the best ETFs for each category
-    commodity_categories = {
-        "Gold": ["gold", "precious metal"],
-        "Silver": ["silver"],
-        "Oil": ["oil", "crude", "energy"],
-        "Natural Gas": ["natural gas"],
-        "Agriculture": ["agriculture", "farm", "agri"],
-        "Metals": ["metal", "mining", "copper"],
-        "Commodities Broad": ["commodity", "commodities"]
+    # Industry-standard commodity ETFs (hardcoded because Yahoo doesn't support ETF screening)
+    # These are the most liquid, widely-used benchmarks for each commodity category
+    commodity_tickers = {
+        "Gold": "GLD",              # SPDR Gold Shares - largest gold ETF
+        "Silver": "SLV",            # iShares Silver Trust
+        "Oil": "USO",               # United States Oil Fund
+        "Natural Gas": "UNG",       # United States Natural Gas Fund
+        "Agriculture": "DBA",       # Invesco DB Agriculture Fund
+        "Metals": "DBB",            # Invesco DB Base Metals Fund
+        "Commodities Broad": "DJP"  # iPath Bloomberg Commodity Index
     }
     
-    for category, keywords in commodity_categories.items():
-        # Try to find ETF dynamically
-        etfs = _screen_etfs_by_category(keywords, min_aum=50_000_000, count=1)
-        
-        if not etfs:
-            # Fallback: use well-known tickers that rarely change
-            fallback_map = {
-                "Gold": "GLD", "Silver": "SLV", "Oil": "USO",
-                "Natural Gas": "UNG", "Agriculture": "DBA", 
-                "Metals": "DBB", "Commodities Broad": "DJP"
-            }
-            etfs = [fallback_map.get(category, "")]
-        
-        ticker = etfs[0] if etfs else None
+    for category, ticker in commodity_tickers.items():
         if not ticker:
             continue
             
@@ -702,36 +817,26 @@ def fetch_commodity_data() -> Dict[str, Dict]:
 
 def fetch_fixed_income_data() -> Dict[str, Dict]:
     """
-    Fetch data for fixed income ETFs DYNAMICALLY.
-    Uses Yahoo Finance to find and track bond ETFs.
+    Fetch live price data for fixed income ETFs.
+    Uses hardcoded ETF tickers (TLT, SHY, LQD, etc.) - Yahoo doesn't support ETF screening.
     
     Returns:
         Dictionary with fixed income data
     """
-    print("    Fetching fixed income ETFs dynamically...")
+    print("    Fetching fixed income ETFs (using standard benchmark tickers)...")
     fi_data = {}
     
-    # Define fixed income categories with search keywords
-    fi_categories = {
-        "Treasury Short": ["treasury", "short term", "t-bill"],
-        "Treasury Long": ["treasury", "long term", "20+ year"],
-        "Corporate Bond": ["corporate bond", "investment grade"],
-        "High Yield": ["high yield", "junk bond"],
-        "TIPS": ["tips", "inflation protected"]
+    # Industry-standard bond ETFs (hardcoded because Yahoo doesn't support ETF screening)
+    # These are the most liquid, widely-used benchmarks for each fixed income category
+    fi_tickers = {
+        "Treasury Short": "SHY",    # iShares 1-3 Year Treasury Bond ETF
+        "Treasury Long": "TLT",     # iShares 20+ Year Treasury Bond ETF
+        "Corporate Bond": "LQD",    # iShares iBoxx $ Investment Grade Corp Bond ETF
+        "High Yield": "HYG",        # iShares iBoxx $ High Yield Corp Bond ETF
+        "TIPS": "TIP"               # iShares TIPS Bond ETF
     }
     
-    for category, keywords in fi_categories.items():
-        etfs = _screen_etfs_by_category(keywords, min_aum=100_000_000, count=1)
-        
-        if not etfs:
-            # Fallback for well-known bond ETFs
-            fallback_map = {
-                "Treasury Short": "SHY", "Treasury Long": "TLT",
-                "Corporate Bond": "LQD", "High Yield": "HYG", "TIPS": "TIP"
-            }
-            etfs = [fallback_map.get(category, "")]
-        
-        ticker = etfs[0] if etfs else None
+    for category, ticker in fi_tickers.items():
         if not ticker:
             continue
             
@@ -766,38 +871,27 @@ def fetch_fixed_income_data() -> Dict[str, Dict]:
 
 def fetch_international_data() -> Dict[str, Dict]:
     """
-    Fetch data for international market ETFs DYNAMICALLY.
-    Uses Yahoo Finance to find regional ETFs.
+    Fetch live price data for international market ETFs.
+    Uses hardcoded ETF tickers (VEA, VWO, VGK, etc.) - Yahoo doesn't support ETF screening.
     
     Returns:
         Dictionary with international market data
     """
-    print("    Fetching international ETFs dynamically...")
+    print("    Fetching international ETFs (using standard benchmark tickers)...")
     intl_data = {}
     
-    # Define international regions with search keywords
-    intl_categories = {
-        "Developed Markets": ["developed market", "international developed", "eafe"],
-        "Emerging Markets": ["emerging market", "em equity"],
-        "Europe": ["europe", "european"],
-        "Asia Pacific": ["asia pacific", "pacific"],
-        "China": ["china", "chinese"],
-        "Japan": ["japan", "japanese"]
+    # Industry-standard international ETFs (hardcoded because Yahoo doesn't support ETF screening)
+    # These are the most liquid, widely-used benchmarks for each region
+    intl_tickers = {
+        "Developed Markets": "VEA",   # Vanguard FTSE Developed Markets ETF
+        "Emerging Markets": "VWO",    # Vanguard FTSE Emerging Markets ETF
+        "Europe": "VGK",              # Vanguard FTSE Europe ETF
+        "Asia Pacific": "VPL",        # Vanguard FTSE Pacific ETF
+        "China": "FXI",               # iShares China Large-Cap ETF
+        "Japan": "EWJ"                # iShares MSCI Japan ETF
     }
     
-    for region, keywords in intl_categories.items():
-        etfs = _screen_etfs_by_category(keywords, min_aum=500_000_000, count=1)
-        
-        if not etfs:
-            # Fallback for well-known international ETFs
-            fallback_map = {
-                "Developed Markets": "VEA", "Emerging Markets": "VWO",
-                "Europe": "VGK", "Asia Pacific": "VPL",
-                "China": "FXI", "Japan": "EWJ"
-            }
-            etfs = [fallback_map.get(region, "")]
-        
-        ticker = etfs[0] if etfs else None
+    for region, ticker in intl_tickers.items():
         if not ticker:
             continue
             
@@ -830,41 +924,35 @@ def fetch_international_data() -> Dict[str, Dict]:
 
 def fetch_growth_etf_data() -> Dict[str, Dict]:
     """
-    Fetch data for growth and thematic ETFs DYNAMICALLY.
-    Uses Yahoo Finance to find ETFs for each investment theme.
+    Fetch live price data for growth and thematic ETFs.
+    Attempts to fetch popular ETFs from web, falls back to curated list.
     
     Returns:
         Dictionary with growth/thematic ETF data organized by theme
     """
-    print("    Fetching thematic/growth ETFs dynamically...")
+    print("    Fetching thematic/growth ETFs...")
     growth_data = {}
     
-    # Define growth themes with search keywords
-    theme_categories = {
-        "AI & Technology": ["artificial intelligence", "ai", "technology"],
-        "Semiconductors": ["semiconductor", "chip"],
-        "Clean Energy": ["clean energy", "solar", "renewable"],
-        "Healthcare Innovation": ["healthcare", "biotech", "genomics"],
-        "Cybersecurity": ["cybersecurity", "cyber"],
-        "Cloud Computing": ["cloud computing", "cloud"],
-        "Dividend Growth": ["dividend growth", "dividend appreciation"]
+    # Get ETFs from web (or fallback)
+    popular_etfs = fetch_popular_etfs_from_web()
+    
+    # Build theme_tickers from the dynamic data
+    theme_tickers = {
+        "Total Market": popular_etfs.get("total_market", ["VOO", "VTI"])[:3],
+        "Growth": popular_etfs.get("growth", ["VUG", "SCHG"])[:3],
+        "Value": popular_etfs.get("value", ["VTV", "SCHV"])[:3],
+        "Dividend": popular_etfs.get("dividend", ["SCHD", "VIG", "VYM"])[:3],
+        "Technology": popular_etfs.get("sector_tech", ["QQQ", "VGT", "SMH"])[:3],
+        "Healthcare": popular_etfs.get("sector_healthcare", ["XLV", "XBI"])[:2],
+        "Financials": popular_etfs.get("sector_financials", ["XLF", "VFH"])[:2],
+        "Energy": popular_etfs.get("sector_energy", ["XLE", "VDE"])[:2],
+        "International": popular_etfs.get("international", ["VEA", "VWO", "EFA"])[:3],
+        "Thematic/Innovation": popular_etfs.get("thematic", ["ARKK", "ICLN", "CIBR"])[:3],
     }
     
-    for theme, keywords in theme_categories.items():
-        etfs = _screen_etfs_by_category(keywords, min_aum=100_000_000, count=2)
-        
-        if not etfs:
-            # Fallback for well-known thematic ETFs
-            fallback_map = {
-                "AI & Technology": ["QQQ"], "Semiconductors": ["SMH"],
-                "Clean Energy": ["ICLN"], "Healthcare Innovation": ["XBI"],
-                "Cybersecurity": ["CIBR"], "Cloud Computing": ["CLOU"],
-                "Dividend Growth": ["VIG"]
-            }
-            etfs = fallback_map.get(theme, [])
-        
+    for theme, etfs in theme_tickers.items():
         theme_data = {}
-        for ticker in etfs[:2]:
+        for ticker in etfs:
             try:
                 stock = yf.Ticker(ticker)
                 hist = stock.history(period="1y")

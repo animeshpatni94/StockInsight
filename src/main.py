@@ -222,6 +222,58 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         }
     }
     
+    # === LOG DATA BEING SENT TO CLAUDE ===
+    print("\n" + "=" * 70)
+    print("📊 DATA SUMMARY BEING SENT TO CLAUDE FOR ANALYSIS")
+    print("=" * 70)
+    
+    # Log screen results summary
+    momentum = screen_results.get('momentum', {})
+    fundamental = screen_results.get('fundamental', {})
+    technical = screen_results.get('technical', {})
+    
+    print(f"\n📈 MOMENTUM SCREENS:")
+    print(f"   Top Gainers ({len(momentum.get('top_gainers', []))}): {', '.join([s['ticker'] for s in momentum.get('top_gainers', [])[:15]])}...")
+    print(f"   Top Losers ({len(momentum.get('top_losers', []))}): {', '.join([s['ticker'] for s in momentum.get('top_losers', [])[:15]])}...")
+    print(f"   52W High Breakouts ({len(momentum.get('52w_high_breakouts', []))}): {', '.join([s['ticker'] for s in momentum.get('52w_high_breakouts', [])[:10]])}...")
+    print(f"   Unusual Volume ({len(momentum.get('unusual_volume', []))}): {', '.join([s['ticker'] for s in momentum.get('unusual_volume', [])[:10]])}...")
+    
+    print(f"\n📊 FUNDAMENTAL SCREENS:")
+    print(f"   Growth Stocks ({len(fundamental.get('growth_stocks', []))}): {', '.join([s['ticker'] for s in fundamental.get('growth_stocks', [])[:15]])}...")
+    print(f"   Value Stocks ({len(fundamental.get('value_stocks', []))}): {', '.join([s['ticker'] for s in fundamental.get('value_stocks', [])[:15]])}...")
+    print(f"   GARP Stocks ({len(fundamental.get('garp_stocks', []))}): {', '.join([s['ticker'] for s in fundamental.get('garp_stocks', [])[:10]])}...")
+    print(f"   Dividend Stocks ({len(fundamental.get('dividend_stocks', []))}): {', '.join([s['ticker'] for s in fundamental.get('dividend_stocks', [])[:10]])}...")
+    print(f"   Insider Buying ({len(fundamental.get('insider_buying', []))}): {', '.join([s['ticker'] for s in fundamental.get('insider_buying', [])[:10]])}...")
+    
+    print(f"\n📉 TECHNICAL SCREENS:")
+    print(f"   Golden Crosses ({len(technical.get('golden_crosses', []))}): {', '.join([s['ticker'] for s in technical.get('golden_crosses', [])[:10]])}...")
+    print(f"   Oversold RSI ({len(technical.get('oversold', []))}): {', '.join([s['ticker'] for s in technical.get('oversold', [])[:10]])}...")
+    print(f"   Overbought RSI ({len(technical.get('overbought', []))}): {', '.join([s['ticker'] for s in technical.get('overbought', [])[:10]])}...")
+    
+    # Log market data summary
+    print(f"\n🌍 MARKET DATA:")
+    print(f"   Indexes: {', '.join(market_data.get('indexes', {}).keys())}")
+    print(f"   Sectors: {', '.join(market_data.get('sectors', {}).keys())}")
+    commodities = market_data.get('commodities', {})
+    print(f"   Commodities: {', '.join([f\"{k}({v.get('ticker', 'N/A')})\" for k,v in list(commodities.items())[:5]])}...")
+    
+    # Log ETF data
+    growth_etfs = market_data.get('growth_etfs', {})
+    print(f"\n📊 ETF DATA:")
+    for theme, etfs in list(growth_etfs.items())[:5]:
+        tickers = list(etfs.keys()) if isinstance(etfs, dict) else []
+        print(f"   {theme}: {', '.join(tickers[:3])}...")
+    
+    # Total unique tickers being analyzed
+    all_analyzed_tickers = set()
+    for screen_type in [momentum, fundamental, technical]:
+        for key, items in screen_type.items():
+            if isinstance(items, list):
+                all_analyzed_tickers.update([s.get('ticker', '') for s in items if s.get('ticker')])
+    
+    print(f"\n✅ TOTAL UNIQUE STOCKS IN SCREENS: {len(all_analyzed_tickers)}")
+    print("=" * 70 + "\n")
+    
     # Step 7: Analyze with Claude
     print("\n[7/10] Analyzing with Claude Opus...")
     print(f"       Model: {CLAUDE_MODEL}")

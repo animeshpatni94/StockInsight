@@ -5,7 +5,7 @@ Configuration and constants for the Stock Insight Agent.
 from datetime import datetime
 
 # =============================================================================
-# USER PROFILE
+# USER PROFILE - AGGRESSIVE GROWTH INVESTOR
 # =============================================================================
 
 _BIRTH_YEAR = 1994
@@ -18,19 +18,28 @@ USER_PROFILE = {
     "retirement_age": _RETIREMENT_AGE,
     "years_to_retirement": max(1, _RETIREMENT_AGE - _CURRENT_AGE),
     
-    # Financial situation - debt-free, ready to invest
+    # Financial situation - debt-free, ready to invest aggressively
     "financial_situation": "strong",   # no debts, emergency fund covered, 401k separate
-    "focus": "growth",                 # grow the portfolio aggressively
+    "focus": "aggressive_growth",      # maximize long-term returns, can tolerate volatility
+    "risk_tolerance": "high",          # comfortable with 30-40% drawdowns
+    "investment_style": "growth",      # growth stocks over value/dividend
+    
+    # Portfolio preferences
+    "prefer_individual_stocks": True,  # prioritize stock picks over ETFs
+    "stock_to_etf_ratio": "70:30",     # 70% individual stocks, 30% ETFs
+    "include_small_caps": True,        # open to emerging companies
+    "include_international": True,     # global diversification welcome
 }
 
 # API Configuration
 CLAUDE_MODEL = "claude-opus-4-5-20251101"  # Claude Opus 4.5 - maximum intelligence
 CLAUDE_MAX_TOKENS = 32000  # Must be greater than thinking budget
 CLAUDE_THINKING_BUDGET = 20000  # Extended thinking budget for deeper analysis of 500+ stocks
-
 # Market Indexes to Track (using ETFs for better data availability)
 INDEXES = {
-    "S&P 500": "SPY",
+    "S&P 500 (SPY)": "SPY",
+    "S&P 500 (VOO)": "VOO",       # Added - most popular retail ETF
+    "Total Market": "VTI",        # Added - Vanguard Total Stock Market
     "Nasdaq 100": "QQQ",
     "Dow Jones": "DIA",
     "Russell 2000": "IWM",
@@ -54,18 +63,21 @@ SECTORS = {
 }
 
 # =============================================================================
-# ASSET CLASS TRACKING - ALL DYNAMIC
+# ASSET CLASS TRACKING
 # =============================================================================
-# Commodities, Fixed Income, International, and Thematic ETFs are now 
-# fetched DYNAMICALLY using Yahoo Finance ETF Screener API.
-# See data_fetcher.py functions:
-#   - fetch_commodity_data() - screens for gold, silver, oil ETFs dynamically
-#   - fetch_fixed_income_data() - screens for bond ETFs dynamically  
-#   - fetch_international_data() - screens for regional ETFs dynamically
-#   - fetch_growth_etf_data() - screens for thematic ETFs dynamically
+# Stock Universe: 100% DYNAMIC via Yahoo Finance EquityQuery API
+#   - Screens 1,500+ stocks by market cap and sector in real-time
+#   - No hardcoded stock lists
 #
-# The screener searches by keywords (e.g., "gold", "treasury", "emerging market")
-# and finds the most liquid ETFs automatically. No hardcoded ticker lists needed.
+# ETF Tracking: Uses industry-standard liquid ETFs
+#   - Commodity ETFs: GLD, SLV, USO, UNG, DBA, DBB, DJP
+#   - Bond ETFs: SHY, TLT, LQD, HYG, TIP
+#   - International ETFs: VEA, VWO, VGK, VPL, FXI, EWJ
+#   - Thematic ETFs: QQQ, SMH, ICLN, XBI, CIBR, SKYY, VIG
+#
+# Why not dynamic ETF discovery? Yahoo Finance EquityQuery doesn't support
+# quoteType='ETF' filtering. These benchmark ETFs are industry standards
+# (largest, most liquid) that rarely change - similar to using SPY for S&P 500.
 
 # =============================================================================
 # GUARDRAILS - Minimal. Let Claude be the advisor.

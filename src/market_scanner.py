@@ -7,6 +7,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import time
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -16,7 +17,8 @@ from config import (
 )
 from data_fetcher import (
     fetch_ticker_data, fetch_ticker_info, fetch_multiple_ticker_info,
-    calculate_technical_indicators, get_current_prices, get_dynamic_stock_universe
+    calculate_technical_indicators, get_current_prices, get_dynamic_stock_universe,
+    log_stocks, logger
 )
 
 
@@ -40,9 +42,16 @@ class MarketScanner:
         all_tickers = list(set(all_tickers))[:max_stocks]
         
         print(f"    Loading {len(all_tickers)} stocks...")
+        logger.info(f"  📥 LOADING STOCK DATA for {len(all_tickers)} tickers...")
+        
         # Use rate-limited fetching with very conservative settings to fetch all 1500 stocks
         self.stock_info = fetch_multiple_ticker_info(all_tickers, max_workers=2, batch_size=20, delay_between_batches=3.0)
         print(f"    Loaded info for {len(self.stock_info)} stocks")
+        
+        # Log successfully loaded stocks
+        loaded_tickers = [s['ticker'] for s in self.stock_info if s.get('ticker')]
+        logger.info(f"  ✅ SUCCESSFULLY LOADED: {len(loaded_tickers)} stocks")
+        log_stocks("Loaded stocks", loaded_tickers, max_display=30)
         
     def _bulk_download_prices(self, tickers: List[str], period: str = "3mo") -> pd.DataFrame:
         """
@@ -972,6 +981,15 @@ def run_all_screens() -> Dict:
         'unusual_volume': scanner.get_unusual_volume()[:60]
     }
     
+    # Log momentum screen results
+    gainers = results['momentum']['top_gainers']
+    losers = results['momentum']['top_losers']
+    logger.info(f"  📈 MOMENTUM SCREENS:")
+    log_stocks("Top Gainers", [g['ticker'] for g in gainers[:20]], max_display=20)
+    log_stocks("Top Losers", [l['ticker'] for l in losers[:20]], max_display=20)
+    log_stocks("52W High Breakouts", [b['ticker'] for b in results['momentum']['52w_high_breakouts'][:15]], max_display=15)
+    log_stocks("Unusual Volume", [v['ticker'] for v in results['momentum']['unusual_volume'][:15]], max_display=15)
+    
     print("  Running fundamental screens (growth, value, GARP, dividend)...")
     results['fundamental'] = {
         'value_stocks': scanner.get_value_stocks()[:75],
@@ -981,6 +999,14 @@ def run_all_screens() -> Dict:
         'insider_buying': scanner.get_insider_buying_clusters()[:40]
     }
     
+    # Log fundamental screen results
+    logger.info(f"  📊 FUNDAMENTAL SCREENS:")
+    log_stocks("Value Stocks", [s['ticker'] for s in results['fundamental']['value_stocks'][:20]], max_display=20)
+    log_stocks("Growth Stocks", [s['ticker'] for s in results['fundamental']['growth_stocks'][:25]], max_display=25)
+    log_stocks("GARP Stocks", [s['ticker'] for s in results['fundamental']['garp_stocks'][:15]], max_display=15)
+    log_stocks("Dividend Stocks", [s['ticker'] for s in results['fundamental']['dividend_stocks'][:15]], max_display=15)
+    log_stocks("Insider Buying", [s['ticker'] for s in results['fundamental']['insider_buying'][:10]], max_display=10)
+    
     print("  Running technical screens...")
     results['technical'] = {
         'golden_crosses': scanner.get_golden_crosses()[:50],
@@ -989,11 +1015,26 @@ def run_all_screens() -> Dict:
         'overbought': scanner.get_overbought_stocks()[:60]
     }
     
+    # Log technical screen results
+    logger.info(f"  📉 TECHNICAL SCREENS:")
+    log_stocks("Golden Crosses", [s['ticker'] for s in results['technical']['golden_crosses'][:15]], max_display=15)
+    log_stocks("Oversold (RSI<30)", [s['ticker'] for s in results['technical']['oversold'][:15]], max_display=15)
+    log_stocks("Overbought (RSI>70)", [s['ticker'] for s in results['technical']['overbought'][:15]], max_display=15)
+    
     print("  Running sector analysis...")
     results['sector'] = {
         'performance': scanner.get_sector_performance(),
         'rotation_signals': scanner.get_sector_rotation_signals(),
         'vs_spy': scanner.get_sector_vs_spy()
     }
+    
+    # Summary
+    total_screened = (
+        len(results['momentum'].get('top_gainers', [])) +
+        len(results['fundamental'].get('growth_stocks', [])) +
+        len(results['fundamental'].get('value_stocks', [])) +
+        len(results['technical'].get('golden_crosses', []))
+    )
+    logger.info(f"  ✅ SCREENING COMPLETE: {total_screened}+ stocks analyzed across all screens")
     
     return results
