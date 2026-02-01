@@ -972,7 +972,8 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
     cash_pct = allocation.get("cash_pct", allocation.get("cash", {}).get("allocation_pct", 15))
     
     for rec in recommendations:
-        action = rec.get("action", rec.get("recommendation", rec.get("type", "HOLD"))).upper()
+        # Check multiple possible field names for action (status is used in new_recommendations)
+        action = rec.get("action", rec.get("recommendation", rec.get("status", rec.get("type", "BUY")))).upper()
         ticker = rec.get("symbol", rec.get("ticker", ""))
         company = rec.get("company", rec.get("company_name", ticker))
         alloc = rec.get("allocation_pct", rec.get("allocation", 10))
@@ -996,7 +997,7 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         else:
             hold_stocks.append({"ticker": ticker, "company": company, "allocation": alloc})
     
-    # Also check portfolio_review for holds and trims
+    # Also check portfolio_review for holds, trims, and sells
     portfolio_review = analysis_result.get("portfolio_review", [])
     for holding in portfolio_review:
         action = holding.get("recommendation", holding.get("action", "HOLD")).upper()
@@ -1013,18 +1014,27 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
                     "new_allocation": new_alloc,
                     "trim_pct": old_alloc - new_alloc
                 })
+        elif "SELL" in action:
+            # Add sells from portfolio_review
+            if not any(s["ticker"] == ticker for s in sell_stocks):
+                sell_stocks.append({
+                    "ticker": ticker,
+                    "company": holding.get("company_name", ticker),
+                    "allocation": holding.get("allocation_pct", 15)
+                })
         elif "HOLD" in action:
-            if not any(h["ticker"] == ticker for h in hold_stocks):
+            # Don't add to hold if already in buy_stocks (prevents duplicates)
+            if not any(h["ticker"] == ticker for h in hold_stocks) and not any(b["ticker"] == ticker for b in buy_stocks):
                 hold_stocks.append({
                     "ticker": ticker,
                     "company": holding.get("company_name", ticker),
                     "allocation": holding.get("allocation_pct", 15)
                 })
     
-    # Calculate percentages
-    buy_total = sum(s["allocation"] for s in buy_stocks) if buy_stocks else 45
-    hold_total = sum(s["allocation"] for s in hold_stocks) if hold_stocks else 35
-    sell_total = sum(s["allocation"] for s in sell_stocks) if sell_stocks else 5
+    # Calculate percentages - use 0 as default when no stocks in category
+    buy_total = sum(s["allocation"] for s in buy_stocks) if buy_stocks else 0
+    hold_total = sum(s["allocation"] for s in hold_stocks) if hold_stocks else 0
+    sell_total = sum(s["allocation"] for s in sell_stocks) if sell_stocks else 0
     
     # Normalize if needed
     total = buy_total + hold_total + sell_total + cash_pct
@@ -1035,28 +1045,35 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         sell_total = int(sell_total * factor)
         cash_pct = 100 - buy_total - hold_total - sell_total
     
-    # Build allocation bar
+    # Build allocation bar - only show sections with > 0%
+    bar_cells = ""
+    if buy_total > 0:
+        bar_cells += f'''<td width="{buy_total}%" style="background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%); padding: 14px 0; text-align: center;">
+                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Buy</span>
+                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{buy_total}%</span>
+                                                        </td>'''
+    if hold_total > 0:
+        bar_cells += f'''<td width="{hold_total}%" style="background: linear-gradient(135deg, #ffd93d 0%, #f4c430 100%); padding: 14px 0; text-align: center;">
+                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Hold</span>
+                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{hold_total}%</span>
+                                                        </td>'''
+    if cash_pct > 0:
+        bar_cells += f'''<td width="{cash_pct}%" style="background: linear-gradient(135deg, #6b6b7b 0%, #505060 100%); padding: 14px 0; text-align: center;">
+                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(255,255,255,0.7);">Cash</span>
+                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85);">{cash_pct}%</span>
+                                                        </td>'''
+    if sell_total > 0:
+        bar_cells += f'''<td width="{sell_total}%" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%); padding: 14px 0; text-align: center;">
+                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Sell</span>
+                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{sell_total}%</span>
+                                                        </td>'''
+    
     allocation_bar = f'''
                                         <tr>
                                             <td style="padding: 0;">
                                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-radius: 10px; overflow: hidden;">
                                                     <tr>
-                                                        <td width="{buy_total}%" style="background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%); padding: 14px 0; text-align: center;">
-                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Buy</span>
-                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{buy_total}%</span>
-                                                        </td>
-                                                        <td width="{hold_total}%" style="background: linear-gradient(135deg, #ffd93d 0%, #f4c430 100%); padding: 14px 0; text-align: center;">
-                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Hold</span>
-                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{hold_total}%</span>
-                                                        </td>
-                                                        <td width="{cash_pct}%" style="background: linear-gradient(135deg, #6b6b7b 0%, #505060 100%); padding: 14px 0; text-align: center;">
-                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(255,255,255,0.7);">Cash</span>
-                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85);">{cash_pct}%</span>
-                                                        </td>
-                                                        <td width="{sell_total}%" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%); padding: 14px 0; text-align: center;">
-                                                            <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(0,0,0,0.7);">Sell</span>
-                                                            <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.85);">{sell_total}%</span>
-                                                        </td>
+                                                        {bar_cells}
                                                     </tr>
                                                 </table>
                                             </td>
@@ -1310,7 +1327,8 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
     """Build a single stock card with position sizing guidance."""
     ticker = rec.get("ticker", rec.get("symbol", "N/A"))
     company = rec.get("company_name", rec.get("company", rec.get("name", ticker)))
-    action = rec.get("action", rec.get("recommendation", rec.get("type", "HOLD"))).upper()
+    # Check multiple possible field names - status is used in new_recommendations, default to BUY
+    action = rec.get("action", rec.get("recommendation", rec.get("status", rec.get("type", "BUY")))).upper()
     price = rec.get("current_market_price", rec.get("current_price", rec.get("price", 0)))
     target = rec.get("price_target", rec.get("target_price", rec.get("target", None)))
     stop_loss = rec.get("stop_loss", None)

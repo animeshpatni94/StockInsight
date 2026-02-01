@@ -443,7 +443,9 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         'retail_analysis': retail_analysis
     }
     
-    email_html = build_email_html(analysis_result, updated_history, email_context)
+    # Pass ORIGINAL history so Current Holdings shows actual existing positions,
+    # not the newly added recommendations (which should appear in Stock Picks section)
+    email_html = build_email_html(analysis_result, history, email_context)
     
     # Save report locally regardless
     output_dir = Path(__file__).parent.parent / 'output'
