@@ -456,17 +456,30 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
     
     # ==================== INVESTOR PROFILE ====================
     years_to_retirement = USER_PROFILE.get('years_to_retirement', 33)
+    current_age = USER_PROFILE.get('current_age', 32)
+    risk_tolerance = USER_PROFILE.get('risk_tolerance', 'high')
+    investment_style = USER_PROFILE.get('investment_style', 'growth')
+    stock_to_etf_ratio = USER_PROFILE.get('stock_to_etf_ratio', '70:30')
+    include_small_caps = USER_PROFILE.get('include_small_caps', True)
+    include_international = USER_PROFILE.get('include_international', True)
+    
     sections.append(f"""
 ## 🎯 INVESTOR PROFILE
 
-**Age**: {USER_PROFILE.get('current_age', 32)} | **Retirement**: {USER_PROFILE.get('retirement_age', 65)} | **Years to Retirement**: {years_to_retirement}
-
-**Age**: {USER_PROFILE.get('current_age', 32)} | **Retirement**: {USER_PROFILE.get('retirement_age', 65)} | **Years to Retirement**: {years_to_retirement}
+**Age**: {current_age} | **Retirement**: {USER_PROFILE.get('retirement_age', 65)} | **Years to Retirement**: {years_to_retirement}
+**Risk Tolerance**: {risk_tolerance.upper()} | **Investment Style**: {investment_style.upper()}
+**Portfolio Mix**: {stock_to_etf_ratio} (Individual Stocks : ETFs)
+**Small Caps**: {'✅ Yes' if include_small_caps else '❌ No'} | **International**: {'✅ Yes' if include_international else '❌ No'}
 
 **Financial Situation**: Strong - No debts, emergency fund covered, 401k handled separately.
-**Focus**: GROWTH. This portfolio is for aggressive wealth building. Go for growth stocks.
+**Focus**: AGGRESSIVE GROWTH. This portfolio is for maximum wealth building over {years_to_retirement} years.
 
-You are the financial advisor. With {years_to_retirement} years until retirement and a strong financial foundation, prioritize growth and beating the S&P 500.
+🔴 IMPORTANT FOR YOUR RECOMMENDATIONS:
+- Prioritize INDIVIDUAL STOCKS over ETFs ({stock_to_etf_ratio} ratio target)
+- Can tolerate 30-40% drawdowns for higher long-term returns
+- Include high-growth small/mid caps, not just mega-caps
+- International exposure welcome for diversification
+- Beat the S&P 500 - that's the benchmark!
 """)
     
     # Current Portfolio
