@@ -1,22 +1,391 @@
 {
   "metadata": {
     "created": "",
-    "last_updated": "",
-    "total_months": 0,
+    "last_updated": "2026-02-01",
+    "total_months": 1,
     "starting_capital": 100000
   },
-  "current_portfolio": [],
+  "current_portfolio": [
+    {
+      "ticker": "GOOGL",
+      "company_name": "Alphabet Inc.",
+      "asset_class": "us_stock",
+      "sector": "Communication Services",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "garp",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 12,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 338.0,
+      "entry_zone": {
+        "low": 327.86,
+        "high": 344.76
+      },
+      "price_target": 420.62,
+      "stop_loss": 295.44,
+      "thesis": "GOOGL broke out to 52-week highs at $338.53, confirming renewed momentum after AI investment fears subsided. Trading at ~21x forward earnings vs mega-cap peers at 30x+, this is the cheapest quality tech name. Cloud growth reaccelerating, YouTube maintaining dominance, and Search moat proving durable against AI chatbot competition. AI infrastructure investments now viewed as competitive advantage rather than margin drag. The 34-year horizon makes this a foundational holding.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "XOM",
+      "company_name": "Exxon Mobil Corporation",
+      "asset_class": "us_stock",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 141.4,
+      "entry_zone": {
+        "low": 137.16,
+        "high": 144.23
+      },
+      "price_target": 169.88,
+      "stop_loss": 124.91,
+      "thesis": "XOM hit 52-week highs at $141.40 as oil surged +14% this month. Late-cycle energy leadership is textbook, and XOM is the highest-quality integrated major. Pioneer acquisition fully integrated, Guyana production ramping, and Permian assets world-class. P/E of ~12x with 3.3% yield provides downside protection. Geopolitical tensions and underinvestment in supply create structural tailwinds. RSI at 91 suggests near-term consolidation, so DCA entry recommended.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "LLY",
+      "company_name": "Eli Lilly and Company",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 1037.15,
+      "entry_zone": {
+        "low": 1006.04,
+        "high": 1057.89
+      },
+      "price_target": 1315.41,
+      "stop_loss": 910.67,
+      "thesis": "LLY at $1037.15 is the undisputed GLP-1 leader with Mounjaro/Zepbound creating a $100B+ addressable market in obesity alone. Revenue growth of 53.9% is extraordinary for a $600B+ market cap company. The obesity drug class is the biggest pharma innovation since statins. Manufacturing capacity expansion underway addresses the key constraint. Healthcare is a late-cycle defensive that can grow through recession. At 33 years to retirement, this multi-decade secular trend is exactly what belongs in the portfolio.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "MU",
+      "company_name": "Micron Technology Inc.",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 414.88,
+      "entry_zone": {
+        "low": 402.43,
+        "high": 423.18
+      },
+      "price_target": 559.96,
+      "stop_loss": 356.34,
+      "thesis": "MU at $414.88 (+41.78% momentum) is the direct beneficiary of the memory chip shortage flagged in today's Apple headlines. HBM (High Bandwidth Memory) for AI is supply-constrained with MU capturing share from Samsung. Revenue growth of 56.7% with memory cycle turning positive. The Apple news confirms memory is the new bottleneck in AI infrastructure - MU, SNDK, and WDC are all surging. Cyclical risk exists but current position in cycle is early-to-mid upswing.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "LMT",
+      "company_name": "Lockheed Martin Corporation",
+      "asset_class": "us_stock",
+      "sector": "Industrials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "garp",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 634.22,
+      "entry_zone": {
+        "low": 615.19,
+        "high": 646.9
+      },
+      "price_target": 752.04,
+      "stop_loss": 566.54,
+      "thesis": "LMT at $634.22 (+29.96% momentum, RSI 85.5) reflects the geopolitical premium now being priced into defense. With ongoing conflicts in multiple theaters and NATO rearmament accelerating, the defense budget cycle is structurally higher for a decade+. F-35 production at full rate, hypersonics contracts flowing, and space/missile defense growing. Steve Cohen sold NOC in December, but these stocks have rallied 30% since - institutional profit-taking is normal after a run. Backlog provides 2+ years of revenue visibility.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "GILD",
+      "company_name": "Gilead Sciences Inc.",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 6,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 141.95,
+      "entry_zone": {
+        "low": 137.69,
+        "high": 144.79
+      },
+      "price_target": 175.56,
+      "stop_loss": 125.4,
+      "thesis": "GILD at $141.95 just broke to 52-week highs with +15.24% gain and RSI 82. After years of underperformance, the HIV franchise is stable, oncology pipeline maturing (Trodelvy), and liver disease optionality provides upside. Trading at ~12x earnings with 3.5% yield - this is defensive value in a late-cycle environment. Pairs well with LLY for barbell healthcare exposure (growth + value). Strong FCF funds dividend and buybacks.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "QCOM",
+      "company_name": "Qualcomm Inc.",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "garp",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 5,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 151.59,
+      "entry_zone": {
+        "low": 147.04,
+        "high": 154.62
+      },
+      "price_target": 202.12,
+      "stop_loss": 131.38,
+      "thesis": "QCOM at $151.59 with RSI 11.1 is extremely oversold - this is capitulation territory. The smartphone slowdown fears are overblown given Apple's memory chip constraints (per today's news) are NOT about Qualcomm modems. QCOM's pivot to automotive and IoT diversifies away from phone dependency. AI-on-device trend plays directly to their Snapdragon X Elite. At 14x earnings with high-teens EPS growth, risk/reward is asymmetric from these levels.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "KO",
+      "company_name": "The Coca-Cola Company",
+      "asset_class": "us_stock",
+      "sector": "Consumer Staples",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 5,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 74.81,
+      "entry_zone": {
+        "low": 72.57,
+        "high": 76.31
+      },
+      "price_target": 88.37,
+      "stop_loss": 67.28,
+      "thesis": "KO at $74.81 broke to 52-week highs as late-cycle rotation into staples accelerates. Consumer Staples sector +6.86% this month is not coincidental. KO's pricing power, 3% yield, 60+ year dividend growth streak, and emerging market penetration make it an all-weather compounder. In a 33-year portfolio, dividend reinvestment creates substantial wealth through compounding. This is the defensive anchor that lets you hold aggressive positions through volatility.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "SCCO",
+      "company_name": "Southern Copper Corporation",
+      "asset_class": "us_stock",
+      "sector": "Materials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 5,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 190.32,
+      "entry_zone": {
+        "low": 184.61,
+        "high": 194.13
+      },
+      "price_target": 247.37,
+      "stop_loss": 161.54,
+      "thesis": "SCCO at $190.32 (+30.82% momentum) is the premier copper pure-play as electrification drives structural demand. EV batteries, grid infrastructure, data center power - all copper-intensive. Revenue growth 39% reflects the demand surge. Materials sector +7.74% this month shows the rotation. SCCO has lowest-cost mines globally with decades of reserves in Peru/Mexico. Copper is 'the new oil' for the energy transition thesis.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "GLD",
+      "company_name": "SPDR Gold Trust",
+      "asset_class": "commodity_etf",
+      "sector": "Metals",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "hedge",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 10,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 444.95,
+      "entry_zone": {
+        "low": 431.6,
+        "high": 453.85
+      },
+      "price_target": 553.05,
+      "stop_loss": 392.16,
+      "thesis": "Gold at $444.95 (+11.55% monthly) is confirming the inflationary/late-cycle thesis. Headlines suggest potential move to much higher levels ($10k mentioned by analysts). Central bank buying continues, dollar weakening, real rates potentially peaking - all bullish for gold. In an aggressive portfolio, 10% gold is not conservative - it's smart portfolio construction. Gold has zero correlation to equities and provides crisis alpha. Expense ratio 0.40% is acceptable for physical gold exposure.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    },
+    {
+      "ticker": "VEA",
+      "company_name": "Vanguard FTSE Developed Markets ETF",
+      "asset_class": "etf",
+      "sector": "International",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 8,
+      "shares": 0,
+      "recommended_date": "2026-02-01",
+      "recommended_price": 66.2,
+      "entry_zone": {
+        "low": 64.21,
+        "high": 67.52
+      },
+      "price_target": 80.24,
+      "stop_loss": 58.18,
+      "thesis": "VEA at $66.20 (+5.43% monthly) is outperforming US markets as the dollar weakens and international valuations (12-14x P/E) offer better risk/reward than expensive US (28x). Japan corporate governance reforms, European energy crisis resolution, and export competitiveness from weaker currencies all support developed international. Expense ratio of 0.05% is best-in-class. Geographic diversification critical for 33-year horizon - US won't outperform forever.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-01"
+    }
+  ],
   "cash": {
-    "allocation_pct": 100,
+    "allocation_pct": 13,
     "vehicle": "SGOV",
     "yield_pct": 5.0
   },
-  "monthly_history": [],
+  "monthly_history": [
+    {
+      "month": "2026-02",
+      "starting_value": 100000,
+      "ending_value": 100416.67,
+      "portfolio_return_pct": 0.42,
+      "sp500_return_pct": 0,
+      "alpha_pct": 0.42,
+      "recommendations_made": [
+        {
+          "ticker": "GOOGL",
+          "action": "BUY",
+          "allocation": 12
+        },
+        {
+          "ticker": "XOM",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "LLY",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "MU",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "LMT",
+          "action": "BUY",
+          "allocation": 8
+        },
+        {
+          "ticker": "GILD",
+          "action": "BUY",
+          "allocation": 6
+        },
+        {
+          "ticker": "QCOM",
+          "action": "BUY",
+          "allocation": 5
+        },
+        {
+          "ticker": "KO",
+          "action": "BUY",
+          "allocation": 5
+        },
+        {
+          "ticker": "SCCO",
+          "action": "BUY",
+          "allocation": 5
+        },
+        {
+          "ticker": "GLD",
+          "action": "BUY",
+          "allocation": 10
+        },
+        {
+          "ticker": "VEA",
+          "action": "BUY",
+          "allocation": 8
+        }
+      ],
+      "sells_executed": [],
+      "notable_politician_trades": [
+        {
+          "politician": "Tina Smith",
+          "party": "D",
+          "ticker": "BRK",
+          "transaction_type": "Sale",
+          "amount": "$100K-$250K",
+          "insight": "Berkshire sale could reflect profit-taking after strong 2025 performance or portfolio rebalancing. Not necessarily bearish - BRK at all-time highs."
+        },
+        {
+          "politician": "Dale Strong",
+          "party": "R",
+          "ticker": "IREN",
+          "transaction_type": "Purchase",
+          "amount": "$1K-$15K",
+          "insight": "Small speculative crypto-mining purchase. Rep. Strong not on relevant committees. Likely personal speculation rather than informed trade."
+        },
+        {
+          "politician": "Steve Cohen",
+          "party": "D",
+          "ticker": "NOC",
+          "transaction_type": "Sale",
+          "amount": "$15K-$50K",
+          "insight": "December defense sales (NOC, FLR) were poorly timed - defense stocks rallied 25-30% since. Either profit-taking or thesis disagreement. We're taking opposite view with LMT given geopolitical backdrop."
+        }
+      ]
+    }
+  ],
   "closed_positions": [],
   "performance_summary": {
-    "total_return_pct": 0.0,
+    "total_return_pct": 0.42,
     "sp500_total_return_pct": 0.0,
-    "total_alpha_pct": 0.0,
+    "total_alpha_pct": 0.42,
     "win_count": 0,
     "loss_count": 0,
     "win_rate_pct": 0,
