@@ -1663,12 +1663,16 @@ def _build_recommendation_tracker(history: Dict, current_value: float = 100000) 
     loss_count = perf.get("loss_count", 0)
     total_trades = win_count + loss_count
     
-    # Calculate dollar returns
-    total_dollar_gain = current_value * (avg_return / 100) if avg_return else 0
-    
     # Get current portfolio for tracking
     current_portfolio = history.get("current_portfolio", [])
     monthly_history = history.get("monthly_history", [])
+    
+    # Return empty if no portfolio and no history (fresh run)
+    if not current_portfolio and not monthly_history:
+        return ""
+    
+    # Calculate dollar returns
+    total_dollar_gain = current_value * (avg_return / 100) if avg_return else 0
     
     active_positions = len(current_portfolio)
     
