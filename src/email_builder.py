@@ -2179,11 +2179,6 @@ def _build_footer() -> str:
                                         <span style="font-size: 11px; color: #6b6b7b; line-height: 1.6; max-width: 500px; display: inline-block;">This newsletter is for informational purposes only and should not be considered financial advice. Past performance does not guarantee future results. Always conduct your own research before making investment decisions.</span>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td align="center" style="padding-top: 16px;">
-                                        <span style="font-size: 11px; color: #505060;">© 2026 Stock Pulse. All rights reserved.</span>
-                                    </td>
-                                </tr>
                             </table>
                         </td>
                     </tr>'''

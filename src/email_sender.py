@@ -29,7 +29,7 @@ def send_email(to_email: str, subject: str, html_content: str,
         True if sent successfully, False otherwise
     """
     api_key = os.getenv('RESEND_API_KEY')
-    sender_address = os.getenv('RESEND_FROM_EMAIL', 'Stock Insight <noreply@patnilabs.com>')
+    sender_address = os.getenv('RESEND_FROM_EMAIL', 'Stock Pulse <noreply@patnilabs.com>')
     
     if not api_key:
         print("  Warning: RESEND_API_KEY not configured")

@@ -461,7 +461,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     else:
         recipient = os.getenv('RECIPIENT_EMAIL')
         if recipient:
-            subject = f"📊 Stock Insight Report - {datetime.now().strftime('%B %d, %Y')}"
+            subject = f"📊 Stock Pulse Report - {datetime.now().strftime('%B %d, %Y')}"
             success = send_email(
                 to_email=recipient,
                 subject=subject,
