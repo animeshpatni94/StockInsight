@@ -140,6 +140,9 @@ class MarketScanner:
         
         # Bulk download prices (much more efficient!)
         print(f"      Downloading prices for {len(tickers)} tickers...")
+        # Audit log: show sample tickers being processed
+        sample_tickers = tickers[:10]
+        logger.info(f"      🔍 AUDIT: Processing sample tickers: {', '.join(sample_tickers)}...")
         price_data = self._bulk_download_prices(tickers, period="3mo")
         
         if price_data.empty:
@@ -179,6 +182,13 @@ class MarketScanner:
         
         # Sort by return descending
         results.sort(key=lambda x: x['return_pct'], reverse=True)
+        
+        # Audit log: show top 5 results with details
+        if results:
+            logger.info(f"      ✅ AUDIT: Top gainers calculated ({len(results)} total)")
+            for i, r in enumerate(results[:5]):
+                logger.info(f"        #{i+1} {r['ticker']}: {r['return_pct']:+.1f}% @ ${r['current_price']:.2f} ({r['sector']})")
+        
         return results[:n]
     
     def get_top_losers(self, sector: Optional[str] = None, n: int = 20,
@@ -327,6 +337,13 @@ class MarketScanner:
                 continue
         
         results.sort(key=lambda x: x['volume_ratio'], reverse=True)
+        
+        # Audit log: show top volume spikes
+        if results:
+            logger.info(f"      ✅ AUDIT: Unusual volume detected ({len(results)} stocks)")
+            for i, r in enumerate(results[:5]):
+                logger.info(f"        #{i+1} {r['ticker']}: {r['volume_ratio']:.1f}x avg vol, {r['price_change_pct']:+.1f}% price chg")
+        
         return results
     
     # ==================== FUNDAMENTAL SCREENS ====================
@@ -360,6 +377,13 @@ class MarketScanner:
                 })
         
         results.sort(key=lambda x: x['pe_ratio'])
+        
+        # Audit log: show top value stocks
+        if results:
+            logger.info(f"      ✅ AUDIT: Value stocks identified ({len(results)} total)")
+            for i, r in enumerate(results[:5]):
+                logger.info(f"        #{i+1} {r['ticker']}: P/E={r['pe_ratio']:.1f}, EPS Growth={r['earnings_growth']:.0f}%, Div={r['dividend_yield']:.1f}%")
+        
         return results
     
     def get_growth_stocks(self) -> List[Dict]:
@@ -463,6 +487,14 @@ class MarketScanner:
         
         # Sort by growth score descending
         results.sort(key=lambda x: x['growth_score'], reverse=True)
+        
+        # Audit log: show top growth stocks
+        if results:
+            logger.info(f"      ✅ AUDIT: Growth stocks identified ({len(results)} total)")
+            for i, r in enumerate(results[:5]):
+                flags = ', '.join(r['growth_flags'][:2]) if r['growth_flags'] else 'N/A'
+                logger.info(f"        #{i+1} {r['ticker']}: Score={r['growth_score']}, Rev+{r['revenue_growth']:.0f}%, EPS+{r['earnings_growth']:.0f}% [{flags}]")
+        
         return results
     
     def get_garp_stocks(self) -> List[Dict]:
@@ -502,6 +534,13 @@ class MarketScanner:
                 })
         
         results.sort(key=lambda x: x['peg_ratio'])
+        
+        # Audit log: show top GARP stocks
+        if results:
+            logger.info(f"      ✅ AUDIT: GARP stocks identified ({len(results)} total)")
+            for i, r in enumerate(results[:5]):
+                logger.info(f"        #{i+1} {r['ticker']}: PEG={r['peg_ratio']:.2f}, P/E={r['pe_ratio']:.1f}, EPS+{r['earnings_growth']:.0f}%")
+        
         return results
     
     def get_dividend_stocks(self) -> List[Dict]:
@@ -531,6 +570,13 @@ class MarketScanner:
                     })
         
         results.sort(key=lambda x: x['dividend_yield'], reverse=True)
+        
+        # Audit log: show top dividend stocks
+        if results:
+            logger.info(f"      ✅ AUDIT: Dividend stocks identified ({len(results)} total)")
+            for i, r in enumerate(results[:5]):
+                logger.info(f"        #{i+1} {r['ticker']}: Yield={r['dividend_yield']:.2f}%, Payout={r['payout_ratio']:.0f}%")
+        
         return results
     
     def get_insider_buying_clusters(self) -> List[Dict]:
@@ -619,6 +665,12 @@ class MarketScanner:
                             'signal': 'Golden Cross (Bullish)'
                         })
         
+        # Audit log: show golden crosses
+        if results:
+            logger.info(f"      ✅ AUDIT: Golden crosses detected ({len(results)} stocks)")
+            for i, r in enumerate(results[:5]):
+                logger.info(f"        #{i+1} {r['ticker']}: 50MA=${r['sma_50']:.2f} > 200MA=${r['sma_200']:.2f}")
+        
         return results
     
     def get_death_crosses(self) -> List[Dict]:
@@ -652,6 +704,12 @@ class MarketScanner:
                             'sma_200': round(sma_200, 2),
                             'signal': 'Death Cross (Bearish)'
                         })
+        
+        # Audit log: show death crosses
+        if results:
+            logger.info(f"      ⚠️ AUDIT: Death crosses detected ({len(results)} stocks)")
+            for i, r in enumerate(results[:5]):
+                logger.info(f"        #{i+1} {r['ticker']}: 50MA=${r['sma_50']:.2f} < 200MA=${r['sma_200']:.2f}")
         
         return results
     
@@ -949,6 +1007,13 @@ class MarketScanner:
                 continue
         
         results.sort(key=lambda x: x['relative_strength'], reverse=True)
+        
+        # Audit log: show sector relative strength
+        if results:
+            logger.info(f"      ✅ AUDIT: Sector vs SPY analysis ({len(results)} sectors)")
+            for i, r in enumerate(results[:5]):
+                logger.info(f"        #{i+1} {r['sector']} ({r['etf']}): {r['relative_strength']:+.1f}% vs SPY ({r['rating']})")
+        
         return results
 
 
