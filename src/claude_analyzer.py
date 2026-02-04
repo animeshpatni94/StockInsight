@@ -84,11 +84,17 @@ You have access to **150+ tradeable cryptocurrencies** alongside stocks. Crypto 
 - **Include 2-4 crypto picks** in your 10-15 total recommendations
 - **Crypto counts toward your $1,000 budget** - mix with stocks for diversification
 
+### Crypto Market Sentiment (PROVIDED IN DATA):
+- **Fear & Greed Index**: 0-25=Extreme Fear (cautious), 25-45=Fear, 45-55=Neutral, 55-75=Greed, 75-100=Extreme Greed (cautious)
+- **BTC Dominance**: High (>60%) = Risk-off, altcoins weak. Low (<50%) = Altcoin season, more aggressive
+- **50d vs 200d Average**: Price above both = bullish trend, below both = bearish trend
+- **% from ATH**: Near ATH = momentum, -50%+ from ATH = potential value or continued downtrend
+
 ### Crypto-Specific Guidance:
 - **Large-cap crypto (BTC, ETH, SOL, XRP)**: Can be 5-15% of speculative allocation
 - **Mid-cap altcoins**: Higher risk, potential 5-10x returns
-- **Consider crypto when**: Risk-on sentiment, dollar weakness, institutional adoption news
-- **Avoid crypto when**: Risk-off environment, regulatory crackdowns, extreme fear
+- **Consider crypto when**: Fear & Greed 20-50 (fear = opportunity), price above 200d avg
+- **Reduce crypto when**: Extreme Greed (>75), price below 200d avg, BTC dominance rising fast
 
 ### For Crypto Recommendations, Use Same Format:
 ```json
@@ -871,6 +877,54 @@ Task: 1) Review holdings→HOLD/TRIM/SELL 2) Deploy ${fresh_budget:,} into best 
                 for c in all_crypto
             ])
             sections.append(f"CRYPTO({len(all_crypto)}): {crypto_str}")
+    
+    # CRYPTO MARKET SENTIMENT - COMPACT
+    crypto_sentiment = analysis_input.get('crypto_sentiment', {})
+    if crypto_sentiment:
+        parts = []
+        
+        # Fear & Greed Index
+        fg = crypto_sentiment.get('fear_greed', {})
+        if fg:
+            parts.append(f"F&G:{fg.get('value', 0)}({fg.get('classification', 'Unknown')})")
+        
+        # BTC Dominance
+        btc_dom = crypto_sentiment.get('btc_dominance')
+        if btc_dom:
+            parts.append(f"BTC_DOM:{btc_dom}%")
+        
+        # Total Market Cap
+        total_mcap = crypto_sentiment.get('total_crypto_mcap', 0)
+        if total_mcap:
+            parts.append(f"TOTAL_MCAP:${total_mcap/1e12:.2f}T")
+        
+        if parts:
+            sections.append(f"CRYPTO_SENTIMENT: {' | '.join(parts)}")
+        
+        # Top Crypto Metrics (compact: BTC:$97k,50d$88k,200d$103k,ATH$126k(-23%))
+        top_metrics = crypto_sentiment.get('top_crypto_metrics', {})
+        if top_metrics:
+            metrics_parts = []
+            for ticker, m in top_metrics.items():
+                short_ticker = ticker.replace('-USD', '')
+                price = m.get('price', 0)
+                d50 = m.get('fifty_day_avg', 0)
+                d200 = m.get('two_hundred_day_avg', 0)
+                ath = m.get('all_time_high', 0)
+                pct_ath = m.get('pct_from_ath', 0)
+                
+                # Format price smartly (k for thousands, no decimal for large)
+                def fmt_price(p):
+                    if p >= 1000:
+                        return f"${p/1000:.0f}k"
+                    elif p >= 1:
+                        return f"${p:.0f}"
+                    else:
+                        return f"${p:.4f}"
+                
+                metrics_parts.append(f"{short_ticker}:{fmt_price(price)},50d{fmt_price(d50)},200d{fmt_price(d200)},ATH{fmt_price(ath)}({pct_ath:+.0f}%)")
+            
+            sections.append(f"CRYPTO_METRICS: {' | '.join(metrics_parts)}")
     
     # Politician Trades - COMPACT
     pol_trades = analysis_input.get('politician_trades', [])
