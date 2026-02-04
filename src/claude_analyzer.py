@@ -5,10 +5,15 @@ Handles API calls and response parsing.
 
 import os
 import json
+import time
 from typing import Dict, Any, Optional
 from anthropic import Anthropic
 
 from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, CLAUDE_THINKING_BUDGET, ALLOCATION_RULES, USER_PROFILE, BIWEEKLY_INVESTMENT_BUDGET
+
+# Retry configuration for API resilience
+MAX_RETRIES = 3
+RETRY_DELAY_SECONDS = 10  # Initial delay, doubles each retry (exponential backoff)
 
 
 SYSTEM_PROMPT = """
@@ -453,6 +458,7 @@ def analyze_with_claude(analysis_input: Dict,
                         max_tokens: int = CLAUDE_MAX_TOKENS) -> Dict:
     """
     Send analysis request to Claude and parse response.
+    Includes automatic retry with exponential backoff for network resilience.
     
     Args:
         analysis_input: Dictionary with all analysis data
@@ -475,53 +481,88 @@ def analyze_with_claude(analysis_input: Dict,
     # Format the user message with all analysis data
     user_message = _format_analysis_prompt(analysis_input)
     
-    try:
-        print(f"  Sending request to {model} with extended thinking enabled (streaming)...")
-        
-        # Use streaming for long requests with extended thinking
-        response_text = ""
-        thinking_text = ""
-        
-        with client.messages.stream(
-            model=model,
-            max_tokens=max_tokens,
-            thinking={
-                "type": "enabled",
-                "budget_tokens": CLAUDE_THINKING_BUDGET
-            },
-            messages=[
-                {"role": "user", "content": system_prompt + "\n\n" + user_message}
+    last_error = None
+    
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            if attempt > 1:
+                delay = RETRY_DELAY_SECONDS * (2 ** (attempt - 2))  # Exponential backoff
+                print(f"  🔄 Retry attempt {attempt}/{MAX_RETRIES} after {delay}s delay...")
+                time.sleep(delay)
+            
+            print(f"  Sending request to {model} with extended thinking enabled (streaming)...")
+            
+            # Use streaming for long requests with extended thinking
+            response_text = ""
+            thinking_text = ""
+            
+            with client.messages.stream(
+                model=model,
+                max_tokens=max_tokens,
+                thinking={
+                    "type": "enabled",
+                    "budget_tokens": CLAUDE_THINKING_BUDGET
+                },
+                messages=[
+                    {"role": "user", "content": system_prompt + "\n\n" + user_message}
+                ]
+            ) as stream:
+                for event in stream:
+                    # Handle different event types
+                    if hasattr(event, 'type'):
+                        if event.type == 'content_block_start':
+                            if hasattr(event, 'content_block'):
+                                if event.content_block.type == 'thinking':
+                                    print("  Claude is thinking...")
+                                elif event.content_block.type == 'text':
+                                    print("  Claude is writing response...")
+                        elif event.type == 'content_block_delta':
+                            if hasattr(event, 'delta'):
+                                if hasattr(event.delta, 'thinking'):
+                                    thinking_text += event.delta.thinking
+                                elif hasattr(event.delta, 'text'):
+                                    response_text += event.delta.text
+            
+            print(f"  Thinking complete ({len(thinking_text)} chars)")
+            print(f"  Response received ({len(response_text)} chars)")
+            
+            # Parse JSON from response
+            analysis_result = _parse_claude_response(response_text)
+            
+            print("  ✅ Analysis received and parsed successfully")
+            return analysis_result
+            
+        except Exception as e:
+            last_error = e
+            error_msg = str(e)
+            
+            # Check if it's a retryable error (network issues, timeouts, etc.)
+            retryable_errors = [
+                'incomplete chunked read',
+                'connection',
+                'timeout',
+                'reset by peer',
+                'temporarily unavailable',
+                'overloaded',
+                '529',  # Overloaded
+                '503',  # Service unavailable
+                '502',  # Bad gateway
             ]
-        ) as stream:
-            for event in stream:
-                # Handle different event types
-                if hasattr(event, 'type'):
-                    if event.type == 'content_block_start':
-                        if hasattr(event, 'content_block'):
-                            if event.content_block.type == 'thinking':
-                                print("  Claude is thinking...")
-                            elif event.content_block.type == 'text':
-                                print("  Claude is writing response...")
-                    elif event.type == 'content_block_delta':
-                        if hasattr(event, 'delta'):
-                            if hasattr(event.delta, 'thinking'):
-                                thinking_text += event.delta.thinking
-                            elif hasattr(event.delta, 'text'):
-                                response_text += event.delta.text
-        
-        print(f"  Thinking complete ({len(thinking_text)} chars)")
-        print(f"  Response received ({len(response_text)} chars)")
-        
-        # Parse JSON from response
-        analysis_result = _parse_claude_response(response_text)
-        
-        print("  Analysis received and parsed successfully")
-        return analysis_result
-        
-    except Exception as e:
-        print(f"  ❌ Error calling Claude API: {str(e)}")
-        print(f"  ⚠️  Returning safe fallback - existing portfolio will be preserved")
-        return _get_fallback_analysis()
+            
+            is_retryable = any(err in error_msg.lower() for err in retryable_errors)
+            
+            if is_retryable and attempt < MAX_RETRIES:
+                print(f"  ⚠️ Attempt {attempt} failed: {error_msg}")
+                print(f"  Will retry ({MAX_RETRIES - attempt} attempts remaining)...")
+                continue
+            else:
+                print(f"  ❌ Error calling Claude API: {error_msg}")
+                if attempt == MAX_RETRIES:
+                    print(f"  ❌ All {MAX_RETRIES} retry attempts exhausted")
+                break
+    
+    print(f"  ⚠️  Returning safe fallback - existing portfolio will be preserved")
+    return _get_fallback_analysis()
 
 
 def _format_analysis_prompt(analysis_input: Dict) -> str:
