@@ -63,6 +63,7 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
     # Get current portfolio for attribution
     current_portfolio = history.get('current_portfolio', [])
     this_month_return = monthly[-1].get('portfolio_return_pct', 0) if monthly else 0
+    this_period_starting_value = monthly[-1].get('starting_value', starting_capital) if monthly else starting_capital
     
     # Get portfolio with updated prices from email_context (calculated by calculate_performance)
     portfolio_performance = email_context.get('portfolio_performance', current_portfolio)
@@ -85,7 +86,7 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
     urgent_alerts_html = _build_urgent_alerts_section(triggered_alerts, current_value)
     market_pulse_html = _build_market_pulse(market_overview, email_context)
     news_sentiment_html = _build_news_sentiment_section(news_sentiment, sentiment_summary)
-    performance_attribution_html = _build_performance_attribution_section(portfolio_performance, this_month_return, current_value)
+    performance_attribution_html = _build_performance_attribution_section(portfolio_performance, this_month_return, current_value, this_period_starting_value)
     holdings_analysis_html = _build_holdings_analysis_section(portfolio_performance, current_value)
     action_plan_html = _build_action_plan(recommendations, allocation, analysis_result)
     stock_picks_html = _build_stock_picks(recommendations, analysis_result, current_value)
@@ -341,6 +342,7 @@ def _build_portfolio_summary_section(starting_capital: float, current_value: flo
                                                 <td>
                                                     <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💰</span>
                                                     <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Portfolio Summary</span>
+                                                    <span style="font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px; margin-left: 10px; vertical-align: middle;">All-Time</span>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #ffffff; background-color: {pnl_solid_bg}; padding: 6px 10px; border-radius: 4px;">{pnl_emoji} {status_text}</span>
@@ -367,7 +369,7 @@ def _build_portfolio_summary_section(starting_capital: float, current_value: flo
                                                 </td>
                                                 <!-- Total P&L -->
                                                 <td width="25%" style="padding: 24px 16px; text-align: center; background-color: {pnl_cell_bg}; border-right: 1px solid #e5e7eb;" bgcolor="{pnl_cell_bg}">
-                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: {pnl_text_color};">Total P&L</span>
+                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: {pnl_text_color};">Total P&L (All-Time)</span>
                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 22px; font-weight: 700; color: {pnl_text_color}; padding-top: 8px;">{pnl_sign}${abs(total_pnl):,.0f}</span>
                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: {pnl_text_color}; padding-top: 4px;">{pnl_sign}{total_pnl_pct:.2f}%</span>
                                                 </td>
@@ -768,7 +770,7 @@ def _build_urgent_alerts_section(triggered_alerts: List[Dict], current_value: fl
                     </tr>'''
 
 
-def _build_performance_attribution_section(current_portfolio: List[Dict], this_month_return: float, current_value: float) -> str:
+def _build_performance_attribution_section(current_portfolio: List[Dict], this_month_return: float, current_value: float, period_starting_value: float = None) -> str:
     """
     Build the Performance Attribution section showing what moved your portfolio.
     Shows contributors and detractors with dollar amounts.
@@ -776,8 +778,13 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
     if not current_portfolio:
         return ""
     
-    # Calculate dollar return for portfolio
-    portfolio_dollar_change = current_value * (this_month_return / 100) if this_month_return != 0 else 0
+    # Calculate dollar return for portfolio using actual period values
+    # If period_starting_value is provided, use it for accurate calculation
+    if period_starting_value and period_starting_value > 0:
+        portfolio_dollar_change = current_value - period_starting_value
+    else:
+        # Fallback: calculate from percentage (less accurate)
+        portfolio_dollar_change = current_value * (this_month_return / 100) if this_month_return != 0 else 0
     
     # Sort positions by contribution (gain_loss_pct * allocation_pct = weighted contribution)
     positions_with_contrib = []
@@ -871,7 +878,7 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
                                                     <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">What Moved Your Portfolio</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">This Period</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">Since Last Report</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -884,7 +891,7 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
                                             <tr>
                                                 <td align="center">
                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 32px; font-weight: 700; color: {return_color};">{this_month_return:+.1f}%</span>
-                                                    <span style="display: block; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">This Period Return</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Change Since Last Report</span>
                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 16px; color: {return_color}; padding-top: 8px;">{dollar_sign}${abs(portfolio_dollar_change):,.0f}</span>
                                                 </td>
                                             </tr>
@@ -2354,14 +2361,51 @@ def _build_sp500_comparison(history: Dict) -> str:
     if not history:
         return ""
     
+    # Calculate our return from actual values (consistent with Portfolio Summary)
+    metadata = history.get('metadata', {})
+    starting_capital = _safe_float(metadata.get('starting_capital', 100000))
+    monthly = history.get('monthly_history', [])
+    current_value = monthly[-1].get('ending_value', starting_capital) if monthly else starting_capital
+    
+    # Calculate actual total return from starting capital to current value
+    our_return = ((current_value / starting_capital) - 1) * 100 if starting_capital > 0 else 0
+    
+    # Get S&P 500 return from performance summary
     perf = history.get("performance_summary", {})
-    our_return = perf.get("total_return_pct", 0)
     sp500_return = perf.get("sp500_total_return_pct", perf.get("benchmark_return_pct", 0))
     
     if our_return == 0 and sp500_return == 0:
         return ""
     
     outperformance = our_return - sp500_return
+    
+    # Determine colors and signs for our return
+    if our_return >= 0:
+        our_color = "#00d4aa"  # Green
+        our_sign = "+"
+    else:
+        our_color = "#ff6b6b"  # Red
+        our_sign = ""
+    
+    # Determine sign for S&P 500 return
+    if sp500_return >= 0:
+        sp500_sign = "+"
+    else:
+        sp500_sign = ""
+    
+    # Build outperformance/underperformance banner
+    if outperformance >= 0:
+        banner_bg = "linear-gradient(135deg, rgba(0,212,170,0.12) 0%, rgba(212,175,55,0.12) 100%)"
+        banner_border = "rgba(0,212,170,0.3)"
+        banner_emoji = "🏆"
+        banner_color = "#00d4aa"
+        banner_text = f"We've made <strong style='color: {banner_color}; font-weight: 700;'>+{outperformance:.1f}% more</strong> than if you just bought the market average"
+    else:
+        banner_bg = "linear-gradient(135deg, rgba(255,107,107,0.08) 0%, rgba(251,191,36,0.08) 100%)"
+        banner_border = "rgba(251,191,36,0.3)"
+        banner_emoji = "📊"
+        banner_color = "#ff6b6b"
+        banner_text = f"We're <strong style='color: {banner_color}; font-weight: 700;'>{outperformance:.1f}%</strong> behind the market average (still early days!)"
     
     return f'''
                     <!-- S&P 500 Comparison -->
@@ -2390,7 +2434,7 @@ def _build_sp500_comparison(history: Dict) -> str:
                                             <tr>
                                                 <td width="45%" style="background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, #f8f9fa 100%); border: 1px solid rgba(212,175,55,0.4); border-radius: 16px; padding: 28px 20px; text-align: center;">
                                                     <span style="display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #b8860b;">Stock Pulse Picks</span>
-                                                    <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: #00d4aa; padding-top: 8px;">+{our_return:.1f}%</span>
+                                                    <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: {our_color}; padding-top: 8px;">{our_sign}{our_return:.1f}%</span>
                                                     <span style="display: block; font-size: 12px; color: #6b7280; padding-top: 4px;">Total Return</span>
                                                 </td>
                                                 <td width="10%" align="center">
@@ -2398,19 +2442,19 @@ def _build_sp500_comparison(history: Dict) -> str:
                                                 </td>
                                                 <td width="45%" style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px 20px; text-align: center;">
                                                     <span style="display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b7280;">S&P 500 (Market)</span>
-                                                    <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: #4b5563; padding-top: 8px;">+{sp500_return:.1f}%</span>
+                                                    <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: #4b5563; padding-top: 8px;">{sp500_sign}{sp500_return:.1f}%</span>
                                                     <span style="display: block; font-size: 12px; color: #6b7280; padding-top: 4px;">Total Return</span>
                                                 </td>
                                             </tr>
                                         </table>
                                     </td>
                                 </tr>
-                                <!-- Outperformance Banner -->
+                                <!-- Outperformance/Underperformance Banner -->
                                 <tr>
                                     <td style="padding-top: 24px;">
-                                        <div style="background: linear-gradient(135deg, rgba(0,212,170,0.12) 0%, rgba(212,175,55,0.12) 100%); border: 1px solid rgba(0,212,170,0.3); border-radius: 10px; padding: 16px 24px; text-align: center;">
-                                            <span style="font-size: 24px; vertical-align: middle;">🏆</span>
-                                            <span style="font-size: 16px; color: #1f2937; padding-left: 12px; vertical-align: middle;">We've made <strong style="color: #00d4aa; font-weight: 700;">+{outperformance:.1f}% more</strong> than if you just bought the market average</span>
+                                        <div style="background: {banner_bg}; border: 1px solid {banner_border}; border-radius: 10px; padding: 16px 24px; text-align: center;">
+                                            <span style="font-size: 24px; vertical-align: middle;">{banner_emoji}</span>
+                                            <span style="font-size: 16px; color: #1f2937; padding-left: 12px; vertical-align: middle;">{banner_text}</span>
                                         </div>
                                     </td>
                                 </tr>
