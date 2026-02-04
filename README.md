@@ -94,6 +94,7 @@ BIWEEKLY_INVESTMENT_BUDGET = 1000  # Fresh money to invest each run
 - **Current Holdings Dashboard**: Real-time P&L with status indicators for each position
 - **Action Plan with Dollar Amounts**: Clear "invest $X in Y shares" guidance
 - **Performance Attribution**: Shows which positions moved your portfolio
+- **Recent Closed Positions**: Shows last 10 trades (sells & trims) with returns, hold period, reasons, and lessons learned
 
 ## 📁 Project Structure
 
