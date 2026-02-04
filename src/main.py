@@ -220,6 +220,20 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     
     historical_financials = fetch_historical_financials_batch(tickers_for_history, max_workers=3)
     
+    # Log what we got
+    successful_fetches = len([t for t in historical_financials.values() if t])
+    print(f"    ✅ Successfully fetched historical financials for {successful_fetches}/{len(tickers_for_history)} tickers")
+    
+    # Show a few samples
+    if historical_financials:
+        sample_tickers = list(historical_financials.keys())[:3]
+        for ticker in sample_tickers:
+            data = historical_financials[ticker]
+            if data and data.get('revenue_history'):
+                rev = data.get('revenue_history', [])
+                periods = data.get('periods', [])
+                print(f"    📈 {ticker}: Revenue {periods} = {['$' + str(round(r, 1)) + 'B' if r else 'N/A' for r in rev]}")
+    
     # Step 6: Prepare analysis input (NO sentiment - Claude decides purely on fundamentals)
     print("\n[6/10] Preparing analysis input...")
     analysis_input = {

@@ -503,6 +503,19 @@ def fetch_historical_financials_batch(tickers: List[str], max_workers: int = 3) 
                 print(f"Error processing historical data for {ticker}: {str(e)}")
     
     print(f"    Fetched historical financials for {len(results)}/{len(tickers)} tickers")
+    
+    # Log sample of historical data
+    if results:
+        sample_ticker = list(results.keys())[0]
+        sample = results[sample_ticker]
+        if sample.get('revenue_history'):
+            periods = sample.get('periods', [])
+            rev = sample.get('revenue_history', [])
+            ni = sample.get('net_income_history', [])
+            print(f"    📊 Sample ({sample_ticker}): Periods {periods}")
+            print(f"       Revenue: {['$' + str(round(r, 1)) + 'B' if r else 'N/A' for r in rev]}")
+            print(f"       Net Inc: {['$' + str(round(n, 2)) + 'B' if n else 'N/A' for n in ni]}")
+    
     return results
 
 
@@ -599,6 +612,26 @@ def fetch_multiple_ticker_info(tickers: List[str],
                 print(f"      Processed {end_idx}/{len(tickers)} stocks ({len(results)} success, {failed_count} failed)...")
     
     print(f"      Final: {len(results)} loaded, {failed_count} failed")
+    
+    # Log sample of new comprehensive fields (first successful stock)
+    if results and VERBOSE_LOGGING:
+        sample = results[0]
+        ticker = sample.get('ticker', 'N/A')
+        new_fields = []
+        if sample.get('analyst_recommendation'):
+            new_fields.append(f"Analyst: {sample['analyst_recommendation']}")
+        if sample.get('target_mean_price'):
+            new_fields.append(f"Target: ${sample['target_mean_price']:.0f}")
+        if sample.get('ev_to_ebitda'):
+            new_fields.append(f"EV/EBITDA: {sample['ev_to_ebitda']:.1f}")
+        if sample.get('free_cashflow'):
+            fcf_b = sample['free_cashflow'] / 1e9
+            new_fields.append(f"FCF: ${fcf_b:.1f}B")
+        if sample.get('short_percent_of_float'):
+            new_fields.append(f"Short%: {sample['short_percent_of_float']*100:.1f}%")
+        if new_fields:
+            logger.info(f"  📊 Sample new fields ({ticker}): {' | '.join(new_fields)}")
+    
     return results
 
 
