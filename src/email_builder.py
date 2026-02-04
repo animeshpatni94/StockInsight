@@ -94,6 +94,7 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
     retail_insights_html = _build_retail_investor_section(email_context.get('retail_analysis', {}), current_value)
     politicians_html = _build_politicians_section(politicians)
     tracker_html = _build_recommendation_tracker(history, portfolio_performance, current_value)
+    closed_positions_html = _build_closed_positions_section(history)
     comparison_html = _build_sp500_comparison(history)
     footer_html = _build_footer()
     
@@ -138,6 +139,8 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
                     {politicians_html}
                     
                     {tracker_html}
+                    
+                    {closed_positions_html}
                     
                     {comparison_html}
                     
@@ -2017,6 +2020,171 @@ def _build_recommendation_tracker(history: Dict, portfolio_performance: List[Dic
                                             </tr>
                                             {portfolio_rows}
                                         </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_closed_positions_section(history: Dict) -> str:
+    """Build the Recent Closed Positions section showing past trades and lessons learned."""
+    if not history:
+        return ""
+    
+    closed_positions = history.get("closed_positions", [])
+    if not closed_positions:
+        return ""
+    
+    # Get the last 10 closed positions (most recent first)
+    recent_closed = sorted(closed_positions, key=lambda x: x.get('sell_date', ''), reverse=True)[:10]
+    
+    if not recent_closed:
+        return ""
+    
+    # Calculate summary stats
+    wins = [p for p in recent_closed if p.get('return_pct', 0) > 0]
+    losses = [p for p in recent_closed if p.get('return_pct', 0) < 0]
+    trims = [p for p in recent_closed if p.get('action_type') == 'TRIM']
+    full_sells = [p for p in recent_closed if p.get('action_type') != 'TRIM']
+    total_return = sum(p.get('return_pct', 0) for p in recent_closed)
+    avg_return = total_return / len(recent_closed) if recent_closed else 0
+    
+    # Build position rows
+    position_rows = ""
+    for pos in recent_closed:
+        ticker = pos.get('ticker', 'N/A')
+        return_pct = pos.get('return_pct', 0)
+        buy_date = pos.get('buy_date', 'N/A')
+        sell_date = pos.get('sell_date', 'N/A')
+        reason = pos.get('reason', 'No reason provided')
+        lesson = pos.get('lesson_learned', '')
+        hold_days = pos.get('hold_period_days', 0)
+        action_type = pos.get('action_type', 'FULL_SELL')
+        
+        # Check if this is a TRIM (partial sale) vs FULL_SELL
+        is_trim = action_type == 'TRIM'
+        trim_pct = pos.get('allocation_trimmed_pct', 0)
+        
+        # Color based on return
+        if return_pct > 0:
+            return_color = "#00d4aa"
+            return_prefix = "+"
+            icon = "✅" if not is_trim else "✂️"
+        elif return_pct < 0:
+            return_color = "#ff6b6b"
+            return_prefix = ""
+            icon = "❌" if not is_trim else "✂️"
+        else:
+            return_color = "#a0a0b0"
+            return_prefix = ""
+            icon = "➖" if not is_trim else "✂️"
+        
+        # Show TRIM badge if partial sale
+        ticker_display = ticker
+        if is_trim:
+            ticker_display = f'{ticker} <span style="font-size: 9px; background: #ff9f43; color: #000; padding: 2px 5px; border-radius: 3px; margin-left: 6px;">TRIM</span>'
+        
+        # Truncate reason if too long
+        reason_display = reason[:60] + "..." if len(reason) > 60 else reason
+        
+        lesson_html = ""
+        if lesson:
+            lesson_display = lesson[:80] + "..." if len(lesson) > 80 else lesson
+            lesson_html = f'''
+                                                        <tr>
+                                                            <td colspan="4" style="padding: 8px 16px 12px 16px;">
+                                                                <span style="font-size: 11px; color: #d4af37; font-style: italic;">💡 Lesson: {lesson_display}</span>
+                                                            </td>
+                                                        </tr>'''
+        
+        position_rows += f'''
+                                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                                        <td style="padding: 16px; width: 40px; text-align: center;">
+                                                            <span style="font-size: 18px;">{icon}</span>
+                                                        </td>
+                                                        <td style="padding: 16px 8px;">
+                                                            <span style="display: block; font-weight: 700; font-size: 15px; color: #f5f5f7;">{ticker_display}</span>
+                                                            <span style="display: block; font-size: 11px; color: #6b6b7b; padding-top: 2px;">Held {hold_days} days</span>
+                                                        </td>
+                                                        <td style="padding: 16px 8px; text-align: right;">
+                                                            <span style="display: block; font-family: 'Consolas', monospace; font-size: 16px; font-weight: 700; color: {return_color};">{return_prefix}{return_pct:.1f}%</span>
+                                                            <span style="display: block; font-size: 10px; color: #6b6b7b; padding-top: 2px;">{sell_date}</span>
+                                                        </td>
+                                                        <td style="padding: 16px; width: 200px;">
+                                                            <span style="font-size: 12px; color: #a0a0b0;">{reason_display}</span>
+                                                        </td>
+                                                    </tr>{lesson_html}'''
+    
+    return f'''
+                    <!-- Recent Closed Positions -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📚</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Recent Closed Positions</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Last 10 Trades</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Summary Stats -->
+                                <tr>
+                                    <td style="padding-top: 20px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td width="24%" style="background-color: #1a1a24; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Wins</span>
+                                                    <span style="display: block; font-size: 24px; font-weight: 700; color: #00d4aa; padding-top: 4px;">{len(wins)}</span>
+                                                </td>
+                                                <td width="1%"></td>
+                                                <td width="24%" style="background-color: #1a1a24; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Losses</span>
+                                                    <span style="display: block; font-size: 24px; font-weight: 700; color: #ff6b6b; padding-top: 4px;">{len(losses)}</span>
+                                                </td>
+                                                <td width="1%"></td>
+                                                <td width="24%" style="background-color: #1a1a24; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Trims ✂️</span>
+                                                    <span style="display: block; font-size: 24px; font-weight: 700; color: #ff9f43; padding-top: 4px;">{len(trims)}</span>
+                                                </td>
+                                                <td width="1%"></td>
+                                                <td width="24%" style="background-color: #1a1a24; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Avg Return</span>
+                                                    <span style="display: block; font-size: 24px; font-weight: 700; color: {"#00d4aa" if avg_return >= 0 else "#ff6b6b"}; padding-top: 4px;">{avg_return:+.1f}%</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Position List -->
+                                <tr>
+                                    <td style="padding-top: 20px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1a1a24; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                                            <tr style="background-color: #22222e;">
+                                                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;"></th>
+                                                <th style="padding: 12px 8px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Ticker</th>
+                                                <th style="padding: 12px 8px; text-align: right; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Return</th>
+                                                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Reason for Selling</th>
+                                            </tr>
+                                            {position_rows}
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Learning Note -->
+                                <tr>
+                                    <td style="padding-top: 16px;">
+                                        <div style="background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(212,175,55,0.02) 100%); border: 1px solid rgba(212,175,55,0.2); border-radius: 8px; padding: 14px 18px;">
+                                            <span style="font-size: 13px; color: #d4af37;">💡 <strong>Learning from history:</strong></span>
+                                            <span style="font-size: 13px; color: #a0a0b0;"> Claude reviews these closed positions each run to avoid repeating mistakes and identify winning patterns.</span>
+                                        </div>
                                     </td>
                                 </tr>
                             </table>
