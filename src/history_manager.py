@@ -980,25 +980,26 @@ def get_portfolio_summary(history: Dict) -> str:
         "PORTFOLIO SUMMARY",
         "=" * 50,
         f"Positions: {len(portfolio)}",
-        f"Cash: {cash.get('allocation_pct', 0):.1f}%",
+        f"Cash: {(cash.get('allocation_pct', 0) or 0):.1f}%",
         "",
         "Current Holdings:"
     ]
     
     for h in portfolio:
-        gain = h.get('gain_loss_pct', 0)
+        gain = h.get('gain_loss_pct', 0) or 0
         emoji = "🟢" if gain > 0 else "🔴" if gain < 0 else "⚪"
+        alloc = h.get('allocation_pct', 0) or 0
         lines.append(
-            f"  {emoji} {h['ticker']}: {h.get('allocation_pct', 0):.1f}% "
+            f"  {emoji} {h['ticker']}: {alloc:.1f}% "
             f"({gain:+.1f}%)"
         )
     
     lines.extend([
         "",
         "Performance:",
-        f"  Total Return: {perf.get('total_return_pct', 0):.2f}%",
-        f"  vs S&P 500: {perf.get('total_alpha_pct', 0):+.2f}%",
-        f"  Win Rate: {perf.get('win_rate_pct', 0):.1f}%",
+        f"  Total Return: {(perf.get('total_return_pct', 0) or 0):.2f}%",
+        f"  vs S&P 500: {(perf.get('total_alpha_pct', 0) or 0):+.2f}%",
+        f"  Win Rate: {(perf.get('win_rate_pct', 0) or 0):.1f}%",
         "=" * 50
     ])
     

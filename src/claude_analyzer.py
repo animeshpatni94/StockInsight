@@ -705,12 +705,12 @@ This is NEW MONEY to invest, on top of existing holdings.
     perf = analysis_input.get('performance_summary', {})
     sections.append(f"""
 ## TRACK RECORD (Since Inception)
-- **Total Return**: {perf.get('total_return_pct', 0):.2f}%
-- **S&P 500 Return**: {perf.get('sp500_total_return_pct', 0):.2f}%
-- **Alpha (You vs S&P)**: {perf.get('total_alpha_pct', 0):+.2f}%
-- **Win Rate**: {perf.get('win_rate_pct', 0):.1f}%
-- Average Win: {perf.get('average_win_pct', 0):+.2f}%
-- Average Loss: {perf.get('average_loss_pct', 0):.2f}%
+- **Total Return**: {(perf.get('total_return_pct', 0) or 0):.2f}%
+- **S&P 500 Return**: {(perf.get('sp500_total_return_pct', 0) or 0):.2f}%
+- **Alpha (You vs S&P)**: {(perf.get('total_alpha_pct', 0) or 0):+.2f}%
+- **Win Rate**: {(perf.get('win_rate_pct', 0) or 0):.1f}%
+- Average Win: {(perf.get('average_win_pct', 0) or 0):+.2f}%
+- Average Loss: {(perf.get('average_loss_pct', 0) or 0):.2f}%
 """)
     
     # Risk Management Status (industry-standard drawdown protection)
@@ -733,12 +733,12 @@ This is NEW MONEY to invest, on top of existing holdings.
 ## ⚠️ RISK MANAGEMENT STATUS: {status_emoji} {status}
 
 ### Current Metrics
-- Portfolio Value: ${metrics.get('current_value', 100000):,.2f}
-- Peak Value: ${metrics.get('peak_value', 100000):,.2f}
-- Drawdown from Peak: {metrics.get('drawdown_pct', 0):.1f}%
-- Consecutive Losses: {metrics.get('consecutive_losses', 0)}
-- Win Rate: {metrics.get('win_rate_pct', 0):.1f}%
-- Alpha vs S&P 500: {metrics.get('alpha_vs_sp500', 0):+.1f}%
+- Portfolio Value: ${(metrics.get('current_value', 100000) or 100000):,.2f}
+- Peak Value: ${(metrics.get('peak_value', 100000) or 100000):,.2f}
+- Drawdown from Peak: {(metrics.get('drawdown_pct', 0) or 0):.1f}%
+- Consecutive Losses: {metrics.get('consecutive_losses', 0) or 0}
+- Win Rate: {(metrics.get('win_rate_pct', 0) or 0):.1f}%
+- Alpha vs S&P 500: {(metrics.get('alpha_vs_sp500', 0) or 0):+.1f}%
 """)
         
         if reasons:
@@ -776,15 +776,19 @@ This is NEW MONEY to invest, on top of existing holdings.
         sections.append("\n## MARKET INDEXES")
         for name, data in market['indexes'].items():
             returns = data.get('returns', {})
-            sections.append(f"- {name}: {data.get('current', 0):.2f} | 1mo: {returns.get('1mo', 0):+.2f}% | YTD: {returns.get('ytd', 0):+.2f}%")
+            current = data.get('current', 0) or 0
+            mo1 = returns.get('1mo', 0) or 0
+            ytd = returns.get('ytd', 0) or 0
+            sections.append(f"- {name}: {current:.2f} | 1mo: {mo1:+.2f}% | YTD: {ytd:+.2f}%")
     
     # Sectors
     if market.get('sectors'):
         sections.append("\n## SECTOR PERFORMANCE")
         for sector, data in market['sectors'].items():
             returns = data.get('returns', {})
-            rs = data.get('relative_strength_3mo', 0)
-            sections.append(f"- {sector} ({data.get('etf')}): 1mo {returns.get('1mo', 0):+.2f}% | RS: {rs:+.2f}")
+            rs = data.get('relative_strength_3mo', 0) or 0
+            mo1 = returns.get('1mo', 0) or 0
+            sections.append(f"- {sector} ({data.get('etf')}): 1mo {mo1:+.2f}% | RS: {rs:+.2f}")
     
     # Commodities - Show dynamic data from screens
     if market.get('commodities'):
@@ -792,7 +796,9 @@ This is NEW MONEY to invest, on top of existing holdings.
         sections.append("For commodity exposure, consider both ETFs and individual miners/producers from the screens below:")
         for name, data in market['commodities'].items():
             returns = data.get('returns', {})
-            sections.append(f"- {name}: ${data.get('current', 0):.2f} | 1mo: {returns.get('1mo', 0):+.2f}%")
+            current = data.get('current', 0) or 0
+            mo1 = returns.get('1mo', 0) or 0
+            sections.append(f"- {name}: ${current:.2f} | 1mo: {mo1:+.2f}%")
     
     # Growth/Thematic ETFs
     growth_etfs = market.get('growth_etfs', {})
@@ -802,10 +808,12 @@ This is NEW MONEY to invest, on top of existing holdings.
         for theme, etfs in growth_etfs.items():
             etf_data = list(etfs.values())
             if etf_data:
-                best_etf = max(etf_data, key=lambda x: x.get('returns', {}).get('1mo', 0))
+                best_etf = max(etf_data, key=lambda x: x.get('returns', {}).get('1mo', 0) or 0)
                 ticker = [k for k, v in etfs.items() if v == best_etf][0]
                 returns = best_etf.get('returns', {})
-                sections.append(f"- {theme}: {ticker} @ ${best_etf.get('current', 0):.2f} | 1mo: {returns.get('1mo', 0):+.2f}%")
+                current = best_etf.get('current', 0) or 0
+                mo1 = returns.get('1mo', 0) or 0
+                sections.append(f"- {theme}: {ticker} @ ${current:.2f} | 1mo: {mo1:+.2f}%")
     
     # Macro indicators
     macro = market.get('macro', {})
@@ -900,36 +908,39 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
         if gainers:
             sections.append("Top Gainers (1mo):")
             for g in gainers:
-                price = g.get('current_price', 0)
-                sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Return: {g.get('return_pct', 0):+.2f}%")
+                price = g.get('current_price', 0) or 0
+                ret = g.get('return_pct', 0) or 0
+                sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Return: {ret:+.2f}%")
         
         losers = screens['momentum'].get('top_losers', [])[:50]
         if losers:
             sections.append("Top Losers (potential value):")
             for l in losers:
-                price = l.get('current_price', 0)
-                sections.append(f"  - {l.get('ticker')}: ${price:.2f} | Return: {l.get('return_pct', 0):+.2f}%")
+                price = l.get('current_price', 0) or 0
+                ret = l.get('return_pct', 0) or 0
+                sections.append(f"  - {l.get('ticker')}: ${price:.2f} | Return: {ret:+.2f}%")
         
         breakouts = screens['momentum'].get('52w_high_breakouts', [])[:45]
         if breakouts:
             sections.append("52-Week High Breakouts:")
             for b in breakouts:
-                price = b.get('current_price', 0)
+                price = b.get('current_price', 0) or 0
                 sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
         
         bounces = screens['momentum'].get('52w_low_bounces', [])[:45]
         if bounces:
             sections.append("52-Week Low Bounces:")
             for b in bounces:
-                price = b.get('current_price', 0)
+                price = b.get('current_price', 0) or 0
                 sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
         
         volume = screens['momentum'].get('unusual_volume', [])[:45]
         if volume:
             sections.append("Unusual Volume:")
             for v in volume:
-                price = v.get('current_price', 0)
-                sections.append(f"  - {v.get('ticker')}: ${price:.2f} | Vol ratio: {v.get('volume_ratio', 0):.1f}x")
+                price = v.get('current_price', 0) or 0
+                vol_ratio = v.get('volume_ratio', 0) or 0
+                sections.append(f"  - {v.get('ticker')}: ${price:.2f} | Vol ratio: {vol_ratio:.1f}x")
     
     if screens.get('fundamental'):
         sections.append("\n## FUNDAMENTAL SCREENS")
@@ -979,28 +990,30 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
         if oversold:
             sections.append("Oversold (RSI < 30):")
             for o in oversold:
-                price = o.get('current_price', 0)
-                sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {o.get('rsi', 0):.1f}")
+                price = o.get('current_price', 0) or 0
+                rsi = o.get('rsi', 0) or 0
+                sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {rsi:.1f}")
         
         overbought = screens['technical'].get('overbought', [])[:45]
         if overbought:
             sections.append("Overbought (RSI > 70):")
             for o in overbought:
-                price = o.get('current_price', 0)
-                sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {o.get('rsi', 0):.1f}")
+                price = o.get('current_price', 0) or 0
+                rsi = o.get('rsi', 0) or 0
+                sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {rsi:.1f}")
         
         golden = screens['technical'].get('golden_crosses', [])[:35]
         if golden:
             sections.append("Golden Crosses:")
             for g in golden:
-                price = g.get('current_price', 0)
+                price = g.get('current_price', 0) or 0
                 sections.append(f"  - {g.get('ticker')}: ${price:.2f}")
         
         death = screens['technical'].get('death_crosses', [])[:35]
         if death:
             sections.append("Death Crosses (avoid or short):")
             for d in death:
-                price = d.get('current_price', 0)
+                price = d.get('current_price', 0) or 0
                 sections.append(f"  - {d.get('ticker')}: ${price:.2f}")
     
     # Politician Trades
@@ -1047,8 +1060,10 @@ You're the advisor. Make the calls. Beat the S&P 500.
             high_priority = [t for t in tlh if t.get('priority') == 'HIGH']
             sections.append(f"\n### 🏦 TAX-LOSS HARVESTING ({len(tlh)} opportunities, {len(high_priority)} HIGH priority)")
             for t in tlh[:5]:
+                loss_pct = t.get('loss_pct', 0) or 0
+                tax_savings = t.get('estimated_tax_savings', 0) or 0
                 sections.append(f"""
-- **{t.get('ticker')}**: {t.get('loss_pct', 0):.1f}% loss | Est. tax savings: ${t.get('estimated_tax_savings', 0):.0f}
+- **{t.get('ticker')}**: {loss_pct:.1f}% loss | Est. tax savings: ${tax_savings:.0f}
   Priority: {t.get('priority')} | {'SHORT-TERM (32% tax benefit)' if t.get('is_short_term') else 'LONG-TERM (15% tax benefit)'}
   Replacement options: {', '.join(t.get('similar_securities', [])[:3])}
   {t.get('recommendation', '')}""")
@@ -1057,8 +1072,10 @@ You're the advisor. Make the calls. Beat the S&P 500.
         corr = retail.get('correlation_analysis', {})
         if corr.get('status') == 'SUCCESS':
             sections.append(f"\n### 📊 PORTFOLIO CORRELATION")
-            sections.append(f"- Diversification Score: {corr.get('diversification_score', 0):.0f}/100 ({corr.get('diversification_grade', 'N/A')})")
-            sections.append(f"- Average Correlation: {corr.get('average_correlation', 0):.2f}")
+            div_score = corr.get('diversification_score', 0) or 0
+            avg_corr = corr.get('average_correlation', 0) or 0
+            sections.append(f"- Diversification Score: {div_score:.0f}/100 ({corr.get('diversification_grade', 'N/A')})")
+            sections.append(f"- Average Correlation: {avg_corr:.2f}")
             
             high_corr = corr.get('high_correlation_pairs', [])
             if high_corr:
@@ -1082,23 +1099,29 @@ You're the advisor. Make the calls. Beat the S&P 500.
         if profitable_unprotected:
             sections.append(f"\n### 🛡️ TRAILING STOP UPDATES NEEDED")
             for t in profitable_unprotected[:5]:
-                sections.append(f"- {t.get('ticker')}: +{t.get('gain_pct', 0):.1f}% gain, current stop ${t.get('original_stop', 0):.2f}")
-                sections.append(f"  → Recommended: Raise stop to ${t.get('trailing_stop', 0):.2f} ({t.get('action', '')})")
+                gain_pct = t.get('gain_pct', 0) or 0
+                orig_stop = t.get('original_stop', 0) or 0
+                trail_stop = t.get('trailing_stop', 0) or 0
+                sections.append(f"- {t.get('ticker')}: +{gain_pct:.1f}% gain, current stop ${orig_stop:.2f}")
+                sections.append(f"  → Recommended: Raise stop to ${trail_stop:.2f} ({t.get('action', '')})")
         
         # Short Interest Signals
         short = retail.get('short_interest', [])
         squeeze_candidates = [s for s in short if s.get('potential_squeeze')]
-        high_short = [s for s in short if s.get('short_pct_of_float', 0) >= 20]
+        high_short = [s for s in short if (s.get('short_pct_of_float', 0) or 0) >= 20]
         if squeeze_candidates or high_short:
             sections.append(f"\n### 🎯 SHORT INTEREST SIGNALS")
             if squeeze_candidates:
                 sections.append("POTENTIAL SQUEEZES:")
                 for s in squeeze_candidates[:3]:
-                    sections.append(f"- 🚀 {s.get('ticker')}: {s.get('short_pct_of_float', 0):.1f}% short, +{s.get('price_change_1mo', 0):.1f}% this month")
+                    short_pct = s.get('short_pct_of_float', 0) or 0
+                    price_chg = s.get('price_change_1mo', 0) or 0
+                    sections.append(f"- 🚀 {s.get('ticker')}: {short_pct:.1f}% short, +{price_chg:.1f}% this month")
             if high_short:
                 sections.append("HIGH SHORT INTEREST (caution):")
                 for s in high_short[:3]:
-                    sections.append(f"- ⚠️ {s.get('ticker')}: {s.get('short_pct_of_float', 0):.1f}% short | {s.get('analysis', '')}")
+                    short_pct = s.get('short_pct_of_float', 0) or 0
+                    sections.append(f"- ⚠️ {s.get('ticker')}: {short_pct:.1f}% short | {s.get('analysis', '')}")
         
         # Sector Rotation
         rotation = retail.get('sector_rotation', {})
@@ -1112,10 +1135,13 @@ You're the advisor. Make the calls. Beat the S&P 500.
         fees = retail.get('fee_analysis', {})
         if fees.get('status') == 'SUCCESS' and fees.get('high_fee_holdings'):
             sections.append(f"\n### 💸 HIGH FEE ALERT")
-            sections.append(f"Portfolio weighted expense: {fees.get('portfolio_weighted_expense_pct', 0):.2f}%")
-            sections.append(f"5-year fee drag: {fees.get('5yr_total_fee_drag_pct', 0):.1f}%")
+            weighted_exp = fees.get('portfolio_weighted_expense_pct', 0) or 0
+            fee_drag = fees.get('5yr_total_fee_drag_pct', 0) or 0
+            sections.append(f"Portfolio weighted expense: {weighted_exp:.2f}%")
+            sections.append(f"5-year fee drag: {fee_drag:.1f}%")
             for h in fees.get('high_fee_holdings', [])[:3]:
-                sections.append(f"- {h.get('ticker')}: {h.get('expense_ratio', 0):.2f}% annual | {h.get('warning', '')}")
+                exp_ratio = h.get('expense_ratio', 0) or 0
+                sections.append(f"- {h.get('ticker')}: {exp_ratio:.2f}% annual | {h.get('warning', '')}")
         
         # Dividend Timing
         div = retail.get('dividend_timing', {})
@@ -1123,7 +1149,8 @@ You're the advisor. Make the calls. Beat the S&P 500.
         if hold_recs:
             sections.append(f"\n### 📅 DIVIDEND TIMING ({len(hold_recs)} upcoming)")
             for d in hold_recs[:3]:
-                sections.append(f"- {d.get('ticker')}: Ex-div {d.get('ex_div_date')} | ${d.get('quarterly_dividend', 0):.2f}/share")
+                qtr_div = d.get('quarterly_dividend', 0) or 0
+                sections.append(f"- {d.get('ticker')}: Ex-div {d.get('ex_div_date')} | ${qtr_div:.2f}/share")
                 sections.append(f"  → {d.get('action', 'HOLD')}: {d.get('reason', '')}")
         
         # Priority Alerts Summary

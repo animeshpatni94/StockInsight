@@ -136,7 +136,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"    ✓ Found {div_count} stocks with ex-dividend dates in next 14 days")
     if div_count > 0:
         upcoming_divs = list(dividend_calendar.items())[:5]
-        div_str = ', '.join([f"{ticker} ({data.get('ex_dividend_display', 'TBD')}: ${data.get('dividend_per_share', 0):.2f})" for ticker, data in upcoming_divs])
+        div_str = ', '.join([f"{ticker} ({data.get('ex_dividend_display', 'TBD')}: ${(data.get('dividend_per_share', 0) or 0):.2f})" for ticker, data in upcoming_divs])
         print(f"    Upcoming: {div_str}")
     
     # Step 5c: Calculate risk metrics (drawdown protection)
@@ -151,7 +151,7 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
             print(f"    ⚠️ {reason}")
     
     metrics = risk_metrics.get('metrics', {})
-    print(f"    Drawdown: {metrics.get('drawdown_pct', 0):.1f}% | Consecutive Losses: {metrics.get('consecutive_losses', 0)}")
+    print(f"    Drawdown: {(metrics.get('drawdown_pct', 0) or 0):.1f}% | Consecutive Losses: {metrics.get('consecutive_losses', 0) or 0}")
     
     rules = risk_metrics.get('rules', {})
     print(f"    Mode Rules: Max position {rules.get('max_position_size', 15)}%, Min cash {rules.get('min_cash', 5)}%")
@@ -453,7 +453,8 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
                         'bullish_pct': sentiment_data.get('bullish_pct', 50),
                         'emoji': sentiment_data.get('emoji', '⚪')
                     }
-                    print(f"       {ticker}: {sentiment_data.get('emoji', '')} {sentiment_data.get('label', 'N/A')} ({sentiment_data.get('bullish_pct', 50):.0f}% bullish)")
+                    bullish = sentiment_data.get('bullish_pct', 50) or 50
+                    print(f"       {ticker}: {sentiment_data.get('emoji', '')} {sentiment_data.get('label', 'N/A')} ({bullish:.0f}% bullish)")
     
     # Step 8: Update portfolio history
     print("\n[8/10] Updating portfolio history...")
@@ -552,11 +553,11 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     
     trims = [r for r in analysis_result.get('portfolio_review', []) if r.get('action') == 'TRIM']
     if trims:
-        trim_strs = [f"{t.get('ticker')} → {t.get('new_allocation_pct', 0):.0f}%" for t in trims]
+        trim_strs = [f"{t.get('ticker')} → {(t.get('new_allocation_pct', 0) or 0):.0f}%" for t in trims]
         print(f"   🟡 TRIM: {', '.join(trim_strs)}")
     
     if new_recs:
-        buy_strs = [f"{r.get('ticker')} ({r.get('allocation_pct', 0):.0f}%)" for r in new_recs]
+        buy_strs = [f"{r.get('ticker')} ({(r.get('allocation_pct', 0) or 0):.0f}%)" for r in new_recs]
         print(f"   🟢 BUY:  {', '.join(buy_strs)}")
     
     cash_pct = updated_history.get('cash', {}).get('allocation_pct', 0)
