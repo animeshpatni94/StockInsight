@@ -44,7 +44,10 @@ The market data provided to you contains REAL-TIME PRICES from Yahoo Finance (yf
 
 ## 🔴 PORTFOLIO MIX: INDIVIDUAL STOCKS + ETFs (AGGRESSIVE GROWTH)
 This is an AGGRESSIVE GROWTH portfolio for a 31-year-old with 34 years to retirement.
-Recommend a MIX of individual stocks AND ETFs with this balance:
+
+### 🎯 MINIMUM RECOMMENDATION COUNT: 10-15 STOCKS PER RUN
+You MUST recommend at least 10 new stock picks. More is better for diversification.
+Spread the $1,000 budget across many small positions rather than few large ones.
 
 ### Individual Stocks (70-80% of recommendations):
 - **Mega-cap leaders**: AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA
@@ -67,12 +70,13 @@ Recommend a MIX of individual stocks AND ETFs with this balance:
 - Be too conservative - this is an AGGRESSIVE portfolio!
 
 ## 🔴 CRITICAL: MIX OF SAFE + SPECULATIVE PICKS
-For an aggressive growth portfolio, ALWAYS include a mix:
+For an aggressive growth portfolio, ALWAYS include a mix across 10-15 picks:
 
-### Your $1,000 Budget Should Include:
-1. **Core Position ($400-500)**: Blue-chip growth stock with strong momentum (NVDA, GOOGL, AMZN, etc.)
-2. **Growth Play ($300-400)**: High-growth mid-cap with 20%+ revenue growth
-3. **Speculative Bet ($100-200)**: High-risk/high-reward pick that could 5-10x
+### Your $1,000 Budget Should Include (10-15 positions):
+1. **2-3 Core Positions ($50-150 each)**: Blue-chip growth stocks (NVDA, GOOGL, AMZN, etc.)
+2. **3-4 Growth Plays ($50-100 each)**: High-growth mid-caps with momentum
+3. **2-3 Thematic/Sector Plays ($50-75 each)**: ETFs or sector leaders
+4. **3-4 Speculative Bets ($25-75 each)**: High-risk/high-reward picks that could 5-10x
 
 ### Speculative Picks to Consider:
 - **Emerging AI/Tech**: Small-cap AI companies, semiconductor equipment, cloud disruptors
@@ -185,19 +189,25 @@ Before recommending ANY stock, answer these questions:
 ### BUDGET ALLOCATION FOR NEW PICKS:
 The fresh biweekly budget is typically $1,000. Include a MIX of risk levels:
 
-**REQUIRED: Recommend 5-7 new stock picks per run!** Don't be lazy with just 2-3 picks.
+**REQUIRED: Recommend 10-15 new stock picks per run!** Don't be lazy with just 2-3 picks.
 - Diversify across different sectors and risk levels
 - Mix of large-cap, mid-cap, and small-cap opportunities
+- Include both ETFs and individual stocks
+- Spread across multiple themes and catalysts
 
 **Example Allocation for $1,000 budget (aggressive portfolio):**
-- **$250-300**: Core large-cap growth (NVDA, GOOGL, AMZN) - moderate risk
-- **$200-250**: High-growth tech or sector leader - moderate risk
-- **$150-200**: Mid-cap momentum play - moderate/aggressive risk
-- **$100-150**: Emerging sector or thematic play - aggressive risk
-- **$100-150**: Speculative moonshot (small-cap, biotech, AI) - aggressive risk
-- **$50-100**: High-conviction spec play - aggressive risk
+- **$150-200**: Core large-cap growth (NVDA, GOOGL, AMZN) - moderate risk
+- **$100-150**: High-growth tech leader - moderate risk  
+- **$100-150**: Second tech or healthcare play - moderate risk
+- **$100-150**: Mid-cap momentum play - moderate/aggressive risk
+- **$75-100**: Emerging sector or thematic play - aggressive risk
+- **$75-100**: International or commodity ETF - moderate risk
+- **$50-75**: Small-cap growth story - aggressive risk
+- **$50-75**: Speculative biotech/AI play - aggressive risk
+- **$50-75**: Another speculative moonshot - aggressive risk
+- **$25-50**: High-conviction micro-cap - very aggressive risk
 
-**MUST INCLUDE at least 2 speculative picks!** This is an aggressive portfolio.
+**MUST INCLUDE at least 3-4 speculative picks!** This is an aggressive portfolio.
 - Total new investments MUST equal the available budget
 - Don't be boring - include multiple exciting high-upside plays
 - Smaller position sizes = more diversification = better risk management
@@ -1175,115 +1185,4 @@ def _get_fallback_analysis() -> Dict:
         "allocation_summary": {},
         "risks_to_portfolio": [],
         "watchlist": []
-    }
-
-
-def _get_mock_analysis() -> Dict:
-    """
-    Return mock analysis for LOCAL TESTING ONLY when API key not set.
-    WARNING: This adds hardcoded stocks - only for development testing.
-    
-    Returns:
-        Mock analysis dictionary
-    """
-    return {
-        "macro_assessment": {
-            "regime": "risk-on",
-            "summary": "Markets showing resilience with strong employment data and easing inflation. Fed likely to hold rates steady.",
-            "implications": [
-                "Favor quality growth and cyclicals",
-                "Maintain modest commodity exposure as hedge"
-            ]
-        },
-        "portfolio_review": [],
-        "sells": [],
-        "new_recommendations": [
-            {
-                "ticker": "GOOGL",
-                "company_name": "Alphabet Inc.",
-                "asset_class": "us_stock",
-                "sector": "Technology",
-                "investment_style": "garp",
-                "risk_level": "moderate",
-                "time_horizon": "long_term",
-                "allocation_pct": 12,
-                "entry_zone": {"low": 175, "high": 185},
-                "price_target": 220,
-                "stop_loss": 155,
-                "thesis": "Cheapest mega-cap tech name. AI search integration progressing well. Strong FCF generation.",
-                "risks": "Regulatory headwinds, AI competition from OpenAI",
-                "catalyst": "Gemini adoption metrics in Q2 earnings"
-            },
-            {
-                "ticker": "XOM",
-                "company_name": "Exxon Mobil Corp",
-                "asset_class": "us_stock",
-                "sector": "Energy",
-                "investment_style": "value",
-                "risk_level": "moderate",
-                "time_horizon": "medium_term",
-                "allocation_pct": 8,
-                "entry_zone": {"low": 105, "high": 112},
-                "price_target": 130,
-                "stop_loss": 95,
-                "thesis": "Best-in-class operator with strong dividend. Pioneer acquisition adds Permian scale.",
-                "risks": "Oil price volatility, energy transition long-term",
-                "catalyst": "Synergy realization from Pioneer deal"
-            },
-            {
-                "ticker": "GLD",
-                "company_name": "SPDR Gold Trust",
-                "asset_class": "commodity_etf",
-                "sector": "Metals",
-                "investment_style": "hedge",
-                "risk_level": "conservative",
-                "time_horizon": "long_term",
-                "allocation_pct": 7,
-                "entry_zone": {"low": 240, "high": 250},
-                "price_target": 280,
-                "stop_loss": 220,
-                "thesis": "Portfolio insurance against tail risks. Central bank buying remains strong.",
-                "risks": "Real rates spike, dollar strength",
-                "catalyst": "Continued central bank accumulation"
-            }
-        ],
-        "metals_commodities_outlook": {
-            "gold": {"stance": "bullish", "rationale": "Real rates falling, central bank buying"},
-            "silver": {"stance": "neutral", "rationale": "Industrial demand mixed"},
-            "copper": {"stance": "bullish", "rationale": "Electrification demand, supply constraints"},
-            "oil": {"stance": "neutral", "rationale": "OPEC+ discipline vs demand concerns"}
-        },
-        "politician_trade_analysis": {
-            "notable_trades": [],
-            "suspicious_patterns": [],
-            "overlap_with_portfolio": []
-        },
-        "allocation_summary": {
-            "by_asset_class": {"us_stock": 20, "commodity_etf": 7, "cash": 73},
-            "by_sector": {"Technology": 12, "Energy": 8, "Metals": 7},
-            "by_style": {"garp": 12, "value": 8, "hedge": 7},
-            "by_horizon": {"long_term": 19, "medium_term": 8},
-            "by_risk": {"moderate": 20, "conservative": 7},
-            "validation": "All within rules"
-        },
-        "risks_to_portfolio": [
-            {
-                "risk": "Tech correction",
-                "impact": "GOOGL position affected",
-                "exposure_pct": 12,
-                "mitigation": "Diversified across sectors, stop-loss in place"
-            }
-        ],
-        "watchlist": [
-            {
-                "ticker": "COST",
-                "why_watching": "Best-in-class retail execution",
-                "entry_trigger": "Pullback to $850 or below"
-            },
-            {
-                "ticker": "AMGN",
-                "why_watching": "Obesity drug optionality underappreciated",
-                "entry_trigger": "FDA catalyst or pullback to $280"
-            }
-        ]
     }

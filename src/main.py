@@ -118,7 +118,6 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
                 all_tickers.extend([item.get('ticker') for item in items[:10] if item.get('ticker')])
     all_tickers = list(set(all_tickers))
     
-    print(f"    Checking earnings for {len(all_tickers)} tickers...")
     earnings_calendar = get_earnings_calendar(all_tickers, days_ahead=14)
     # earnings_calendar is a flat dict {ticker: earnings_info}
     upcoming_count = len(earnings_calendar)

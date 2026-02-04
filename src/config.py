@@ -69,15 +69,10 @@ SECTORS = {
 #   - Screens 1,500+ stocks by market cap and sector in real-time
 #   - No hardcoded stock lists
 #
-# ETF Tracking: Uses industry-standard liquid ETFs
-#   - Commodity ETFs: GLD, SLV, USO, UNG, DBA, DBB, DJP
-#   - Bond ETFs: SHY, TLT, LQD, HYG, TIP
-#   - International ETFs: VEA, VWO, VGK, VPL, FXI, EWJ
-#   - Thematic ETFs: QQQ, SMH, ICLN, XBI, CIBR, SKYY, VIG
-#
-# Why not dynamic ETF discovery? Yahoo Finance EquityQuery doesn't support
-# quoteType='ETF' filtering. These benchmark ETFs are industry standards
-# (largest, most liquid) that rarely change - similar to using SPY for S&P 500.
+# ETF Detection: DYNAMIC via yfinance quoteType
+#   - yfinance Ticker.info['quoteType'] returns 'ETF' or 'EQUITY'
+#   - No hardcoded ETF lists needed
+#   - ETFs are automatically filtered out from earnings calendar
 
 # =============================================================================
 # BIWEEKLY INVESTMENT BUDGET
@@ -143,14 +138,6 @@ FUNDAMENTAL_PARAMS = {
     "earnings_surprise_threshold": 0.10
 }
 
-# Data Sources
-DATA_SOURCES = {
-    "market_data": "yfinance",
-    "politician_trades": "quiver_quantitative",
-    "fundamentals": "yfinance",
-    "news": "yfinance"
-}
-
 # Email Configuration
 EMAIL_CONFIG = {
     "subject_prefix": "📊 Monthly Stock Recommendations",
@@ -166,80 +153,4 @@ PATHS = {
     "email_template": "templates/email_template.html"
 }
 
-# Rate Limiting Configuration
-RATE_LIMIT_CONFIG = {
-    "yfinance_batch_size": 50,
-    "yfinance_delay_between_batches": 3.0,
-    "alphavantage_delay_seconds": 15,
-    "alphavantage_max_batches": 4,
-    "capitol_trades_delay": 0.5,
-    "initial_backoff": 5,
-    "max_backoff": 120,
-    "backoff_multiplier": 2
-}
 
-# Screening Thresholds (moved from magic numbers)
-SCREENING_CONFIG = {
-    "52w_high_threshold": 0.98,       # Within 2% of 52-week high
-    "52w_low_threshold": 1.10,        # Within 10% above 52-week low
-    "volume_spike_threshold": 3.0,    # 3x average volume
-    "breakeven_threshold_pct": 0.5,   # ±0.5% considered breakeven for win/loss
-    "max_stocks_universe": 1500,
-    "top_gainers_count": 50,
-    "top_losers_count": 50,
-    "momentum_results_limit": 45,
-    "fundamental_results_limit": 50
-}
-
-# Transaction Cost Estimates (for realistic return calculations)
-TRANSACTION_COSTS = {
-    "commission_per_trade": 0.0,      # Most brokers are commission-free now
-    "estimated_spread_pct": 0.05,     # ~5 basis points spread estimate
-    "short_term_tax_rate": 0.32,      # Estimate for short-term capital gains
-    "long_term_tax_rate": 0.15        # Estimate for long-term capital gains
-}
-
-# Retail Investor Specific Settings
-RETAIL_INVESTOR_CONFIG = {
-    # Tax-Loss Harvesting
-    "tlh_loss_threshold_pct": -5,           # Minimum loss % to consider for harvesting
-    "tlh_high_priority_loss_pct": -15,      # Loss % that triggers high priority
-    "tlh_harvest_season_months": [10, 11, 12],  # Oct-Dec for year-end harvesting
-    
-    # Portfolio Correlation
-    "high_correlation_threshold": 0.80,     # Pairs above this are flagged
-    "moderate_correlation_threshold": 0.60, # Pairs above this get warning
-    "min_diversification_score": 50,        # Below this is concerning
-    
-    # Liquidity Thresholds
-    "liquidity_high_dollar_volume": 50_000_000,   # $50M+ daily = high liquidity
-    "liquidity_medium_dollar_volume": 5_000_000,  # $5M-$50M = medium
-    "liquidity_low_dollar_volume": 500_000,       # $500K-$5M = low
-    "max_spread_warning_pct": 0.25,               # Warn if spread > 0.25%
-    
-    # Trailing Stop Settings
-    "trailing_stop_atr_multiplier": 2.5,    # ATR-based stop = 2.5x ATR below peak
-    "trailing_stop_min_profit_to_raise": 15, # Raise stop after 15% gain
-    "trailing_stop_breakeven_threshold": 5,  # Move to breakeven after 5% gain
-    
-    # Short Interest
-    "short_squeeze_threshold_pct": 20,      # >20% short + rising = potential squeeze
-    "extreme_short_threshold_pct": 30,      # >30% is extreme
-    "squeeze_price_momentum_pct": 10,       # >10% gain this month with high short
-    
-    # Institutional Ownership
-    "crowded_trade_threshold_pct": 90,      # >90% institutional = crowded
-    "low_institutional_threshold_pct": 20,  # <20% = research needed
-    
-    # Dollar-Cost Averaging
-    "dca_default_tranches": 3,              # Default number of entry tranches
-    "dca_pullback_levels_pct": [5, 10, 15], # Pullback levels for limit orders
-    
-    # Fee Awareness
-    "high_expense_ratio_pct": 0.50,         # >0.50% is considered high
-    "leveraged_etf_warning": True,          # Always warn about leveraged/inverse ETFs
-    
-    # Dividend Timing
-    "min_dividend_yield_for_capture": 0.50, # Minimum yield to hold for dividend
-    "ex_div_warning_days": 14               # Warn about ex-div within 14 days
-}

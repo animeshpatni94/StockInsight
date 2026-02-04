@@ -1457,6 +1457,7 @@ def get_earnings_calendar(tickers: List[str], days_ahead: int = 14) -> Dict[str,
     """
     Get upcoming earnings dates for a list of tickers.
     Flags stocks with earnings within the specified window.
+    Dynamically skips ETFs (detected via yfinance quoteType) which don't have earnings.
     
     Args:
         tickers: List of stock symbols to check
@@ -1469,55 +1470,80 @@ def get_earnings_calendar(tickers: List[str], days_ahead: int = 14) -> Dict[str,
     earnings_data = {}
     today = datetime.now()
     cutoff_date = today + timedelta(days=days_ahead)
+    etf_count = 0
+    
+    print(f"    Checking {len(tickers)} tickers...")
     
     for ticker in tickers:
         try:
             stock = yf.Ticker(ticker)
+            
+            # Dynamically detect ETFs via quoteType - skip them (no earnings)
+            info = stock.info
+            quote_type = info.get('quoteType', 'EQUITY')
+            if quote_type == 'ETF':
+                etf_count += 1
+                continue
+            
             calendar = stock.calendar
             
-            if calendar is not None and not calendar.empty:
-                # Handle different calendar formats
-                earnings_date = None
+            if calendar is None:
+                continue
                 
+            # Handle different calendar formats (dict or DataFrame)
+            earnings_date = None
+            
+            # yfinance now returns calendar as a dict
+            if isinstance(calendar, dict) and 'Earnings Date' in calendar:
+                dates = calendar['Earnings Date']
+                if isinstance(dates, list) and len(dates) > 0:
+                    earnings_date = dates[0]
+                elif dates is not None:
+                    earnings_date = dates
+            # Legacy DataFrame format (older yfinance versions)
+            elif hasattr(calendar, 'empty') and not calendar.empty:
                 if 'Earnings Date' in calendar.index:
                     dates = calendar.loc['Earnings Date']
                     if isinstance(dates, pd.Series):
                         earnings_date = dates.iloc[0]
                     else:
                         earnings_date = dates
-                elif isinstance(calendar, dict) and 'Earnings Date' in calendar:
-                    dates = calendar['Earnings Date']
-                    if isinstance(dates, list) and len(dates) > 0:
-                        earnings_date = dates[0]
+            
+            if earnings_date is not None:
+                # Convert to datetime if needed
+                if isinstance(earnings_date, pd.Timestamp):
+                    earnings_dt = earnings_date.to_pydatetime()
+                elif isinstance(earnings_date, datetime):
+                    earnings_dt = earnings_date
+                elif hasattr(earnings_date, 'year'):  # datetime.date object
+                    # Convert date to datetime
+                    earnings_dt = datetime(earnings_date.year, earnings_date.month, earnings_date.day)
+                else:
+                    continue
                 
-                if earnings_date is not None:
-                    # Convert to datetime if needed
-                    if isinstance(earnings_date, pd.Timestamp):
-                        earnings_dt = earnings_date.to_pydatetime()
-                    elif isinstance(earnings_date, datetime):
-                        earnings_dt = earnings_date
-                    else:
-                        continue
-                    
-                    # Remove timezone info for comparison
-                    if earnings_dt.tzinfo is not None:
-                        earnings_dt = earnings_dt.replace(tzinfo=None)
-                    
-                    days_until = (earnings_dt - today).days
-                    
-                    if 0 <= days_until <= days_ahead:
-                        earnings_data[ticker] = {
-                            'earnings_date': earnings_dt.strftime('%Y-%m-%d'),
-                            'days_until': days_until,
-                            'warning': True,
-                            'warning_text': f"⚠️ Earnings in {days_until} days ({earnings_dt.strftime('%b %d')})"
-                        }
+                # Remove timezone info for comparison
+                if earnings_dt.tzinfo is not None:
+                    earnings_dt = earnings_dt.replace(tzinfo=None)
+                
+                days_until = (earnings_dt - today).days
+                
+                if 0 <= days_until <= days_ahead:
+                    earnings_data[ticker] = {
+                        'earnings_date': earnings_dt.strftime('%Y-%m-%d'),
+                        'days_until': days_until,
+                        'warning': True,
+                        'warning_text': f"⚠️ Earnings in {days_until} days ({earnings_dt.strftime('%b %d')})"
+                    }
         except Exception as e:
             # Silently skip stocks where we can't get earnings data
             pass
     
+    if etf_count > 0:
+        print(f"    Skipped {etf_count} ETFs (no earnings)")
     if earnings_data:
         print(f"    Found {len(earnings_data)} stocks with upcoming earnings")
+    else:
+        print(f"    No upcoming earnings in the next {days_ahead} days")
     
     return earnings_data
 

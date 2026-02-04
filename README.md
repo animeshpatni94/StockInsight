@@ -22,16 +22,24 @@ Every time the agent runs, you invest **$1,000 fresh money** on top of your exis
 3. **Allocate New Budget**: The fresh $1,000 is distributed across:
    - New stock picks (never owned before)
    - Adding to existing winners (ADD action)
+4. **10-15 Stock Recommendations**: Claude provides diversified picks across sectors and risk levels
 
 ### Example Allocation
 
 ```
-Fresh Budget: $1,000
-├── NVDA (ADD to existing position): $300
-├── PLTR (NEW BUY): $250
-├── SOFI (NEW BUY): $200
-├── MSTR (NEW speculative): $150
-└── CELH (NEW growth): $100
+Fresh Budget: $1,000 (spread across 10-15 positions)
+├── NVDA (Core position): $150
+├── GOOGL (Core position): $125
+├── PLTR (Growth play): $100
+├── AMD (Growth play): $100
+├── SOFI (Mid-cap momentum): $75
+├── XLK (Sector ETF): $75
+├── MSTR (Speculative): $75
+├── CELH (Speculative): $75
+├── IONQ (Speculative AI): $50
+├── RKLB (Small-cap growth): $50
+├── ARKG (Thematic ETF): $50
+└── DNA (Moonshot): $75
 ```
 
 ### ADD (Double Down) Support
@@ -53,13 +61,15 @@ BIWEEKLY_INVESTMENT_BUDGET = 1000  # Fresh money to invest each run
 
 ### Core Analysis
 - **100% Dynamic Stock Universe**: Zero hardcoded stock lists - Yahoo Finance EquityQuery API screens 1,500+ stocks in real-time by market cap and sector
+- **Dynamic ETF Detection**: ETFs automatically identified via yfinance `quoteType` - no hardcoded ETF lists
 - **Full Market Coverage**: All 11 GICS sectors, mega-to-nano cap ($100M+), commodities, fixed income, international markets
-- **Dynamic ETF Discovery**: Commodity, bond, and international ETFs found via keyword search - always current
 - **Real-Time Prices**: All prices sourced from yfinance - never uses stale training data
+- **10-15 Recommendations Per Run**: Diversified picks across sectors, risk levels, and market caps
 - **Portfolio Memory**: Tracks recommendations over time, calculates performance, learns from past trades
 - **Risk Management**: Industry-standard drawdown protection with automatic defensive modes
 - **Stop-Loss & Target Alerts**: Automatic detection when positions hit stop-loss or price targets
 - **Allocation Validation**: Auto-validates Claude's recommendations against allocation rules
+- **API Resilience**: Automatic retry with exponential backoff (3 retries) for network reliability
 
 ### Retail Investor Focus 💰
 - **Tax-Loss Harvesting Detection**: Identifies positions for tax-efficient selling with replacement suggestions
@@ -257,18 +267,19 @@ The email uses a **dark-theme-first design** that looks great in both light and 
 | Section | Description |
 |---------|-------------|
 | 🎉 **Welcome** (First Run) | Onboarding guide for new users |
+| 💰 **Portfolio Summary** | Starting capital → Current value → Total P&L (green/red) → vs S&P 500 |
 | 🚨 **Urgent Alerts** | Stop-loss triggers and target hits |
 | 📊 **Market Pulse** | Major indices with % changes |
 | 📰 **News Sentiment** | AI-analyzed sentiment for recommended stocks |
 | 📊 **Performance Attribution** | What moved your portfolio this period |
 | 💼 **Existing Holdings** | Real-time P&L with HOLD/SELL/TRIM/ADD status |
-| 🎯 **Action Plan** | BUY/HOLD/SELL/TRIM with allocation guidance |
-| 💰 **New Picks** | Fresh $1,000 budget allocation (up to 15 stocks) |
+| 🎯 **Action Plan** | Fresh budget allocation with BUY/ADD actions |
+| 💰 **New Picks** | Fresh $1,000 budget allocation (5-7 diversified stocks) |
 | 📅 **Dividend Calendar** | Upcoming ex-dividend dates |
 | 💰 **Retail Insights** | Tax harvesting, correlation, stops, squeezes |
-| 🏛️ **Politician Trades** | Congressional trading activity (up to 10 trades) |
-| 📈 **Recommendation Tracker** | Win rate and historical performance |
-| ⚡ **S&P 500 Comparison** | Portfolio vs benchmark |
+| 🏛️ **Politician Trades** | Congressional trading with Claude's insights (up to 10 trades) |
+| 📈 **Recommendation Tracker** | Live prices, P&L, HOLD/SELL status for all positions |
+| ⚡ **S&P 500 Comparison** | Portfolio vs benchmark performance since inception |
 
 ### Screens Included
 
@@ -373,31 +384,40 @@ MANDATORY RULES FOR DEFENSIVE MODE:
 
 | Service | Monthly Cost |
 |---------|--------------|
-| Claude Opus API | ~$5-10 |
+| Claude Opus 4.5 API | ~$5-15 |
 | Resend (100 emails/day free) | $0 |
 | GitHub Actions | $0 |
 | Alpha Vantage (free tier) | $0 |
-| **Total** | **~$5-10/month** |
+| **Total** | **~$5-15/month** |
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
+
+**Claude API timeout/network error:**
+- The system automatically retries 3 times with exponential backoff (10s, 20s delays)
+- If all retries fail, a safe fallback preserves your existing portfolio
+- Check GitHub Actions logs for details
 
 **Empty email sections:**
 - First run will show welcome section instead of performance data
 - Portfolio builds over time with each run
 
 **No politician trades:**
+- Verify Claude is returning `politician_trade_analysis.notable_trades` in response
 - Capitol Trades may have rate limits
-- Mock data is used if API unavailable
+
+**S&P 500 showing 0%:**
+- Fixed in latest version - now correctly uses "S&P 500 (SPY)" key
+- Historical data won't be retroactively fixed, but new runs will be accurate
 
 **No news sentiment:**
 - Check `ALPHAVANTAGE_API_KEY` is set
 - Free tier: 25 calls/day limit
 
-**Prices seem wrong:**
-- All prices come from yfinance in real-time
-- Claude's output is always verified against yfinance
+**Prices showing N/A or $0:**
+- All prices should come from yfinance via `portfolio_performance`
+- Check that `calculate_performance()` is being called in main.py
 
 ### Logs
 
@@ -418,10 +438,17 @@ Check the console output for detailed progress:
 - Consult a licensed financial advisor for personalized advice
 - The authors are not responsible for any investment decisions made based on this tool's output
 
-## 📄 License
-
-MIT License - feel free to use, modify, and distribute.
-
 ---
 
 Built with ❤️ for retail investors who want institutional-quality insights.
+
+## 📝 Recent Updates
+
+### February 2026
+- **Portfolio Summary Section**: New prominent section showing Starting Capital → Current Value → Total P&L (green/red) → vs S&P 500
+- **S&P 500 Tracking Fix**: Fixed benchmark comparison (was showing 0%)
+- **Live Prices Everywhere**: Recommendation Tracker now shows real-time prices from yfinance
+- **Politician Trades Fix**: Now correctly displays congressional trades with Claude's analysis insights
+- **5-7 Stock Recommendations**: Claude now provides more diversified picks (was 2-3)
+- **API Retry Logic**: Automatic 3x retry with exponential backoff for network resilience
+- **Status Badges**: Recommendation Tracker shows HOLD (blue), ADD (green), TRIM (orange), SELL (red)
