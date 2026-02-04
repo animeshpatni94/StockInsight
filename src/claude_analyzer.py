@@ -1167,7 +1167,7 @@ You're the advisor. Make the calls. Beat the S&P 500.
                 continue
                 
             sections.append(f"\n### {ticker}")
-            sections.append(f"Periods: {' → '.join(periods)}")
+            sections.append(f"Periods: {' → '.join(str(p) for p in periods)}")
             
             # Revenue trend
             rev = data.get('revenue_history', [])
