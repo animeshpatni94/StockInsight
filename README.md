@@ -175,7 +175,7 @@ Add all the environment variables listed above.
 
 ### 4. Deploy
 
-Push to GitHub — the action runs automatically every 2 weeks (1st and 15th of each month at 9:00 AM UTC).
+Push to GitHub — the action runs automatically every 2 weeks (1st and 3rd Wednesday of each month at 8:17 AM MST / 15:17 UTC).
 
 ## 💻 Manual Run
 
