@@ -904,7 +904,7 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
     if screens.get('momentum'):
         sections.append("\n## MOMENTUM SCREENS")
         
-        gainers = screens['momentum'].get('top_gainers', [])[:50]
+        gainers = screens['momentum'].get('top_gainers', [])
         if gainers:
             sections.append("Top Gainers (1mo):")
             for g in gainers:
@@ -912,7 +912,7 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
                 ret = g.get('return_pct', 0) or 0
                 sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Return: {ret:+.2f}%")
         
-        losers = screens['momentum'].get('top_losers', [])[:50]
+        losers = screens['momentum'].get('top_losers', [])
         if losers:
             sections.append("Top Losers (potential value):")
             for l in losers:
@@ -920,21 +920,21 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
                 ret = l.get('return_pct', 0) or 0
                 sections.append(f"  - {l.get('ticker')}: ${price:.2f} | Return: {ret:+.2f}%")
         
-        breakouts = screens['momentum'].get('52w_high_breakouts', [])[:45]
+        breakouts = screens['momentum'].get('52w_high_breakouts', [])
         if breakouts:
             sections.append("52-Week High Breakouts:")
             for b in breakouts:
                 price = b.get('current_price', 0) or 0
                 sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
         
-        bounces = screens['momentum'].get('52w_low_bounces', [])[:45]
+        bounces = screens['momentum'].get('52w_low_bounces', [])
         if bounces:
             sections.append("52-Week Low Bounces:")
             for b in bounces:
                 price = b.get('current_price', 0) or 0
                 sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
         
-        volume = screens['momentum'].get('unusual_volume', [])[:45]
+        volume = screens['momentum'].get('unusual_volume', [])
         if volume:
             sections.append("Unusual Volume:")
             for v in volume:
@@ -945,7 +945,7 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
     if screens.get('fundamental'):
         sections.append("\n## FUNDAMENTAL SCREENS")
         
-        value = screens['fundamental'].get('value_stocks', [])[:50]
+        value = screens['fundamental'].get('value_stocks', [])
         if value:
             sections.append("Value Stocks (P/E<15, EPS growth>10%):")
             for v in value:
@@ -955,7 +955,7 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
                 div_yield = v.get('dividend_yield', 0) or 0
                 sections.append(f"  - {v.get('ticker')}: ${price:.2f} | P/E {pe:.1f} | EPS +{eps_growth:.0f}% | Div {div_yield:.1f}%")
         
-        growth = screens['fundamental'].get('growth_stocks', [])[:50]
+        growth = screens['fundamental'].get('growth_stocks', [])
         if growth:
             sections.append("Growth Stocks:")
             for g in growth:
@@ -967,7 +967,7 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
                 score = g.get('growth_score', 0) or 0
                 sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Rev +{rev_growth:.0f}% | EPS +{eps_growth:.0f}% | PEG {peg:.2f} | ROE {roe:.0f}% | Score {score}")
         
-        dividend = screens['fundamental'].get('dividend_stocks', [])[:45]
+        dividend = screens['fundamental'].get('dividend_stocks', [])
         if dividend:
             sections.append("Dividend Stocks (>3% yield):")
             for d in dividend:
@@ -980,7 +980,7 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
     if screens.get('technical'):
         sections.append("\n## TECHNICAL SCREENS")
         
-        oversold = screens['technical'].get('oversold', [])[:45]
+        oversold = screens['technical'].get('oversold', [])
         if oversold:
             sections.append("Oversold (RSI < 30):")
             for o in oversold:
@@ -988,7 +988,7 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
                 rsi = o.get('rsi', 0) or 0
                 sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {rsi:.1f}")
         
-        overbought = screens['technical'].get('overbought', [])[:45]
+        overbought = screens['technical'].get('overbought', [])
         if overbought:
             sections.append("Overbought (RSI > 70):")
             for o in overbought:
@@ -996,14 +996,14 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
                 rsi = o.get('rsi', 0) or 0
                 sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {rsi:.1f}")
         
-        golden = screens['technical'].get('golden_crosses', [])[:35]
+        golden = screens['technical'].get('golden_crosses', [])
         if golden:
             sections.append("Golden Crosses:")
             for g in golden:
                 price = g.get('current_price', 0) or 0
                 sections.append(f"  - {g.get('ticker')}: ${price:.2f}")
         
-        death = screens['technical'].get('death_crosses', [])[:35]
+        death = screens['technical'].get('death_crosses', [])
         if death:
             sections.append("Death Crosses (avoid or short):")
             for d in death:
@@ -1156,12 +1156,14 @@ You're the advisor. Make the calls. Beat the S&P 500.
                 sections.append(f"  Action: {a.get('action', '')}")
     
     # Historical Financials Section (4-year trends)
+    # Show historical data for ALL stocks in screens to avoid bias
     hist_fin = analysis_input.get('historical_financials', {})
     if hist_fin:
         sections.append(f"\n## 📈 4-YEAR HISTORICAL FINANCIALS ({len(hist_fin)} tickers)")
-        sections.append("Use these trends to validate growth stories and spot red flags:")
+        sections.append("Use these trends to validate growth stories and spot red flags.")
+        sections.append("Historical data is provided for ALL stocks shown in screens above - no selection bias.")
         
-        for ticker, data in list(hist_fin.items())[:30]:  # Limit to 30 to avoid token overload
+        for ticker, data in hist_fin.items():  # Show ALL stocks with historical data
             periods = data.get('periods', [])
             if not periods:
                 continue

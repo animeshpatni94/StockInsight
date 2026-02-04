@@ -1058,11 +1058,11 @@ def run_all_screens() -> Dict:
     
     print("  Running fundamental screens (growth, value, GARP, dividend)...")
     results['fundamental'] = {
-        'value_stocks': scanner.get_value_stocks()[:75],
-        'growth_stocks': scanner.get_growth_stocks()[:100],  # More growth stocks
-        'garp_stocks': scanner.get_garp_stocks()[:50],       # NEW: Growth at Reasonable Price
-        'dividend_stocks': scanner.get_dividend_stocks()[:60],
-        'insider_buying': scanner.get_insider_buying_clusters()[:40]
+        'value_stocks': scanner.get_value_stocks(),      # No limit - send all to Claude
+        'growth_stocks': scanner.get_growth_stocks(),    # No limit - send all to Claude
+        'garp_stocks': scanner.get_garp_stocks(),        # No limit - send all to Claude
+        'dividend_stocks': scanner.get_dividend_stocks(), # No limit - send all to Claude
+        'insider_buying': scanner.get_insider_buying_clusters()  # No limit
     }
     
     # Log fundamental screen results
@@ -1075,10 +1075,10 @@ def run_all_screens() -> Dict:
     
     print("  Running technical screens...")
     results['technical'] = {
-        'golden_crosses': scanner.get_golden_crosses()[:50],
-        'death_crosses': scanner.get_death_crosses()[:50],
-        'oversold': scanner.get_oversold_stocks()[:60],
-        'overbought': scanner.get_overbought_stocks()[:60]
+        'golden_crosses': scanner.get_golden_crosses(),   # No limit - send all to Claude
+        'death_crosses': scanner.get_death_crosses(),     # No limit - send all to Claude
+        'oversold': scanner.get_oversold_stocks(),        # No limit - send all to Claude
+        'overbought': scanner.get_overbought_stocks()     # No limit - send all to Claude
     }
     
     # Log technical screen results

@@ -193,30 +193,51 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print("\n[5b/10] Fetching historical financials (4-year trends)...")
     
     # Get tickers to fetch historical data for:
-    # 1. Current portfolio holdings
+    # 1. Current portfolio holdings (always include)
     portfolio_tickers = [p.get('ticker') for p in portfolio_performance if p.get('ticker')]
     
-    # 2. Top candidates from screens (to help Claude make better decisions)
+    # 2. ALL stocks from screens that Claude will see (NO LIMITS - full analysis)
+    # Opus 4.5 has 200K token input - we should use it for proper analysis
     momentum = screen_results.get('momentum', {})
     fundamental = screen_results.get('fundamental', {})
-    top_candidates = set()
+    technical = screen_results.get('technical', {})
     
-    # Get top 10 from key screens
-    for screen_list in [
-        momentum.get('top_gainers', [])[:10],
-        momentum.get('52w_high_breakouts', [])[:10],
-        fundamental.get('growth_stocks', [])[:10],
-        fundamental.get('value_stocks', [])[:10],
-        fundamental.get('garp_stocks', [])[:10],
-    ]:
-        for stock in screen_list:
-            if stock.get('ticker'):
-                top_candidates.add(stock['ticker'])
+    screen_candidates = set()
+    
+    # Momentum screens - ALL stocks
+    for stock in momentum.get('top_gainers', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in momentum.get('top_losers', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in momentum.get('52w_high_breakouts', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in momentum.get('52w_low_bounces', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in momentum.get('unusual_volume', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    
+    # Fundamental screens - ALL stocks
+    for stock in fundamental.get('value_stocks', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in fundamental.get('growth_stocks', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in fundamental.get('dividend_stocks', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    
+    # Technical screens - ALL stocks
+    for stock in technical.get('oversold', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in technical.get('overbought', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in technical.get('golden_crosses', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
+    for stock in technical.get('death_crosses', []):
+        if stock.get('ticker'): screen_candidates.add(stock['ticker'])
     
     # Combine and deduplicate
-    tickers_for_history = list(set(portfolio_tickers) | top_candidates)
-    print(f"    Fetching 4-year financials for {len(tickers_for_history)} tickers...")
-    print(f"    (Portfolio: {len(portfolio_tickers)}, Top candidates: {len(top_candidates)})")
+    tickers_for_history = list(set(portfolio_tickers) | screen_candidates)
+    print(f"    Fetching 4-year financials for {len(tickers_for_history)} tickers (full dataset, no limits)...")
+    print(f"    (Portfolio: {len(portfolio_tickers)}, Screen candidates: {len(screen_candidates)})")
     
     historical_financials = fetch_historical_financials_batch(tickers_for_history, max_workers=3)
     
