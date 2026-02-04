@@ -334,6 +334,60 @@ The agent runs **17 different screens** across the entire market:
 | Thematic | ETF keyword search: "AI", "clean energy", "semiconductor", "biotech" |
 
 All ETFs are discovered dynamically via Yahoo Finance - no hardcoded ticker lists.
+
+## 📊 Comprehensive Stock Data (60+ Fields)
+
+Claude receives extensive fundamental data for every stock analyzed. Here's the complete data set:
+
+### Per-Stock Data Points
+
+| Category | Fields |
+|----------|--------|
+| **Basic Info** | ticker, name, sector, industry |
+| **Price Data** | current_price, 52w_high, 52w_low, 50_day_avg, 200_day_avg, 52w_change, sp500_52w_change |
+| **Valuation** | market_cap, enterprise_value, pe_ratio, forward_pe, peg_ratio, price_to_book, price_to_sales, ev_to_revenue, ev_to_ebitda |
+| **Profitability** | profit_margin, gross_margins, ebitda_margins, operating_margins, roe, roa |
+| **Financial Health** | total_cash, total_debt, debt_to_equity, current_ratio, quick_ratio, free_cashflow, operating_cashflow |
+| **Growth** | revenue_growth, earnings_growth, earnings_quarterly_growth, revenue_quarterly_growth |
+| **Analyst Data** | analyst_recommendation, analyst_rating_score, num_analyst_opinions, target_mean_price, target_high_price, target_low_price |
+| **Short Interest** | short_ratio, shares_short, short_percent_of_float, shares_short_prior_month |
+| **Ownership** | insider_ownership, institutional_ownership, float_shares, shares_outstanding |
+| **Dividends** | dividend_yield, dividend_rate, payout_ratio, ex_dividend_date |
+| **Trading** | avg_volume, avg_volume_10day, beta |
+| **Earnings** | trailing_eps, forward_eps, book_value, revenue_per_share |
+
+### 4-Year Historical Financials
+
+For portfolio holdings and top 50 screen candidates, Claude also receives **4 years of annual financial data**:
+
+| Metric | Description |
+|--------|-------------|
+| **Revenue History** | 4-year revenue trend (in billions) |
+| **Net Income History** | 4-year profitability trend |
+| **EPS History** | Earnings per share (diluted) over 4 years |
+| **Free Cash Flow History** | FCF generation trend |
+| **Gross Profit History** | Margin consistency over time |
+| **EBITDA History** | Operating earnings power |
+| **Revenue Growth Trend** | Year-over-year growth rates |
+
+### Example: NVDA Historical Data
+
+```
+Periods: 2022 → 2023 → 2024 → 2025
+Revenue:      $26.9B → $27.0B → $60.9B → $130.5B
+Net Income:   $9.8B  → $4.4B  → $29.8B → $72.9B
+EPS:          $0.39  → $0.18  → $1.21  → $2.97
+FCF:          $8.1B  → $3.8B  → $27.0B → $60.9B
+Growth:       -      → 0.2%   → 125.9% → 114.2%
+```
+
+This historical data allows Claude to:
+- ✅ Validate growth claims with actual multi-year trends
+- ✅ Identify companies with consistent vs erratic growth
+- ✅ Spot margin expansion/compression over time
+- ✅ Detect companies transitioning from losses to profits
+- ✅ Avoid "one-hit wonders" with unsustainable growth
+
 ## 📐 Diversification Rules
 
 Claude Opus 4.5 acts as the **sole advisor** with minimal guardrails:
@@ -445,7 +499,15 @@ Built with ❤️ for retail investors who want institutional-quality insights.
 
 ## 📝 Recent Updates
 
-### February 2026
+### February 2026 (Latest)
+- **60+ Stock Data Fields**: Comprehensive fundamentals including analyst ratings, EV/EBITDA, cash/debt, margins, short interest, and more
+- **4-Year Historical Financials**: Revenue, Net Income, EPS, FCF, EBITDA trends for portfolio + top 50 candidates
+- **Enhanced Claude Prompt**: Updated to leverage historical data for better growth validation
+- **Earnings Calendar Section**: New email section showing upcoming earnings for watchlist stocks
+- **Light Theme Email Design**: Professional light theme with solid colors for dark mode compatibility
+- **Entry Price Fix**: Stock cards now correctly show entry prices in "How to Execute" section
+
+### January 2026
 - **Portfolio Summary Section**: New prominent section showing Starting Capital → Current Value → Total P&L (green/red) → vs S&P 500
 - **S&P 500 Tracking Fix**: Fixed benchmark comparison (was showing 0%)
 - **Live Prices Everywhere**: Recommendation Tracker now shows real-time prices from yfinance

@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 
 from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, PATHS
-from data_fetcher import fetch_all_market_data, fetch_historical_context, get_earnings_calendar, get_dividend_calendar
+from data_fetcher import fetch_all_market_data, fetch_historical_context, get_earnings_calendar, get_dividend_calendar, fetch_historical_financials_batch
 from market_scanner import run_all_screens
 from politician_tracker import fetch_recent_trades, analyze_committee_correlation
 from history_manager import (
@@ -189,6 +189,37 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     if div_score > 0:
         print(f"    📊 Diversification Score: {div_score:.0f}/100 ({corr.get('diversification_grade', 'N/A')})")
     
+    # Step 5b: Fetch historical financials for portfolio + top candidates
+    print("\n[5b/10] Fetching historical financials (4-year trends)...")
+    
+    # Get tickers to fetch historical data for:
+    # 1. Current portfolio holdings
+    portfolio_tickers = [p.get('ticker') for p in portfolio_performance if p.get('ticker')]
+    
+    # 2. Top candidates from screens (to help Claude make better decisions)
+    momentum = screen_results.get('momentum', {})
+    fundamental = screen_results.get('fundamental', {})
+    top_candidates = set()
+    
+    # Get top 10 from key screens
+    for screen_list in [
+        momentum.get('top_gainers', [])[:10],
+        momentum.get('52w_high_breakouts', [])[:10],
+        fundamental.get('growth_stocks', [])[:10],
+        fundamental.get('value_stocks', [])[:10],
+        fundamental.get('garp_stocks', [])[:10],
+    ]:
+        for stock in screen_list:
+            if stock.get('ticker'):
+                top_candidates.add(stock['ticker'])
+    
+    # Combine and deduplicate
+    tickers_for_history = list(set(portfolio_tickers) | top_candidates)
+    print(f"    Fetching 4-year financials for {len(tickers_for_history)} tickers...")
+    print(f"    (Portfolio: {len(portfolio_tickers)}, Top candidates: {len(top_candidates)})")
+    
+    historical_financials = fetch_historical_financials_batch(tickers_for_history, max_workers=3)
+    
     # Step 6: Prepare analysis input (NO sentiment - Claude decides purely on fundamentals)
     print("\n[6/10] Preparing analysis input...")
     analysis_input = {
@@ -206,6 +237,8 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         "triggered_alerts": triggered_alerts,
         "auto_sells": auto_sells,
         "current_date": datetime.now().isoformat(),
+        # Historical financials (4-year trends for portfolio + top candidates)
+        "historical_financials": historical_financials,
         # Retail investor specific data
         "retail_analysis": {
             "tax_loss_harvesting": retail_analysis.get('tax_loss_harvesting', []),
@@ -263,6 +296,18 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     for theme, etfs in list(growth_etfs.items())[:5]:
         tickers = list(etfs.keys()) if isinstance(etfs, dict) else []
         print(f"   {theme}: {', '.join(tickers[:3])}...")
+    
+    # Log historical financials
+    print(f"\n📈 HISTORICAL FINANCIALS (4-Year Trends):")
+    print(f"   Tickers with history: {len(historical_financials)}")
+    if historical_financials:
+        sample_ticker = list(historical_financials.keys())[0]
+        sample = historical_financials[sample_ticker]
+        print(f"   Sample ({sample_ticker}):")
+        print(f"     Revenue (B$): {sample.get('revenue_history', [])}")
+        print(f"     Net Income (B$): {sample.get('net_income_history', [])}")
+        print(f"     FCF (B$): {sample.get('fcf_history', [])}")
+        print(f"     EPS: {sample.get('eps_history', [])}")
     
     # Total unique tickers being analyzed
     all_analyzed_tickers = set()

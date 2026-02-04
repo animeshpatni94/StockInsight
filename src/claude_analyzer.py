@@ -130,7 +130,7 @@ You have access to comprehensive market intelligence:
 7. **Politician Trading**: Congressional trades with committee correlation flags
 8. **Earnings Calendar**: Upcoming catalysts for watchlist stocks
 9. **5-Year Historical Context**: Long-term sector performance, market cycles
-10. **Retail Investor Analysis** (NEW - specifically for individual investors):
+10. **Retail Investor Analysis** (specifically for individual investors):
     - Tax-Loss Harvesting opportunities (with priority ranking)
     - Portfolio Correlation analysis (hidden concentration risks)
     - Liquidity warnings (bid-ask spread costs for small caps)
@@ -140,6 +140,37 @@ You have access to comprehensive market intelligence:
     - Sector rotation phase (early/mid/late cycle timing)
     - Fee impact analysis (expense ratio drag on returns)
     - Dividend timing optimization (ex-dividend capture)
+
+11. **Comprehensive Stock Fundamentals** (60+ data points per stock):
+    - **Valuation**: P/E, Forward P/E, PEG, P/B, P/S, EV/Revenue, EV/EBITDA, Enterprise Value
+    - **Profitability**: Gross Margin, EBITDA Margin, Operating Margin, Profit Margin, ROE, ROA
+    - **Financial Health**: Total Cash, Total Debt, Debt/Equity, Current Ratio, Quick Ratio
+    - **Cash Flow**: Free Cash Flow, Operating Cash Flow
+    - **Growth**: Revenue Growth, Earnings Growth, Quarterly Revenue/Earnings Growth
+    - **Analyst Consensus**: Recommendation (buy/hold/sell), Rating Score, # of Analysts, Price Targets (mean/high/low)
+    - **Short Interest**: Shares Short, Short % of Float, Short Ratio, Prior Month Comparison
+    - **Ownership**: Insider %, Institutional %, Float Shares, Shares Outstanding
+    - **Dividends**: Yield, Rate, Payout Ratio, Ex-Dividend Date
+    - **Trading**: Beta, Avg Volume (daily & 10-day), 52-Week High/Low, 50/200 DMA
+
+12. **4-Year Historical Financials** (for portfolio + top candidates):
+    - **Revenue Trend**: 4 years of annual revenue to see growth trajectory
+    - **Net Income Trend**: Profitability evolution over 4 years
+    - **EPS Trend**: Earnings per share history (diluted)
+    - **Free Cash Flow Trend**: FCF generation over time
+    - **Gross Profit Trend**: Margin consistency/expansion/contraction
+    - **EBITDA Trend**: Operating earnings power over time
+    - **Year-over-Year Growth Rates**: Calculated revenue growth for each period
+
+### 🔴 USE HISTORICAL FINANCIALS FOR BETTER ANALYSIS
+When analyzing stocks, especially for new recommendations:
+- **Check Revenue Trend**: Is revenue consistently growing? Accelerating or decelerating?
+- **Check Profitability Trend**: Is net income growing faster than revenue? (operating leverage)
+- **Check FCF Trend**: Is the company generating increasing free cash flow? (quality of earnings)
+- **Check EPS Trend**: Is EPS growth consistent? Any red flags from dilution?
+- **Compare Multiples to Growth**: A high P/E is justified if revenue/EPS growth is consistently 20%+
+- **Identify Inflection Points**: Companies transitioning from losses to profits are high-potential
+- **Spot Deterioration**: Declining revenue or margins over 4 years = thesis problem
 
 ## DECISION FRAMEWORK
 
@@ -908,21 +939,38 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
             sections.append("Value Stocks (P/E<15, EPS growth>10%):")
             for v in value:
                 price = v.get('current_price', 0)
-                sections.append(f"  - {v.get('ticker')}: ${price:.2f} | P/E {v.get('pe_ratio', 0):.1f}, EPS growth {v.get('earnings_growth', 0):.1f}%")
+                pe = v.get('pe_ratio', 0)
+                fwd_pe = v.get('forward_pe', 0)
+                ev_ebitda = v.get('ev_to_ebitda', 0)
+                fcf = v.get('free_cashflow', 0)
+                fcf_str = f"FCF ${fcf/1e9:.1f}B" if fcf else ""
+                analyst = v.get('analyst_recommendation', '')
+                target = v.get('target_mean_price', 0)
+                target_str = f"Target ${target:.0f}" if target else ""
+                sections.append(f"  - {v.get('ticker')}: ${price:.2f} | P/E {pe:.1f} (Fwd {fwd_pe:.1f}) | EV/EBITDA {ev_ebitda:.1f} | {fcf_str} | {analyst} {target_str}")
         
         growth = screens['fundamental'].get('growth_stocks', [])[:50]
         if growth:
             sections.append("Growth Stocks:")
             for g in growth:
                 price = g.get('current_price', 0)
-                sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Revenue growth {g.get('revenue_growth', 0):.1f}%")
+                rev_growth = g.get('revenue_growth', 0)
+                qtr_growth = g.get('earnings_quarterly_growth', 0)
+                peg = g.get('peg_ratio', 0)
+                analyst = g.get('analyst_recommendation', '')
+                target = g.get('target_mean_price', 0)
+                target_str = f"Target ${target:.0f}" if target else ""
+                sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Rev growth {rev_growth:.1f}% | Q/Q EPS {qtr_growth:.1f}% | PEG {peg:.2f} | {analyst} {target_str}")
         
         dividend = screens['fundamental'].get('dividend_stocks', [])[:45]
         if dividend:
             sections.append("Dividend Stocks (>3% yield):")
             for d in dividend:
                 price = d.get('current_price', 0)
-                sections.append(f"  - {d.get('ticker')}: ${price:.2f} | Yield: {d.get('dividend_yield', 0):.2f}%")
+                div_yield = d.get('dividend_yield', 0)
+                payout = d.get('payout_ratio', 0)
+                ex_div = d.get('ex_dividend_date', '')
+                sections.append(f"  - {d.get('ticker')}: ${price:.2f} | Yield: {div_yield:.2f}% | Payout {payout:.0f}% | Ex-div: {ex_div}")
     
     if screens.get('technical'):
         sections.append("\n## TECHNICAL SCREENS")
@@ -1086,6 +1134,50 @@ You're the advisor. Make the calls. Beat the S&P 500.
                 sections.append(f"- [{a.get('priority')}] {a.get('title')}")
                 sections.append(f"  Action: {a.get('action', '')}")
     
+    # Historical Financials Section (4-year trends)
+    hist_fin = analysis_input.get('historical_financials', {})
+    if hist_fin:
+        sections.append(f"\n## 📈 4-YEAR HISTORICAL FINANCIALS ({len(hist_fin)} tickers)")
+        sections.append("Use these trends to validate growth stories and spot red flags:")
+        
+        for ticker, data in list(hist_fin.items())[:30]:  # Limit to 30 to avoid token overload
+            periods = data.get('periods', [])
+            if not periods:
+                continue
+                
+            sections.append(f"\n### {ticker}")
+            sections.append(f"Periods: {' → '.join(periods)}")
+            
+            # Revenue trend
+            rev = data.get('revenue_history', [])
+            if rev and any(r is not None for r in rev):
+                rev_str = ' → '.join([f"${r:.1f}B" if r else "N/A" for r in rev])
+                sections.append(f"Revenue: {rev_str}")
+            
+            # Net Income trend
+            ni = data.get('net_income_history', [])
+            if ni and any(n is not None for n in ni):
+                ni_str = ' → '.join([f"${n:.2f}B" if n else "N/A" for n in ni])
+                sections.append(f"Net Income: {ni_str}")
+            
+            # EPS trend  
+            eps = data.get('eps_history', [])
+            if eps and any(e is not None for e in eps):
+                eps_str = ' → '.join([f"${e:.2f}" if e else "N/A" for e in eps])
+                sections.append(f"EPS: {eps_str}")
+            
+            # FCF trend
+            fcf = data.get('fcf_history', [])
+            if fcf and any(f is not None for f in fcf):
+                fcf_str = ' → '.join([f"${f:.2f}B" if f else "N/A" for f in fcf])
+                sections.append(f"Free Cash Flow: {fcf_str}")
+            
+            # Revenue growth trend
+            growth = data.get('revenue_growth_trend', [])
+            if growth and any(g is not None for g in growth):
+                growth_str = ' → '.join([f"{g:+.1f}%" if g else "N/A" for g in growth])
+                sections.append(f"Revenue Growth YoY: {growth_str}")
+    
     # Final instruction
     sections.append("""
 ## YOUR TASK
@@ -1095,7 +1187,11 @@ Based on all the above data:
 3. Ensure all allocations comply with diversification rules
 4. Analyze politician trades for signals
 5. Assess macro regime and adjust accordingly
-6. **FOR RETAIL INVESTOR - Include in your response:**
+6. **USE HISTORICAL FINANCIALS**: Check 4-year trends before recommending any stock
+   - Validate growth claims with actual revenue/EPS trends
+   - Favor consistent growers over one-hit wonders
+   - Watch for margin compression or FCF deterioration
+7. **FOR RETAIL INVESTOR - Include in your response:**
    - Tax-loss harvesting recommendations (if applicable)
    - Trailing stop updates for profitable positions
    - DCA entry suggestions for new positions

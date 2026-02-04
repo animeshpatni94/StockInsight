@@ -292,7 +292,8 @@ def fetch_ticker_data(ticker: str, period: str = "1y") -> Optional[pd.DataFrame]
 
 def fetch_ticker_info(ticker: str) -> Optional[Dict]:
     """
-    Fetch fundamental info for a single ticker.
+    Fetch comprehensive fundamental info for a single ticker.
+    Includes valuation, growth, profitability, financial health, analyst ratings, and more.
     
     Args:
         ticker: Stock symbol
@@ -303,37 +304,206 @@ def fetch_ticker_info(ticker: str) -> Optional[Dict]:
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
+        
         return {
+            # === BASIC INFO ===
             'ticker': ticker,
             'name': info.get('longName', info.get('shortName', ticker)),
             'sector': info.get('sector', 'Unknown'),
             'industry': info.get('industry', 'Unknown'),
-            'market_cap': info.get('marketCap', 0),
-            'pe_ratio': info.get('trailingPE'),
-            'forward_pe': info.get('forwardPE'),
-            'peg_ratio': info.get('pegRatio'),
-            'price_to_book': info.get('priceToBook'),
-            'dividend_yield': info.get('dividendYield', 0),
-            'payout_ratio': info.get('payoutRatio'),
-            'revenue_growth': info.get('revenueGrowth'),
-            'earnings_growth': info.get('earningsGrowth'),
-            'profit_margin': info.get('profitMargins'),
-            'roe': info.get('returnOnEquity'),
-            'debt_to_equity': info.get('debtToEquity'),
+            
+            # === PRICE DATA ===
             'current_price': info.get('currentPrice', info.get('regularMarketPrice')),
             'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
             'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
             'fifty_day_avg': info.get('fiftyDayAverage'),
             'two_hundred_day_avg': info.get('twoHundredDayAverage'),
+            'fifty_two_week_change': info.get('52WeekChange'),  # NEW
+            'sp500_52_week_change': info.get('SandP52WeekChange'),  # NEW - compare vs market
+            
+            # === VALUATION MULTIPLES ===
+            'market_cap': info.get('marketCap', 0),
+            'enterprise_value': info.get('enterpriseValue'),  # NEW
+            'pe_ratio': info.get('trailingPE'),
+            'forward_pe': info.get('forwardPE'),
+            'peg_ratio': info.get('pegRatio'),
+            'price_to_book': info.get('priceToBook'),
+            'price_to_sales': info.get('priceToSalesTrailing12Months'),  # NEW
+            'ev_to_revenue': info.get('enterpriseToRevenue'),  # NEW
+            'ev_to_ebitda': info.get('enterpriseToEbitda'),  # NEW
+            
+            # === GROWTH METRICS ===
+            'revenue_growth': info.get('revenueGrowth'),  # YoY
+            'earnings_growth': info.get('earningsGrowth'),  # YoY
+            'earnings_quarterly_growth': info.get('earningsQuarterlyGrowth'),  # NEW - latest quarter
+            'revenue_quarterly_growth': info.get('revenueQuarterlyGrowth'),  # NEW - latest quarter
+            
+            # === PROFITABILITY & MARGINS ===
+            'profit_margin': info.get('profitMargins'),
+            'gross_margins': info.get('grossMargins'),  # NEW
+            'ebitda_margins': info.get('ebitdaMargins'),  # NEW
+            'operating_margins': info.get('operatingMargins'),  # NEW
+            'roe': info.get('returnOnEquity'),
+            'roa': info.get('returnOnAssets'),  # NEW
+            
+            # === FINANCIAL HEALTH ===
+            'total_cash': info.get('totalCash'),  # NEW
+            'total_debt': info.get('totalDebt'),  # NEW
+            'free_cashflow': info.get('freeCashflow'),  # NEW
+            'operating_cashflow': info.get('operatingCashflow'),  # NEW
+            'debt_to_equity': info.get('debtToEquity'),
+            'current_ratio': info.get('currentRatio'),  # NEW
+            'quick_ratio': info.get('quickRatio'),  # NEW
+            
+            # === DIVIDENDS ===
+            'dividend_yield': info.get('dividendYield', 0),
+            'dividend_rate': info.get('dividendRate'),  # NEW - annual dividend $
+            'payout_ratio': info.get('payoutRatio'),
+            'ex_dividend_date': info.get('exDividendDate'),  # NEW
+            
+            # === TRADING & LIQUIDITY ===
             'avg_volume': info.get('averageVolume'),
+            'avg_volume_10day': info.get('averageVolume10days'),  # NEW
             'beta': info.get('beta'),
-            'short_ratio': info.get('shortRatio'),
+            'float_shares': info.get('floatShares'),  # NEW
+            'shares_outstanding': info.get('sharesOutstanding'),  # NEW
+            
+            # === SHORT INTEREST ===
+            'short_ratio': info.get('shortRatio'),  # days to cover
+            'shares_short': info.get('sharesShort'),  # NEW
+            'short_percent_of_float': info.get('shortPercentOfFloat'),  # NEW
+            'shares_short_prior_month': info.get('sharesShortPriorMonth'),  # NEW
+            
+            # === OWNERSHIP ===
             'insider_ownership': info.get('heldPercentInsiders'),
-            'institutional_ownership': info.get('heldPercentInstitutions')
+            'institutional_ownership': info.get('heldPercentInstitutions'),
+            
+            # === ANALYST RATINGS === (NEW SECTION)
+            'analyst_recommendation': info.get('recommendationKey'),  # strong_buy, buy, hold, sell
+            'analyst_rating_score': info.get('recommendationMean'),  # 1-5 scale (1=Strong Buy)
+            'num_analyst_opinions': info.get('numberOfAnalystOpinions'),
+            'target_mean_price': info.get('targetMeanPrice'),
+            'target_high_price': info.get('targetHighPrice'),
+            'target_low_price': info.get('targetLowPrice'),
+            
+            # === EARNINGS INFO === (NEW)
+            'trailing_eps': info.get('trailingEps'),
+            'forward_eps': info.get('forwardEps'),
+            'book_value': info.get('bookValue'),
+            'revenue_per_share': info.get('revenuePerShare'),
         }
     except Exception as e:
         print(f"Error fetching info for {ticker}: {str(e)}")
         return None
+
+
+def fetch_historical_financials(ticker: str) -> Optional[Dict]:
+    """
+    Fetch historical financial data for a ticker (4 years of annual data).
+    Includes revenue, net income, EPS, and cash flow trends.
+    
+    Args:
+        ticker: Stock symbol
+    
+    Returns:
+        Dictionary with historical financial trends or None if fetch fails
+    """
+    try:
+        stock = yf.Ticker(ticker)
+        
+        result = {
+            'ticker': ticker,
+            'revenue_history': [],      # Last 4 years of revenue
+            'net_income_history': [],   # Last 4 years of net income
+            'eps_history': [],          # Last 4 years of EPS
+            'fcf_history': [],          # Last 4 years of free cash flow
+            'gross_profit_history': [], # Last 4 years of gross profit
+            'ebitda_history': [],       # Last 4 years of EBITDA
+            'revenue_growth_trend': [], # YoY growth rates
+            'periods': [],              # Year labels
+        }
+        
+        # Get annual income statement
+        income = stock.income_stmt
+        if income is not None and not income.empty:
+            # Get years (columns are timestamps)
+            years = [col.year if hasattr(col, 'year') else str(col)[:4] for col in income.columns[:4]]
+            result['periods'] = years
+            
+            # Revenue
+            if 'Total Revenue' in income.index:
+                revenues = income.loc['Total Revenue'].values[:4]
+                result['revenue_history'] = [round(float(r)/1e9, 2) if pd.notna(r) else None for r in revenues]
+                # Calculate growth rates
+                for i in range(len(revenues)-1):
+                    if pd.notna(revenues[i]) and pd.notna(revenues[i+1]) and revenues[i+1] != 0:
+                        growth = ((revenues[i] / revenues[i+1]) - 1) * 100
+                        result['revenue_growth_trend'].append(round(growth, 1))
+            
+            # Net Income
+            if 'Net Income' in income.index:
+                net_incomes = income.loc['Net Income'].values[:4]
+                result['net_income_history'] = [round(float(n)/1e9, 2) if pd.notna(n) else None for n in net_incomes]
+            
+            # Gross Profit
+            if 'Gross Profit' in income.index:
+                gross = income.loc['Gross Profit'].values[:4]
+                result['gross_profit_history'] = [round(float(g)/1e9, 2) if pd.notna(g) else None for g in gross]
+            
+            # EBITDA
+            if 'EBITDA' in income.index:
+                ebitda = income.loc['EBITDA'].values[:4]
+                result['ebitda_history'] = [round(float(e)/1e9, 2) if pd.notna(e) else None for e in ebitda]
+            
+            # Basic EPS
+            if 'Basic EPS' in income.index:
+                eps = income.loc['Basic EPS'].values[:4]
+                result['eps_history'] = [round(float(e), 2) if pd.notna(e) else None for e in eps]
+        
+        # Get cash flow statement for FCF
+        cashflow = stock.cashflow
+        if cashflow is not None and not cashflow.empty:
+            if 'Free Cash Flow' in cashflow.index:
+                fcf = cashflow.loc['Free Cash Flow'].values[:4]
+                result['fcf_history'] = [round(float(f)/1e9, 2) if pd.notna(f) else None for f in fcf]
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error fetching historical financials for {ticker}: {str(e)}")
+        return None
+
+
+def fetch_historical_financials_batch(tickers: List[str], max_workers: int = 3) -> Dict[str, Dict]:
+    """
+    Fetch historical financials for multiple tickers with rate limiting.
+    
+    Args:
+        tickers: List of stock symbols
+        max_workers: Maximum parallel threads (keep low to avoid rate limits)
+    
+    Returns:
+        Dictionary mapping ticker to historical financial data
+    """
+    results = {}
+    print(f"    Fetching historical financials for {len(tickers)} tickers...")
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_ticker = {
+            executor.submit(fetch_historical_financials, ticker): ticker 
+            for ticker in tickers
+        }
+        for future in as_completed(future_to_ticker):
+            ticker = future_to_ticker[future]
+            try:
+                data = future.result()
+                if data is not None:
+                    results[ticker] = data
+            except Exception as e:
+                print(f"Error processing historical data for {ticker}: {str(e)}")
+    
+    print(f"    Fetched historical financials for {len(results)}/{len(tickers)} tickers")
+    return results
 
 
 def fetch_multiple_tickers(tickers: List[str], period: str = "1y", 
