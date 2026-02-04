@@ -27,10 +27,8 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
     
     # Extract data from various possible structures
     market_overview = analysis_result.get("market_overview", {})
-    holdings_analysis = analysis_result.get("holdings_analysis", [])
     recommendations = analysis_result.get("recommendations", analysis_result.get("new_recommendations", []))
-    market_signals = analysis_result.get("market_signals", {})
-    news_sentiment = email_context.get("news_sentiment", {})  # Get from email_context, not analysis_result
+    news_sentiment = email_context.get("news_sentiment", {})
     sentiment_summary = email_context.get("sentiment_summary", {})
     
     # Get politician trades from Claude's analysis structure
@@ -44,6 +42,7 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
     # Extract new context data
     triggered_alerts = email_context.get("triggered_alerts", [])
     dividend_calendar = email_context.get("dividend_calendar", {})
+    earnings_calendar = email_context.get("earnings_calendar", {})
     is_first_run = email_context.get("is_first_run", False)
     
     # Also check for alternative data structures
@@ -91,6 +90,7 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
     action_plan_html = _build_action_plan(recommendations, allocation, analysis_result)
     stock_picks_html = _build_stock_picks(recommendations, analysis_result, current_value)
     dividend_calendar_html = _build_dividend_calendar_section(dividend_calendar, portfolio_performance, current_value)
+    earnings_calendar_html = _build_earnings_calendar_section(earnings_calendar, portfolio_performance)
     retail_insights_html = _build_retail_investor_section(email_context.get('retail_analysis', {}), current_value)
     politicians_html = _build_politicians_section(politicians)
     tracker_html = _build_recommendation_tracker(history, portfolio_performance, current_value)
@@ -98,19 +98,34 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
     comparison_html = _build_sp500_comparison(history)
     footer_html = _build_footer()
     
+    # Professional Light Theme - Clean, readable, works everywhere
     html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Pulse | Biweekly Advisor</title>
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>Stock Pulse</title>
+    <!--[if mso]>
+    <style>
+        table {{ border-collapse: collapse; }}
+        td {{ font-family: Arial, sans-serif; }}
+    </style>
+    <![endif]-->
+    <style>
+        :root {{ color-scheme: light; }}
+    </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0a0a0f; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #0a0a0f;">
+<body style="margin: 0; padding: 0; min-width: 100%; background-color: #f4f4f4; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div style="display: none; max-height: 0; overflow: hidden;">Stock Pulse - Your biweekly market intelligence report</div>
+    
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f4;" bgcolor="#f4f4f4">
         <tr>
-            <td align="center" style="padding: 0;">
-                <!-- Main Container -->
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="700" style="max-width: 700px; background-color: #12121a; border-left: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08);">
+            <td align="center" valign="top" style="padding: 20px 10px;">
+                
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="700" style="max-width: 700px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);" bgcolor="#ffffff">
                     
                     {header_html}
                     
@@ -133,6 +148,8 @@ def build_email_html(analysis_result: Dict[str, Any], history: Dict[str, Any] = 
                     {stock_picks_html}
                     
                     {dividend_calendar_html}
+                    
+                    {earnings_calendar_html}
                     
                     {retail_insights_html}
                     
@@ -161,7 +178,7 @@ def _build_header(current_date: str) -> str:
     return f'''
                     <!-- Header -->
                     <tr>
-                        <td style="padding: 40px 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(212,175,55,0.05) 0%, transparent 100%);">
+                        <td style="padding: 40px 32px; border-bottom: 1px solid #e5e7eb; background: linear-gradient(180deg, rgba(212,175,55,0.05) 0%, transparent 100%);">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
@@ -170,17 +187,17 @@ def _build_header(current_date: str) -> str:
                                                 <td style="vertical-align: middle;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                                         <tr>
-                                                            <td style="width: 44px; height: 44px; background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border-radius: 10px; text-align: center; vertical-align: middle;">
-                                                                <span style="font-family: Georgia, serif; font-weight: 700; font-size: 22px; color: #0a0a0f;">SP</span>
+                                                            <td style="width: 44px; height: 44px; background: linear-gradient(135deg, #b8860b 0%, #f4d03f 50%, #b8860b 100%); border-radius: 10px; text-align: center; vertical-align: middle;">
+                                                                <span style="font-family: Georgia, serif; font-weight: 700; font-size: 22px; color: #f4f4f4;">SP</span>
                                                             </td>
                                                             <td style="padding-left: 12px;">
-                                                                <span style="font-family: Georgia, serif; font-size: 26px; font-weight: 600; color: #f5f5f7; letter-spacing: -0.5px;">Stock Pulse</span>
+                                                                <span style="font-family: Georgia, serif; font-size: 26px; font-weight: 600; color: #1f2937; letter-spacing: -0.5px;">Stock Pulse</span>
                                                             </td>
                                                         </tr>
                                                     </table>
                                                 </td>
                                                 <td align="right" style="vertical-align: middle;">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #d4af37; background: rgba(212,175,55,0.15); padding: 6px 12px; border-radius: 4px;">Biweekly Edition</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #b8860b; background: rgba(212,175,55,0.15); padding: 6px 12px; border-radius: 4px;">Biweekly Edition</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -188,13 +205,13 @@ def _build_header(current_date: str) -> str:
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 24px;">
-                                        <span style="font-family: Georgia, serif; font-size: 36px; font-weight: 700; color: #f5f5f7; letter-spacing: -1px; display: block;">Market Intelligence Report</span>
+                                        <span style="font-family: Georgia, serif; font-size: 36px; font-weight: 700; color: #1f2937; letter-spacing: -1px; display: block;">Market Intelligence Report</span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 8px;">
-                                        <span style="color: #d4af37; font-weight: 500; font-size: 15px;">{current_date}</span>
-                                        <span style="color: #a0a0b0; font-size: 15px;"> · Your biweekly edge in the market</span>
+                                        <span style="color: #b8860b; font-weight: 500; font-size: 15px;">{current_date}</span>
+                                        <span style="color: #4b5563; font-size: 15px;"> · Your biweekly edge in the market</span>
                                     </td>
                                 </tr>
                             </table>
@@ -210,7 +227,7 @@ def _build_welcome_section(is_first_run: bool, num_recommendations: int) -> str:
     return f'''
                     <!-- Welcome Section for First Run -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(0,212,170,0.05) 100%);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb; background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(0,212,170,0.05) 100%);">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td align="center">
@@ -219,12 +236,12 @@ def _build_welcome_section(is_first_run: bool, num_recommendations: int) -> str:
                                 </tr>
                                 <tr>
                                     <td align="center" style="padding-top: 16px;">
-                                        <span style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #f5f5f7;">Welcome to Stock Pulse!</span>
+                                        <span style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #1f2937;">Welcome to Stock Pulse!</span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td align="center" style="padding-top: 12px; padding-left: 40px; padding-right: 40px;">
-                                        <span style="font-size: 15px; color: #a0a0b0; line-height: 1.7;">This is your first portfolio analysis. We've analyzed 1,500+ stocks across all sectors and identified <strong style="color: #00d4aa;">{num_recommendations} opportunities</strong> to build your diversified portfolio.</span>
+                                        <span style="font-size: 15px; color: #4b5563; line-height: 1.7;">This is your first portfolio analysis. We've analyzed 1,500+ stocks across all sectors and identified <strong style="color: #00d4aa;">{num_recommendations} opportunities</strong> to build your diversified portfolio.</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -232,24 +249,24 @@ def _build_welcome_section(is_first_run: bool, num_recommendations: int) -> str:
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td width="33%" style="padding: 0 8px;">
-                                                    <div style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; text-align: center;">
+                                                    <div style="background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; text-align: center;">
                                                         <span style="display: block; font-size: 24px;">📊</span>
-                                                        <span style="display: block; font-size: 12px; color: #d4af37; font-weight: 600; padding-top: 8px;">STEP 1</span>
-                                                        <span style="display: block; font-size: 13px; color: #f5f5f7; padding-top: 4px;">Review the picks below</span>
+                                                        <span style="display: block; font-size: 12px; color: #b8860b; font-weight: 600; padding-top: 8px;">STEP 1</span>
+                                                        <span style="display: block; font-size: 13px; color: #1f2937; padding-top: 4px;">Review the picks below</span>
                                                     </div>
                                                 </td>
                                                 <td width="33%" style="padding: 0 8px;">
-                                                    <div style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; text-align: center;">
+                                                    <div style="background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; text-align: center;">
                                                         <span style="display: block; font-size: 24px;">💰</span>
-                                                        <span style="display: block; font-size: 12px; color: #d4af37; font-weight: 600; padding-top: 8px;">STEP 2</span>
-                                                        <span style="display: block; font-size: 13px; color: #f5f5f7; padding-top: 4px;">Invest per allocation %</span>
+                                                        <span style="display: block; font-size: 12px; color: #b8860b; font-weight: 600; padding-top: 8px;">STEP 2</span>
+                                                        <span style="display: block; font-size: 13px; color: #1f2937; padding-top: 4px;">Invest per allocation %</span>
                                                     </div>
                                                 </td>
                                                 <td width="33%" style="padding: 0 8px;">
-                                                    <div style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; text-align: center;">
+                                                    <div style="background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; text-align: center;">
                                                         <span style="display: block; font-size: 24px;">📈</span>
-                                                        <span style="display: block; font-size: 12px; color: #d4af37; font-weight: 600; padding-top: 8px;">STEP 3</span>
-                                                        <span style="display: block; font-size: 13px; color: #f5f5f7; padding-top: 4px;">Check back in 2 weeks</span>
+                                                        <span style="display: block; font-size: 12px; color: #b8860b; font-weight: 600; padding-top: 8px;">STEP 3</span>
+                                                        <span style="display: block; font-size: 13px; color: #1f2937; padding-top: 4px;">Check back in 2 weeks</span>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -259,7 +276,7 @@ def _build_welcome_section(is_first_run: bool, num_recommendations: int) -> str:
                                 <tr>
                                     <td align="center" style="padding-top: 20px;">
                                         <div style="background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 8px; padding: 12px 20px; display: inline-block;">
-                                            <span style="font-size: 13px; color: #d4af37;">💡 <strong>Pro tip:</strong> Start with a small amount to get comfortable, then scale up</span>
+                                            <span style="font-size: 13px; color: #b8860b;">💡 <strong>Pro tip:</strong> Start with a small amount to get comfortable, then scale up</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -287,13 +304,17 @@ def _build_portfolio_summary_section(starting_capital: float, current_value: flo
     # Color styling based on P&L
     if total_pnl >= 0:
         pnl_color = "#00d4aa"  # Green
-        pnl_bg = "rgba(0,212,170,0.12)"
+        pnl_solid_bg = "#059669"  # Solid green for badge
+        pnl_cell_bg = "#d1fae5"  # Light green background for cell
+        pnl_text_color = "#065f46"  # Dark green text for cell
         pnl_sign = "+"
         pnl_emoji = "📈"
         status_text = "IN PROFIT"
     else:
         pnl_color = "#ff6b6b"  # Red
-        pnl_bg = "rgba(255,107,107,0.12)"
+        pnl_solid_bg = "#dc2626"  # Solid red for badge
+        pnl_cell_bg = "#fee2e2"  # Light red background for cell
+        pnl_text_color = "#991b1b"  # Dark red text for cell
         pnl_sign = ""
         pnl_emoji = "📉"
         status_text = "IN LOSS"
@@ -311,18 +332,18 @@ def _build_portfolio_summary_section(starting_capital: float, current_value: flo
     return f'''
                     <!-- Portfolio Summary Section -->
                     <tr>
-                        <td style="padding: 24px 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <td style="padding: 24px 32px; border-bottom: 1px solid #e5e7eb;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💰</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Portfolio Summary</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💰</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Portfolio Summary</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: {pnl_color}; background-color: {pnl_bg}; padding: 6px 10px; border-radius: 4px;">{pnl_emoji} {status_text}</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #ffffff; background-color: {pnl_solid_bg}; padding: 6px 10px; border-radius: 4px;">{pnl_emoji} {status_text}</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -330,29 +351,29 @@ def _build_portfolio_summary_section(starting_capital: float, current_value: flo
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 20px;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #1a1a24 0%, #22222e 100%); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; overflow: hidden;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;" bgcolor="#ffffff">
                                             <tr>
                                                 <!-- Starting Capital -->
-                                                <td width="25%" style="padding: 24px 16px; text-align: center; border-right: 1px solid rgba(255,255,255,0.06);">
-                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b6b7b;">Started With</span>
-                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 22px; font-weight: 700; color: #a0a0b0; padding-top: 8px;">${starting_capital:,.0f}</span>
-                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; padding-top: 4px;">{num_runs} runs completed</span>
+                                                <td width="25%" style="padding: 24px 16px; text-align: center; border-right: 1px solid #e5e7eb; background-color: #ffffff;" bgcolor="#ffffff">
+                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b7280;">Started With</span>
+                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 22px; font-weight: 700; color: #374151; padding-top: 8px;">${starting_capital:,.0f}</span>
+                                                    <span style="display: block; font-size: 11px; color: #6b7280; padding-top: 4px;">{num_runs} runs completed</span>
                                                 </td>
                                                 <!-- Current Value -->
-                                                <td width="25%" style="padding: 24px 16px; text-align: center; border-right: 1px solid rgba(255,255,255,0.06);">
-                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b6b7b;">Current Value</span>
-                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 22px; font-weight: 700; color: #f5f5f7; padding-top: 8px;">${current_value:,.0f}</span>
-                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; padding-top: 4px;">as of today</span>
+                                                <td width="25%" style="padding: 24px 16px; text-align: center; border-right: 1px solid #e5e7eb; background-color: #ffffff;" bgcolor="#ffffff">
+                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b7280;">Current Value</span>
+                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 22px; font-weight: 700; color: #1f2937; padding-top: 8px;">${current_value:,.0f}</span>
+                                                    <span style="display: block; font-size: 11px; color: #6b7280; padding-top: 4px;">as of today</span>
                                                 </td>
                                                 <!-- Total P&L -->
-                                                <td width="25%" style="padding: 24px 16px; text-align: center; background: {pnl_bg}; border-right: 1px solid rgba(255,255,255,0.06);">
-                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: {pnl_color};">Total P&L</span>
-                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 22px; font-weight: 700; color: {pnl_color}; padding-top: 8px;">{pnl_sign}${abs(total_pnl):,.0f}</span>
-                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: {pnl_color}; padding-top: 4px;">{pnl_sign}{total_pnl_pct:.2f}%</span>
+                                                <td width="25%" style="padding: 24px 16px; text-align: center; background-color: {pnl_cell_bg}; border-right: 1px solid #e5e7eb;" bgcolor="{pnl_cell_bg}">
+                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: {pnl_text_color};">Total P&L</span>
+                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 22px; font-weight: 700; color: {pnl_text_color}; padding-top: 8px;">{pnl_sign}${abs(total_pnl):,.0f}</span>
+                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: {pnl_text_color}; padding-top: 4px;">{pnl_sign}{total_pnl_pct:.2f}%</span>
                                                 </td>
                                                 <!-- Alpha vs S&P -->
-                                                <td width="25%" style="padding: 24px 16px; text-align: center;">
-                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b6b7b;">vs S&P 500</span>
+                                                <td width="25%" style="padding: 24px 16px; text-align: center; background-color: #ffffff;" bgcolor="#ffffff">
+                                                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b7280;">vs S&P 500</span>
                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 22px; font-weight: 700; color: {alpha_color}; padding-top: 8px;">{alpha_sign}{alpha:.2f}%</span>
                                                     <span style="display: block; font-size: 11px; color: {alpha_color}; padding-top: 4px;">{alpha_text}</span>
                                                 </td>
@@ -410,8 +431,8 @@ def _build_news_sentiment_section(news_sentiment: Dict, sentiment_summary: Dict)
             badge_color = "#ff6b6b"
             badge_bg = "rgba(255,107,107,0.15)"
         else:
-            badge_color = "#a0a0b0"
-            badge_bg = "rgba(255,255,255,0.08)"
+            badge_color = "#4b5563"
+            badge_bg = "#e5e7eb"
         
         stock_badges += f'''
                                             <td style="padding: 4px;">
@@ -424,15 +445,15 @@ def _build_news_sentiment_section(news_sentiment: Dict, sentiment_summary: Dict)
     return f'''
                     <!-- News Sentiment Section -->
                     <tr>
-                        <td style="padding: 24px 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: {sentiment_bg};">
+                        <td style="padding: 24px 32px; border-bottom: 1px solid #e5e7eb; background: {sentiment_bg};">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📰</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">News Sentiment</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📰</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">News Sentiment</span>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-size: 24px; vertical-align: middle;">{sentiment_emoji}</span>
@@ -444,7 +465,7 @@ def _build_news_sentiment_section(news_sentiment: Dict, sentiment_summary: Dict)
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 12px;">
-                                        <span style="font-size: 12px; color: #6b6b7b;">AI-analyzed sentiment from {analyzed_count} stocks based on recent news coverage:</span>
+                                        <span style="font-size: 12px; color: #6b7280;">AI-analyzed sentiment from {analyzed_count} stocks based on recent news coverage:</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -522,7 +543,7 @@ def _build_holdings_analysis_section(current_portfolio: List[Dict], current_valu
             status_color = "#ffd93d"
         else:
             status = "➖ Flat"
-            status_color = "#a0a0b0"
+            status_color = "#4b5563"
         
         # P&L styling
         pnl_color = "#00d4aa" if gain_loss_pct >= 0 else "#ff6b6b"
@@ -531,32 +552,32 @@ def _build_holdings_analysis_section(current_portfolio: List[Dict], current_valu
         
         holdings_rows += f'''
                                     <tr>
-                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid #e5e7eb;">
                                             <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                                 <tr>
                                                     <td>
-                                                        <span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #f5f5f7;">{ticker}</span>
-                                                        <span style="display: block; font-size: 11px; color: #6b6b7b; padding-top: 2px;">{company[:20]}</span>
+                                                        <span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #1f2937;">{ticker}</span>
+                                                        <span style="display: block; font-size: 11px; color: #6b7280; padding-top: 2px;">{company[:20]}</span>
                                                     </td>
                                                 </tr>
                                             </table>
                                         </td>
-                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;">
-                                            <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #a0a0b0;">${entry_price:.2f}</span>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+                                            <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #4b5563;">${entry_price:.2f}</span>
                                         </td>
-                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;">
-                                            <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #f5f5f7;">${current_price:.2f}</span>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+                                            <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #1f2937;">${current_price:.2f}</span>
                                         </td>
-                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;">
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
                                             <span style="font-family: 'Consolas', monospace; font-size: 13px; font-weight: 600; color: {pnl_color};">{pnl_sign}{gain_loss_pct:.1f}%</span>
                                             <span style="display: block; font-size: 11px; color: {pnl_color};">{dollar_sign}${abs(dollar_gain):,.0f}</span>
                                         </td>
-                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;">
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
                                             <span style="font-size: 12px; color: {status_color};">{status}</span>
                                         </td>
-                                        <td style="padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: right;">
-                                            <span style="font-size: 12px; color: #6b6b7b;">Stop: ${stop_loss:.2f}</span>
-                                            <span style="display: block; font-size: 12px; color: #6b6b7b;">Target: ${price_target:.2f}</span>
+                                        <td style="padding: 14px 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">
+                                            <span style="font-size: 12px; color: #6b7280;">Stop: ${stop_loss:.2f}</span>
+                                            <span style="display: block; font-size: 12px; color: #6b7280;">Target: ${price_target:.2f}</span>
                                         </td>
                                     </tr>'''
     
@@ -567,15 +588,15 @@ def _build_holdings_analysis_section(current_portfolio: List[Dict], current_valu
     return f'''
                     <!-- Holdings Analysis Section -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💼</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Your Existing Holdings</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💼</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Your Existing Holdings</span>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #ffd93d; background-color: rgba(255,217,61,0.15); padding: 6px 10px; border-radius: 4px;">REVIEW: Hold / Sell / Trim</span>
@@ -586,19 +607,19 @@ def _build_holdings_analysis_section(current_portfolio: List[Dict], current_valu
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 12px; padding-bottom: 8px;">
-                                        <span style="font-size: 14px; color: #a0a0b0;">These are your <strong style="color: #f5f5f7;">already invested</strong> positions from previous runs. Check the status column for recommended action.</span>
+                                        <span style="font-size: 14px; color: #4b5563;">These are your <strong style="color: #1f2937;">already invested</strong> positions from previous runs. Check the status column for recommended action.</span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 20px;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
                                             <tr style="background: rgba(0,0,0,0.3);">
-                                                <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Stock</th>
-                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Entry</th>
-                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Current</th>
-                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">P&L</th>
-                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Status</th>
-                                                <th style="padding: 12px; text-align: right; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b;">Levels</th>
+                                                <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;">Stock</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;">Entry</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;">Current</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;">P&L</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;">Status</th>
+                                                <th style="padding: 12px; text-align: right; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;">Levels</th>
                                             </tr>
                                             {holdings_rows}
                                         </table>
@@ -606,10 +627,10 @@ def _build_holdings_analysis_section(current_portfolio: List[Dict], current_valu
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 16px;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #22222e; border-radius: 8px; padding: 12px 16px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e5e7eb; border-radius: 8px; padding: 12px 16px;">
                                             <tr>
                                                 <td>
-                                                    <span style="font-size: 13px; color: #6b6b7b;">Total Unrealized P&L:</span>
+                                                    <span style="font-size: 13px; color: #6b7280;">Total Unrealized P&L:</span>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-family: 'Consolas', monospace; font-size: 18px; font-weight: 700; color: {total_pnl_color};">{total_sign}${abs(total_gain_loss):,.0f}</span>
@@ -653,7 +674,7 @@ def _build_urgent_alerts_section(triggered_alerts: List[Dict], current_value: fl
         alerts_html += f'''
                                 <tr>
                                     <td style="padding: 12px 0;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(90deg, rgba(255,107,107,0.15) 0%, #1a1a24 100%); border-left: 4px solid #ff6b6b; border-radius: 8px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(90deg, rgba(255,107,107,0.15) 0%, #f8f9fa 100%); border-left: 4px solid #ff6b6b; border-radius: 8px;">
                                             <tr>
                                                 <td style="padding: 16px;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -661,7 +682,7 @@ def _build_urgent_alerts_section(triggered_alerts: List[Dict], current_value: fl
                                                             <td width="40" style="vertical-align: top; font-size: 28px;">🔴</td>
                                                             <td style="padding-left: 12px;">
                                                                 <span style="display: block; font-weight: 700; font-size: 16px; color: #ff6b6b;">{ticker} - STOP-LOSS TRIGGERED</span>
-                                                                <span style="display: block; font-size: 14px; color: #a0a0b0; padding-top: 4px;">{company} dropped to ${current_price:.2f} (entry: ${entry_price:.2f})</span>
+                                                                <span style="display: block; font-size: 14px; color: #4b5563; padding-top: 4px;">{company} dropped to ${current_price:.2f} (entry: ${entry_price:.2f})</span>
                                                                 <span style="display: block; font-size: 14px; color: #ff6b6b; padding-top: 4px;">Loss: {loss_pct:.1f}% (${abs(dollar_loss):,.0f})</span>
                                                                 <span style="display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 12px; border-radius: 4px; color: #ff6b6b; background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.3);">⚡ SELL to limit losses</span>
                                                             </td>
@@ -690,7 +711,7 @@ def _build_urgent_alerts_section(triggered_alerts: List[Dict], current_value: fl
         alerts_html += f'''
                                 <tr>
                                     <td style="padding: 12px 0;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(90deg, rgba(0,212,170,0.15) 0%, #1a1a24 100%); border-left: 4px solid #00d4aa; border-radius: 8px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(90deg, rgba(0,212,170,0.15) 0%, #f8f9fa 100%); border-left: 4px solid #00d4aa; border-radius: 8px;">
                                             <tr>
                                                 <td style="padding: 16px;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -698,7 +719,7 @@ def _build_urgent_alerts_section(triggered_alerts: List[Dict], current_value: fl
                                                             <td width="40" style="vertical-align: top; font-size: 28px;">🎯</td>
                                                             <td style="padding-left: 12px;">
                                                                 <span style="display: block; font-weight: 700; font-size: 16px; color: #00d4aa;">{ticker} - TARGET REACHED! 🎉</span>
-                                                                <span style="display: block; font-size: 14px; color: #a0a0b0; padding-top: 4px;">{company} hit ${current_price:.2f} (target was ${trigger_price:.2f})</span>
+                                                                <span style="display: block; font-size: 14px; color: #4b5563; padding-top: 4px;">{company} hit ${current_price:.2f} (target was ${trigger_price:.2f})</span>
                                                                 <span style="display: block; font-size: 14px; color: #00d4aa; padding-top: 4px;">Profit: +{gain_pct:.1f}% (+${dollar_gain:,.0f})</span>
                                                                 <span style="display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 12px; border-radius: 4px; color: #00d4aa; background: rgba(0,212,170,0.12); border: 1px solid rgba(0,212,170,0.3);">🎯 Consider taking profits</span>
                                                             </td>
@@ -717,15 +738,15 @@ def _build_urgent_alerts_section(triggered_alerts: List[Dict], current_value: fl
     return f'''
                     <!-- URGENT ALERTS Section -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(135deg, rgba(255,107,107,0.08) 0%, rgba(255,217,61,0.05) 100%); border-left: 4px solid {badge_color};">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb; background: linear-gradient(135deg, rgba(255,107,107,0.08) 0%, rgba(255,217,61,0.05) 100%); border-left: 4px solid {badge_color};">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🚨</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Urgent Alerts</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🚨</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Urgent Alerts</span>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: {badge_color}; background: {badge_bg}; padding: 6px 10px; border-radius: 4px; border: 1px solid {badge_color};">{alert_count} Alert{"s" if alert_count != 1 else ""}</span>
@@ -737,7 +758,7 @@ def _build_urgent_alerts_section(triggered_alerts: List[Dict], current_value: fl
                                 {alerts_html}
                                 <tr>
                                     <td style="padding-top: 12px;">
-                                        <div style="font-size: 13px; color: #6b6b7b; padding: 12px 16px; background: #22222e; border-radius: 8px;">
+                                        <div style="font-size: 13px; color: #6b7280; padding: 12px 16px; background: #e5e7eb; border-radius: 8px;">
                                             💡 <strong>What this means:</strong> These positions have hit pre-set price levels. Review and take action to protect your portfolio.
                                         </div>
                                     </td>
@@ -795,13 +816,13 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
     for pos in contributors:
         contributors_html += f'''
                                             <tr>
-                                                <td style="padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.08);">
+                                                <td style="padding: 8px 0; border-bottom: 1px dashed #e5e7eb;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                         <tr>
-                                                            <td><span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #f5f5f7;">{pos['ticker']}</span></td>
+                                                            <td><span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #1f2937;">{pos['ticker']}</span></td>
                                                             <td align="right">
                                                                 <span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #00d4aa;">+${pos['dollar_change']:,.0f}</span>
-                                                                <span style="font-size: 12px; color: #6b6b7b; padding-left: 6px;">({pos['gain_pct']:+.1f}%)</span>
+                                                                <span style="font-size: 12px; color: #6b7280; padding-left: 6px;">({pos['gain_pct']:+.1f}%)</span>
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -809,20 +830,20 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
                                             </tr>'''
     
     if not contributors_html:
-        contributors_html = '<tr><td style="padding: 12px 0; font-size: 13px; color: #6b6b7b; font-style: italic;">No positive contributors this period</td></tr>'
+        contributors_html = '<tr><td style="padding: 12px 0; font-size: 13px; color: #6b7280; font-style: italic;">No positive contributors this period</td></tr>'
     
     # Build detractors HTML
     detractors_html = ""
     for pos in detractors:
         detractors_html += f'''
                                             <tr>
-                                                <td style="padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.08);">
+                                                <td style="padding: 8px 0; border-bottom: 1px dashed #e5e7eb;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                         <tr>
-                                                            <td><span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #f5f5f7;">{pos['ticker']}</span></td>
+                                                            <td><span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #1f2937;">{pos['ticker']}</span></td>
                                                             <td align="right">
                                                                 <span style="font-family: 'Consolas', monospace; font-weight: 600; font-size: 14px; color: #ff6b6b;">-${abs(pos['dollar_change']):,.0f}</span>
-                                                                <span style="font-size: 12px; color: #6b6b7b; padding-left: 6px;">({pos['gain_pct']:+.1f}%)</span>
+                                                                <span style="font-size: 12px; color: #6b7280; padding-left: 6px;">({pos['gain_pct']:+.1f}%)</span>
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -830,7 +851,7 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
                                             </tr>'''
     
     if not detractors_html:
-        detractors_html = '<tr><td style="padding: 12px 0; font-size: 13px; color: #6b6b7b; font-style: italic;">No detractors this period 🎉</td></tr>'
+        detractors_html = '<tr><td style="padding: 12px 0; font-size: 13px; color: #6b7280; font-style: italic;">No detractors this period 🎉</td></tr>'
     
     # Determine overall color
     return_color = "#00d4aa" if this_month_return >= 0 else "#ff6b6b"
@@ -839,18 +860,18 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
     return f'''
                     <!-- Performance Attribution Section -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📊</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">What Moved Your Portfolio</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📊</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">What Moved Your Portfolio</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">This Period</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">This Period</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -859,11 +880,11 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
                                 <!-- Summary Card -->
                                 <tr>
                                     <td style="padding-top: 20px;" align="center">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #1a1a24; border: 1px solid {'rgba(0,212,170,0.3)' if this_month_return >= 0 else 'rgba(255,107,107,0.3)'}; border-radius: 12px; padding: 20px 40px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #f8f9fa; border: 1px solid {'rgba(0,212,170,0.3)' if this_month_return >= 0 else 'rgba(255,107,107,0.3)'}; border-radius: 12px; padding: 20px 40px;">
                                             <tr>
                                                 <td align="center">
                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 32px; font-weight: 700; color: {return_color};">{this_month_return:+.1f}%</span>
-                                                    <span style="display: block; font-size: 12px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">This Period Return</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">This Period Return</span>
                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 16px; color: {return_color}; padding-top: 8px;">{dollar_sign}${abs(portfolio_dollar_change):,.0f}</span>
                                                 </td>
                                             </tr>
@@ -876,18 +897,18 @@ def _build_performance_attribution_section(current_portfolio: List[Dict], this_m
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td width="48%" style="vertical-align: top;">
-                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-top: 3px solid #00d4aa; border-radius: 10px; padding: 16px;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border: 1px solid #e5e7eb; border-top: 3px solid #00d4aa; border-radius: 10px; padding: 16px;">
                                                         <tr>
-                                                            <td style="font-weight: 600; font-size: 14px; color: #00d4aa; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">📈 Top Contributors</td>
+                                                            <td style="font-weight: 600; font-size: 14px; color: #00d4aa; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">📈 Top Contributors</td>
                                                         </tr>
                                                         {contributors_html}
                                                     </table>
                                                 </td>
                                                 <td width="4%"></td>
                                                 <td width="48%" style="vertical-align: top;">
-                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-top: 3px solid #ff6b6b; border-radius: 10px; padding: 16px;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border: 1px solid #e5e7eb; border-top: 3px solid #ff6b6b; border-radius: 10px; padding: 16px;">
                                                         <tr>
-                                                            <td style="font-weight: 600; font-size: 14px; color: #ff6b6b; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">📉 Detractors</td>
+                                                            <td style="font-weight: 600; font-size: 14px; color: #ff6b6b; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">📉 Detractors</td>
                                                         </tr>
                                                         {detractors_html}
                                                     </table>
@@ -937,31 +958,31 @@ def _build_dividend_calendar_section(dividend_calendar: Dict, current_portfolio:
         
         rows_html += f'''
                                 <tr style="background: {row_bg};">
-                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-                                        <span style="font-family: 'Consolas', monospace; font-weight: 600; color: #f5f5f7;">{ticker}</span>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb;">
+                                        <span style="font-family: 'Consolas', monospace; font-weight: 600; color: #1f2937;">{ticker}</span>
                                         {urgent_badge}
                                     </td>
-                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); color: #a0a0b0;">{ex_date}</td>
-                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); color: #6b6b7b;">{days_until} days</td>
-                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Consolas', monospace; color: #a0a0b0;">${div_per_share:.2f}</td>
-                                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Consolas', monospace; font-weight: 600; color: #00d4aa;">${expected_income:.0f}</td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; color: #4b5563;">{ex_date}</td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; color: #6b7280;">{days_until} days</td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; font-family: 'Consolas', monospace; color: #4b5563;">${div_per_share:.2f}</td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; font-family: 'Consolas', monospace; font-weight: 600; color: #00d4aa;">${expected_income:.0f}</td>
                                 </tr>'''
     
     return f'''
                     <!-- Dividend Calendar Section -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📅</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Dividend Calendar</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📅</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Dividend Calendar</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Next 14 Days</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">Next 14 Days</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -970,12 +991,12 @@ def _build_dividend_calendar_section(dividend_calendar: Dict, current_portfolio:
                                 <tr>
                                     <td style="padding-top: 20px;">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px;">
-                                            <tr style="background: #1a1a24;">
-                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Stock</th>
-                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Ex-Date</th>
-                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Days</th>
-                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Per Share</th>
-                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; border-bottom: 1px solid rgba(255,255,255,0.08);">Expected</th>
+                                            <tr style="background: #f8f9fa;">
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Stock</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Ex-Date</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Days</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Per Share</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Expected</th>
                                             </tr>
                                             {rows_html}
                                         </table>
@@ -983,10 +1004,10 @@ def _build_dividend_calendar_section(dividend_calendar: Dict, current_portfolio:
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 16px;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #22222e; border-radius: 8px; padding: 12px 16px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e5e7eb; border-radius: 8px; padding: 12px 16px;">
                                             <tr>
                                                 <td>
-                                                    <span style="font-size: 13px; color: #6b6b7b;">Total Expected Dividend Income:</span>
+                                                    <span style="font-size: 13px; color: #6b7280;">Total Expected Dividend Income:</span>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-family: 'Consolas', monospace; font-size: 18px; font-weight: 700; color: #00d4aa;">${total_expected_income:,.0f}</span>
@@ -997,7 +1018,142 @@ def _build_dividend_calendar_section(dividend_calendar: Dict, current_portfolio:
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 12px;">
-                                        <span style="font-size: 12px; color: #6b6b7b; line-height: 1.5;">💡 <strong>Tip:</strong> You must own shares BEFORE the ex-dividend date to receive the dividend. Consider holding these positions until after the ex-date.</span>
+                                        <span style="font-size: 12px; color: #6b7280; line-height: 1.5;">💡 <strong>Tip:</strong> You must own shares BEFORE the ex-dividend date to receive the dividend. Consider holding these positions until after the ex-date.</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>'''
+
+
+def _build_earnings_calendar_section(earnings_calendar: Dict, current_portfolio: List[Dict]) -> str:
+    """
+    Build the Earnings Calendar section showing upcoming earnings dates for portfolio stocks.
+    """
+    if not earnings_calendar:
+        return ""
+    
+    # Get portfolio tickers to highlight holdings
+    portfolio_tickers = {pos.get('ticker', '') for pos in current_portfolio}
+    
+    # Sort by days until earnings
+    sorted_earnings = sorted(earnings_calendar.items(), key=lambda x: x[1].get('days_until', 999))
+    
+    rows_html = ""
+    portfolio_earnings = 0
+    watchlist_earnings = 0
+    
+    for ticker, earn_data in sorted_earnings:
+        earnings_date = earn_data.get('earnings_date', 'TBD')
+        days_until = earn_data.get('days_until', '?')
+        
+        # Format earnings date nicely
+        try:
+            from datetime import datetime
+            dt = datetime.strptime(earnings_date, '%Y-%m-%d')
+            formatted_date = dt.strftime('%b %d, %Y')
+        except:
+            formatted_date = earnings_date
+        
+        # Check if this is a portfolio holding or watchlist stock
+        is_holding = ticker in portfolio_tickers
+        if is_holding:
+            portfolio_earnings += 1
+            badge = '<span style="font-size: 9px; font-weight: 600; color: #00d4aa; background: rgba(0,212,170,0.12); padding: 2px 6px; border-radius: 3px; margin-left: 8px;">HOLDING</span>'
+            row_bg = "rgba(0,212,170,0.05)"
+        else:
+            watchlist_earnings += 1
+            badge = '<span style="font-size: 9px; font-weight: 600; color: #6b7280; background: rgba(107,107,123,0.12); padding: 2px 6px; border-radius: 3px; margin-left: 8px;">WATCHLIST</span>'
+            row_bg = "transparent"
+        
+        # Urgency styling for imminent earnings
+        is_urgent = isinstance(days_until, int) and days_until <= 3
+        if is_urgent:
+            row_bg = "rgba(255,107,107,0.08)"
+            urgent_badge = '<span style="font-size: 10px; font-weight: 600; color: #ff6b6b; background: rgba(255,107,107,0.12); padding: 2px 6px; border-radius: 3px; margin-left: 8px;">⚠️ IMMINENT</span>'
+        else:
+            urgent_badge = ""
+        
+        # Days styling
+        if isinstance(days_until, int):
+            if days_until <= 3:
+                days_color = "#ff6b6b"
+            elif days_until <= 7:
+                days_color = "#ffd93d"
+            else:
+                days_color = "#6b7280"
+            days_text = f"{days_until} day{'s' if days_until != 1 else ''}"
+        else:
+            days_color = "#6b7280"
+            days_text = str(days_until)
+        
+        rows_html += f'''
+                                <tr style="background: {row_bg};">
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb;">
+                                        <span style="font-family: 'Consolas', monospace; font-weight: 600; color: #1f2937;">{ticker}</span>
+                                        {badge}
+                                        {urgent_badge}
+                                    </td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; color: #4b5563;">{formatted_date}</td>
+                                    <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; color: {days_color}; font-weight: 600;">{days_text}</td>
+                                </tr>'''
+    
+    # Summary text
+    summary_parts = []
+    if portfolio_earnings > 0:
+        summary_parts.append(f"<strong style='color: #00d4aa;'>{portfolio_earnings}</strong> holdings")
+    if watchlist_earnings > 0:
+        summary_parts.append(f"<strong style='color: #6b7280;'>{watchlist_earnings}</strong> watchlist stocks")
+    summary_text = " and ".join(summary_parts) + " with upcoming earnings"
+    
+    return f'''
+                    <!-- Earnings Calendar Section -->
+                    <tr>
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📊</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Earnings Calendar</span>
+                                                </td>
+                                                <td align="right">
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">Next 14 Days</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 12px;">
+                                        <span style="font-size: 13px; color: #4b5563;">{summary_text}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 16px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px;">
+                                            <tr style="background: #f8f9fa;">
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Stock</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Earnings Date</th>
+                                                <th style="text-align: left; padding: 12px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Days Until</th>
+                                            </tr>
+                                            {rows_html}
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 16px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: rgba(255,217,61,0.08); border-radius: 8px; border-left: 3px solid #ffd93d;">
+                                            <tr>
+                                                <td style="padding: 12px 16px;">
+                                                    <span style="font-size: 12px; color: #4b5563; line-height: 1.5;">
+                                                        ⚠️ <strong style="color: #ffd93d;">Earnings Volatility Warning:</strong> Stocks often experience significant price swings around earnings announcements. Consider reviewing position sizes for holdings with imminent earnings.
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
@@ -1049,7 +1205,7 @@ def _build_market_pulse(market_overview: Dict[str, Any], email_context: Dict[str
     return f'''
                     <!-- Market Pulse Strip -->
                     <tr>
-                        <td style="background-color: #0a0a0f; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 32px;">
+                        <td style="background-color: #f4f4f4; border-bottom: 1px solid #e5e7eb; padding: 16px 32px;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     {pulse_cells}
@@ -1078,14 +1234,14 @@ def _create_pulse_item(name: str, value: Any, change_pct: float) -> str:
         sign = "+" if is_positive else ""
         change_str = f"{sign}{change_pct:.2f}%"
     else:
-        color = "#a0a0b0"
-        bg_color = "rgba(255,255,255,0.08)"
+        color = "#4b5563"
+        bg_color = "#e5e7eb"
         change_str = str(change_pct)
     
     return f'''
                                     <td width="25%" style="padding: 0 8px;">
-                                        <span style="display: block; font-size: 12px; color: #6b6b7b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">{name}</span>
-                                        <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 500; color: #f5f5f7; padding-top: 4px;">{value_str}</span>
+                                        <span style="display: block; font-size: 12px; color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">{name}</span>
+                                        <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 500; color: #1f2937; padding-top: 4px;">{value_str}</span>
                                         <span style="display: inline-block; font-family: 'Consolas', monospace; font-size: 12px; color: {color}; background: {bg_color}; padding: 2px 6px; border-radius: 3px; margin-top: 4px;">{change_str}</span>
                                     </td>'''
 
@@ -1181,7 +1337,7 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
                                                         </td>'''
         if cash_reserve > 0:
             pct = int((cash_reserve / total_available) * 100)
-            bar_cells += f'''<td width="{pct}%" style="background: linear-gradient(135deg, #6b6b7b 0%, #505060 100%); padding: 14px 0; text-align: center;">
+            bar_cells += f'''<td width="{pct}%" style="background: linear-gradient(135deg, #6b7280 0%, #505060 100%); padding: 14px 0; text-align: center;">
                                                             <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: rgba(255,255,255,0.7);">Cash</span>
                                                             <span style="display: block; font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85);">${cash_reserve:,.0f}</span>
                                                         </td>'''
@@ -1202,21 +1358,21 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
     
     # Budget source card (if there are sells/trims adding to budget)
     if sell_proceeds > 0 or trim_proceeds > 0:
-        source_rows = f'''<tr><td style="padding: 8px 0;"><span style="font-size: 14px; color: #a0a0b0;">Fresh biweekly investment:</span></td><td align="right"><span style="font-family: 'Consolas', monospace; font-size: 14px; color: #00d4aa;">${fresh_budget:,.0f}</span></td></tr>'''
+        source_rows = f'''<tr><td style="padding: 8px 0;"><span style="font-size: 14px; color: #4b5563;">Fresh biweekly investment:</span></td><td align="right"><span style="font-family: 'Consolas', monospace; font-size: 14px; color: #00d4aa;">${fresh_budget:,.0f}</span></td></tr>'''
         if sell_proceeds > 0:
-            source_rows += f'''<tr><td style="padding: 8px 0;"><span style="font-size: 14px; color: #a0a0b0;">+ Proceeds from SELLs:</span></td><td align="right"><span style="font-family: 'Consolas', monospace; font-size: 14px; color: #ff6b6b;">${sell_proceeds:,.0f}</span></td></tr>'''
+            source_rows += f'''<tr><td style="padding: 8px 0;"><span style="font-size: 14px; color: #4b5563;">+ Proceeds from SELLs:</span></td><td align="right"><span style="font-family: 'Consolas', monospace; font-size: 14px; color: #ff6b6b;">${sell_proceeds:,.0f}</span></td></tr>'''
         if trim_proceeds > 0:
-            source_rows += f'''<tr><td style="padding: 8px 0;"><span style="font-size: 14px; color: #a0a0b0;">+ Proceeds from TRIMs:</span></td><td align="right"><span style="font-family: 'Consolas', monospace; font-size: 14px; color: #ff9f43;">${trim_proceeds:,.0f}</span></td></tr>'''
-        source_rows += f'''<tr><td style="padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1);"><span style="font-size: 15px; font-weight: 600; color: #f5f5f7;">Total to Deploy:</span></td><td align="right" style="border-top: 1px solid rgba(255,255,255,0.1);"><span style="font-family: 'Consolas', monospace; font-size: 18px; font-weight: 700; color: #00d4aa;">${total_available:,.0f}</span></td></tr>'''
+            source_rows += f'''<tr><td style="padding: 8px 0;"><span style="font-size: 14px; color: #4b5563;">+ Proceeds from TRIMs:</span></td><td align="right"><span style="font-family: 'Consolas', monospace; font-size: 14px; color: #ff9f43;">${trim_proceeds:,.0f}</span></td></tr>'''
+        source_rows += f'''<tr><td style="padding: 12px 0; border-top: 1px solid #d1d5db;"><span style="font-size: 15px; font-weight: 600; color: #1f2937;">Total to Deploy:</span></td><td align="right" style="border-top: 1px solid #d1d5db;"><span style="font-family: 'Consolas', monospace; font-size: 18px; font-weight: 700; color: #00d4aa;">${total_available:,.0f}</span></td></tr>'''
         
         action_cards += f'''
                                         <tr>
-                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #d4af37;">
+                                            <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; border-left: 4px solid #b8860b;">
                                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                     <tr>
                                                         <td style="padding-bottom: 12px;">
                                                             <span style="font-size: 20px; vertical-align: middle;">💰</span>
-                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">Your Available Budget</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #1f2937; padding-left: 10px;">Your Available Budget</span>
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -1237,14 +1393,14 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         for stock in new_buys:
             buy_rows += f'''
                                                     <tr>
-                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px;">
+                                                        <td style="padding: 12px 16px; background-color: #e5e7eb; border-radius: 8px;">
                                                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                                 <tr>
-                                                                    <td width="50%" style="font-weight: 600; font-size: 14px; color: #f5f5f7;">{stock["ticker"]}</td>
+                                                                    <td width="50%" style="font-weight: 600; font-size: 14px; color: #1f2937;">{stock["ticker"]}</td>
                                                                     <td width="50%" align="right" style="font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #00d4aa;">${stock["amount"]:,.0f}</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td colspan="2" style="font-size: 12px; color: #6b6b7b; padding-top: 4px;">{stock["company"][:30]}</td>
+                                                                    <td colspan="2" style="font-size: 12px; color: #6b7280; padding-top: 4px;">{stock["company"][:30]}</td>
                                                                 </tr>
                                                             </table>
                                                         </td>
@@ -1253,12 +1409,12 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         
         action_cards += f'''
                                         <tr>
-                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #00d4aa;">
+                                            <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; border-left: 4px solid #00d4aa;">
                                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                     <tr>
                                                         <td style="padding-bottom: 16px;">
                                                             <span style="font-size: 20px; vertical-align: middle;">🟢</span>
-                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">BUY — New Positions (${new_buy_total:,.0f})</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #1f2937; padding-left: 10px;">BUY — New Positions (${new_buy_total:,.0f})</span>
                                                         </td>
                                                     </tr>
                                                     {buy_rows}
@@ -1273,10 +1429,10 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         for stock in add_to_existing:
             add_rows += f'''
                                                     <tr>
-                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px;">
+                                                        <td style="padding: 12px 16px; background-color: #e5e7eb; border-radius: 8px;">
                                                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                                 <tr>
-                                                                    <td width="50%" style="font-weight: 600; font-size: 14px; color: #f5f5f7;">{stock["ticker"]} <span style="font-size: 11px; color: #4ecdc4;">(you own)</span></td>
+                                                                    <td width="50%" style="font-weight: 600; font-size: 14px; color: #1f2937;">{stock["ticker"]} <span style="font-size: 11px; color: #4ecdc4;">(you own)</span></td>
                                                                     <td width="50%" align="right" style="font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #4ecdc4;">+${stock["amount"]:,.0f}</td>
                                                                 </tr>
                                                             </table>
@@ -1286,12 +1442,12 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         
         action_cards += f'''
                                         <tr>
-                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #4ecdc4;">
+                                            <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; border-left: 4px solid #4ecdc4;">
                                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                     <tr>
                                                         <td style="padding-bottom: 16px;">
                                                             <span style="font-size: 20px; vertical-align: middle;">📈</span>
-                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">ADD — Double Down on Winners (${add_total:,.0f})</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #1f2937; padding-left: 10px;">ADD — Double Down on Winners (${add_total:,.0f})</span>
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -1312,10 +1468,10 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         for stock in sells:
             sell_rows += f'''
                                                     <tr>
-                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px;">
+                                                        <td style="padding: 12px 16px; background-color: #e5e7eb; border-radius: 8px;">
                                                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                                 <tr>
-                                                                    <td width="60%" style="font-weight: 600; font-size: 14px; color: #f5f5f7;">{stock["ticker"]}</td>
+                                                                    <td width="60%" style="font-weight: 600; font-size: 14px; color: #1f2937;">{stock["ticker"]}</td>
                                                                     <td width="40%" align="right" style="font-size: 13px; color: #ff6b6b;">Exit position</td>
                                                                 </tr>
                                                             </table>
@@ -1325,12 +1481,12 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         
         action_cards += f'''
                                         <tr>
-                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #ff6b6b;">
+                                            <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; border-left: 4px solid #ff6b6b;">
                                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                     <tr>
                                                         <td style="padding-bottom: 16px;">
                                                             <span style="font-size: 20px; vertical-align: middle;">🔴</span>
-                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">SELL — Exit These Positions</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #1f2937; padding-left: 10px;">SELL — Exit These Positions</span>
                                                         </td>
                                                     </tr>
                                                     {sell_rows}
@@ -1345,10 +1501,10 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         for stock in trims:
             trim_rows += f'''
                                                     <tr>
-                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px;">
+                                                        <td style="padding: 12px 16px; background-color: #e5e7eb; border-radius: 8px;">
                                                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                                 <tr>
-                                                                    <td width="50%" style="font-weight: 600; font-size: 14px; color: #f5f5f7;">{stock["ticker"]}</td>
+                                                                    <td width="50%" style="font-weight: 600; font-size: 14px; color: #1f2937;">{stock["ticker"]}</td>
                                                                     <td width="50%" align="right" style="font-size: 13px; color: #ff9f43;">Sell {stock["trim_pct"]:.0f}% of position</td>
                                                                 </tr>
                                                             </table>
@@ -1358,12 +1514,12 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         
         action_cards += f'''
                                         <tr>
-                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #ff9f43;">
+                                            <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; border-left: 4px solid #ff9f43;">
                                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                     <tr>
                                                         <td style="padding-bottom: 16px;">
                                                             <span style="font-size: 20px; vertical-align: middle;">✂️</span>
-                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">TRIM — Take Partial Profits</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #1f2937; padding-left: 10px;">TRIM — Take Partial Profits</span>
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -1383,17 +1539,17 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
         cash_pct_of_budget = (cash_reserve / total_available) * 100 if total_available > 0 else 0
         action_cards += f'''
                                         <tr>
-                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; border-left: 4px solid #6b6b7b;">
+                                            <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; border-left: 4px solid #6b7280;">
                                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                     <tr>
                                                         <td style="padding-bottom: 12px;">
                                                             <span style="font-size: 20px; vertical-align: middle;">💵</span>
-                                                            <span style="font-weight: 700; font-size: 16px; color: #f5f5f7; padding-left: 10px;">CASH — Keep ${cash_reserve:,.0f} ({cash_pct_of_budget:.0f}%) as Reserve</span>
+                                                            <span style="font-weight: 700; font-size: 16px; color: #1f2937; padding-left: 10px;">CASH — Keep ${cash_reserve:,.0f} ({cash_pct_of_budget:.0f}%) as Reserve</span>
                                                         </td>
                                                     </tr>
                                                     <tr>
-                                                        <td style="padding: 12px 16px; background-color: #22222e; border-radius: 8px;">
-                                                            <span style="font-size: 14px; color: #a0a0b0; line-height: 1.6;">Keep in high-yield savings. Ready for opportunities or emergencies.</span>
+                                                        <td style="padding: 12px 16px; background-color: #e5e7eb; border-radius: 8px;">
+                                                            <span style="font-size: 14px; color: #4b5563; line-height: 1.6;">Keep in high-yield savings. Ready for opportunities or emergencies.</span>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -1404,23 +1560,23 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
     if not action_cards:
         action_cards = f'''
                                         <tr>
-                                            <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; text-align: center;">
-                                                <span style="font-size: 16px; color: #a0a0b0;">No specific actions this period. Your ${fresh_budget:,} remains in cash reserve.</span>
+                                            <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; text-align: center;">
+                                                <span style="font-size: 16px; color: #4b5563;">No specific actions this period. Your ${fresh_budget:,} remains in cash reserve.</span>
                                             </td>
                                         </tr>'''
     
     return f'''
                     <!-- This Week's Action Plan -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background-color: #0a0a0f;">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb; background-color: #f4f4f4;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🎯</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">This Week's Action Plan</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🎯</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">This Week's Action Plan</span>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #00d4aa; background-color: rgba(0,212,170,0.15); padding: 6px 10px; border-radius: 4px;">Deploy ${total_available:,.0f}</span>
@@ -1431,7 +1587,7 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 20px; padding-bottom: 24px;">
-                                        <span style="font-size: 16px; color: #a0a0b0; line-height: 1.6;">Your <strong style="color: #00d4aa;">fresh ${fresh_budget:,} biweekly budget</strong> is here! {f'Plus ${sell_proceeds + trim_proceeds:,.0f} from SELL/TRIM actions.' if (sell_proceeds + trim_proceeds) > 0 else ''}</span>
+                                        <span style="font-size: 16px; color: #4b5563; line-height: 1.6;">Your <strong style="color: #00d4aa;">fresh ${fresh_budget:,} biweekly budget</strong> is here! {f'Plus ${sell_proceeds + trim_proceeds:,.0f} from SELL/TRIM actions.' if (sell_proceeds + trim_proceeds) > 0 else ''}</span>
                                     </td>
                                 </tr>
                                 {allocation_bar}
@@ -1463,7 +1619,7 @@ def _build_stock_picks(recommendations: List[Dict], analysis_result: Dict, curre
     return f'''
                     <!-- This Week's Picks -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(0,212,170,0.03) 0%, transparent 100%);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb; background: linear-gradient(180deg, rgba(0,212,170,0.03) 0%, transparent 100%);">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
@@ -1471,7 +1627,7 @@ def _build_stock_picks(recommendations: List[Dict], analysis_result: Dict, curre
                                             <tr>
                                                 <td>
                                                     <span style="display: inline-block; width: 32px; height: 32px; background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%); border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💰</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">New Picks — Fresh $1,000 Budget</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">New Picks — Fresh $1,000 Budget</span>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #00d4aa; background-color: rgba(0,212,170,0.15); padding: 6px 10px; border-radius: 4px;">BUY with new money</span>
@@ -1482,7 +1638,7 @@ def _build_stock_picks(recommendations: List[Dict], analysis_result: Dict, curre
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 12px; padding-bottom: 8px;">
-                                        <span style="font-size: 14px; color: #a0a0b0;">Deploy your <strong style="color: #00d4aa;">fresh $1,000</strong> into these new opportunities. This is NEW money on top of your existing holdings.</span>
+                                        <span style="font-size: 14px; color: #4b5563;">Deploy your <strong style="color: #00d4aa;">fresh $1,000</strong> into these new opportunities. This is NEW money on top of your existing holdings.</span>
                                     </td>
                                 </tr>
                                 {stock_cards}
@@ -1497,7 +1653,8 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
     company = rec.get("company_name", rec.get("company", rec.get("name", ticker)))
     # Check multiple possible field names - status is used in new_recommendations, default to BUY
     action = rec.get("action", rec.get("recommendation", rec.get("status", rec.get("type", "BUY")))).upper()
-    price = rec.get("current_market_price", rec.get("current_price", rec.get("price", 0)))
+    # Support multiple price field names: entry_price (for new buys), current_price, price, etc.
+    price = rec.get("current_market_price", rec.get("current_price", rec.get("entry_price", rec.get("price", 0))))
     target = rec.get("price_target", rec.get("target_price", rec.get("target", None)))
     stop_loss = rec.get("stop_loss", None)
     thesis = rec.get("thesis", rec.get("reason", rec.get("rationale", rec.get("summary", ""))))
@@ -1546,11 +1703,11 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
             potential_color = "#00d4aa" if potential >= 0 else "#ff6b6b"
         else:
             potential_str = "N/A"
-            potential_color = "#a0a0b0"
+            potential_color = "#4b5563"
     else:
         target_str = "N/A"
         potential_str = "N/A"
-        potential_color = "#a0a0b0"
+        potential_color = "#4b5563"
     
     # Format stop loss
     stop_loss_str = f"${stop_loss:,.2f}" if stop_loss and isinstance(stop_loss, (int, float)) else None
@@ -1586,23 +1743,23 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
                                             <tr>
                                                 <td style="padding-top: 16px;">
                                                     <div style="background-color: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25); border-radius: 8px; padding: 16px;">
-                                                        <span style="display: block; font-size: 13px; font-weight: 600; color: #d4af37; margin-bottom: 12px;">💰 How to Execute This Trade</span>
+                                                        <span style="display: block; font-size: 13px; font-weight: 600; color: #b8860b; margin-bottom: 12px;">💰 How to Execute This Trade</span>
                                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                             <tr>
                                                                 <td width="25%">
-                                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase;">Invest</span>
-                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #f5f5f7; padding-top: 2px;">${actual_investment:,.0f}</span>
+                                                                    <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;">Invest</span>
+                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #1f2937; padding-top: 2px;">${actual_investment:,.0f}</span>
                                                                 </td>
                                                                 <td width="25%">
-                                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase;">Buy Shares</span>
-                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #f5f5f7; padding-top: 2px;">{shares_to_buy:,}</span>
+                                                                    <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;">Buy Shares</span>
+                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #1f2937; padding-top: 2px;">{shares_to_buy:,}</span>
                                                                 </td>
                                                                 <td width="25%">
-                                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase;">If Target Hit</span>
+                                                                    <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;">If Target Hit</span>
                                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #00d4aa; padding-top: 2px;">+{profit_str}</span>
                                                                 </td>
                                                                 <td width="25%">
-                                                                    <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase;">Max Loss</span>
+                                                                    <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;">Max Loss</span>
                                                                     <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #ff6b6b; padding-top: 2px;">-{loss_str}</span>
                                                                 </td>
                                                             </tr>
@@ -1616,28 +1773,28 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
         ytd_color = "#00d4aa" if ytd_return >= 0 else "#ff6b6b"
         ytd_str = f"+{ytd_return:.1f}%" if ytd_return >= 0 else f"{ytd_return:.1f}%"
     else:
-        ytd_color = "#a0a0b0"
+        ytd_color = "#4b5563"
         ytd_str = str(ytd_return)
     
     # Build target row
     target_row = f'''
                                             <tr>
-                                                <td style="padding-top: 16px; border-top: 1px dashed rgba(255,255,255,0.08);">
+                                                <td style="padding-top: 16px; border-top: 1px dashed #e5e7eb;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                         <tr>
                                                             <td width="33%">
-                                                                <span style="display: block; font-size: 12px; color: #6b6b7b;">We think it will reach:</span>
+                                                                <span style="display: block; font-size: 12px; color: #6b7280;">We think it will reach:</span>
                                                                 <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: {potential_color}; padding-top: 2px;">{target_str}</span>
                                                             </td>
                                                             <td width="33%">
-                                                                <span style="display: block; font-size: 12px; color: #6b6b7b;">Potential profit:</span>
+                                                                <span style="display: block; font-size: 12px; color: #6b7280;">Potential profit:</span>
                                                                 <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: {potential_color}; padding-top: 2px;">{potential_str}</span>
                                                             </td>'''
     
     if stop_loss_str:
         target_row += f'''
                                                             <td width="33%">
-                                                                <span style="display: block; font-size: 12px; color: #6b6b7b;">Stop loss:</span>
+                                                                <span style="display: block; font-size: 12px; color: #6b7280;">Stop loss:</span>
                                                                 <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #ff6b6b; padding-top: 2px;">{stop_loss_str}</span>
                                                             </td>'''
     
@@ -1650,7 +1807,7 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
     return f'''
                                 <tr><td style="height: 16px;"></td></tr>
                                 <tr>
-                                    <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px;">
+                                    <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px;">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <!-- Stock Header -->
                                             <tr>
@@ -1658,11 +1815,11 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                         <tr>
                                                             <td width="48" style="vertical-align: top;">
-                                                                <div style="width: 48px; height: 48px; background-color: #22222e; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); text-align: center; line-height: 48px; font-weight: 700; font-size: 14px; color: #d4af37;">{ticker[:4]}</div>
+                                                                <div style="width: 48px; height: 48px; background-color: #e5e7eb; border-radius: 10px; border: 1px solid #e5e7eb; text-align: center; line-height: 48px; font-weight: 700; font-size: 14px; color: #b8860b;">{ticker[:4]}</div>
                                                             </td>
                                                             <td style="padding-left: 14px; vertical-align: top;">
-                                                                <span style="display: block; font-weight: 600; font-size: 16px; color: #f5f5f7;">{company}</span>
-                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 13px; color: #6b6b7b; padding-top: 2px;">{ticker}</span>
+                                                                <span style="display: block; font-weight: 600; font-size: 16px; color: #1f2937;">{company}</span>
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 13px; color: #6b7280; padding-top: 2px;">{ticker}</span>
                                                             </td>
                                                             <td align="right" style="vertical-align: top;">
                                                                 <span style="display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 8px 16px; border-radius: 6px; color: {badge_color}; background: {badge_bg}; border: 1px solid {badge_border};">{badge_text}</span>
@@ -1673,24 +1830,24 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
                                             </tr>
                                             <!-- Metrics -->
                                             <tr>
-                                                <td style="padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                                <td style="padding: 16px 0; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                         <tr>
                                                             <td width="25%" align="center">
-                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #f5f5f7;">{price_str}</span>
-                                                                <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">Current Price</span>
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #1f2937;">{price_str}</span>
+                                                                <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">Current Price</span>
                                                             </td>
                                                             <td width="25%" align="center">
-                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #f5f5f7;">{pe_ratio}</span>
-                                                                <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">P/E Ratio</span>
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #1f2937;">{pe_ratio}</span>
+                                                                <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">P/E Ratio</span>
                                                             </td>
                                                             <td width="25%" align="center">
-                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #f5f5f7;">{market_cap}</span>
-                                                                <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">Market Cap</span>
+                                                                <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: #1f2937;">{market_cap}</span>
+                                                                <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">Market Cap</span>
                                                             </td>
                                                             <td width="25%" align="center">
                                                                 <span style="display: block; font-family: 'Consolas', monospace; font-size: 15px; font-weight: 600; color: {ytd_color};">{ytd_str}</span>
-                                                                <span style="display: block; font-size: 11px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">YTD Return</span>
+                                                                <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;">YTD Return</span>
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -1699,8 +1856,8 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
                                             <!-- Thesis -->
                                             <tr>
                                                 <td style="padding-top: 16px;">
-                                                    <span style="display: block; font-size: 13px; font-weight: 600; color: #a0a0b0; margin-bottom: 8px;">💡 Why we {"like it" if "BUY" in action else "say " + badge_text.lower()} (in plain English):</span>
-                                                    <span style="display: block; font-size: 14px; color: #a0a0b0; line-height: 1.7;">{thesis[:400] if thesis else "Analysis pending."}</span>
+                                                    <span style="display: block; font-size: 13px; font-weight: 600; color: #4b5563; margin-bottom: 8px;">💡 Why we {"like it" if "BUY" in action else "say " + badge_text.lower()} (in plain English):</span>
+                                                    <span style="display: block; font-size: 14px; color: #4b5563; line-height: 1.7;">{thesis[:400] if thesis else "Analysis pending."}</span>
                                                 </td>
                                             </tr>
                                             {target_row}
@@ -1745,8 +1902,8 @@ def _build_politicians_section(politicians: List[Dict]) -> str:
             party_color = "#ff8888"
             party_text = "R"
         else:
-            party_bg = "rgba(255,255,255,0.1)"
-            party_color = "#a0a0b0"
+            party_bg = "#d1d5db"
+            party_color = "#4b5563"
             party_text = ""
         
         # Action styling
@@ -1773,29 +1930,29 @@ def _build_politicians_section(politicians: List[Dict]) -> str:
         trade_rows += f'''
                                 <tr><td style="height: 12px;"></td></tr>
                                 <tr>
-                                    <td style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px 20px;">
+                                    <td style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 20px;">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td width="60%" style="vertical-align: middle;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                                         <tr>
                                                             <td width="44" style="vertical-align: middle;">
-                                                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #3b3b4f 0%, #2a2a3a 100%); border-radius: 50%; border: 2px solid rgba(255,255,255,0.08); text-align: center; line-height: 44px; font-size: 18px;">👤</div>
+                                                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #3b3b4f 0%, #2a2a3a 100%); border-radius: 50%; border: 2px solid #e5e7eb; text-align: center; line-height: 44px; font-size: 18px;">👤</div>
                                                             </td>
                                                             <td style="padding-left: 14px; vertical-align: middle;">
-                                                                <span style="display: block; font-weight: 600; font-size: 15px; color: #f5f5f7;">{name}</span>
-                                                                <span style="display: block; font-size: 12px; color: #6b6b7b; padding-top: 2px;">{role}{party_html}</span>
+                                                                <span style="display: block; font-weight: 600; font-size: 15px; color: #1f2937;">{name}</span>
+                                                                <span style="display: block; font-size: 12px; color: #6b7280; padding-top: 2px;">{role}{party_html}</span>
                                                             </td>
                                                         </tr>
                                                     </table>
                                                 </td>
                                                 <td width="40%" align="right" style="vertical-align: middle;">
                                                     <span style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: {action_color};">{action_text}</span>
-                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #f5f5f7; padding-top: 4px;">{symbol}</span>
-                                                    <span style="display: block; font-size: 12px; color: #6b6b7b; padding-top: 2px;">{amount_str}</span>
+                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #1f2937; padding-top: 4px;">{symbol}</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b7280; padding-top: 2px;">{amount_str}</span>
                                                 </td>
                                             </tr>
-                                            {f'<tr><td colspan="2" style="padding-top: 10px;"><span style="font-size: 12px; color: #a0a0b0; font-style: italic;">💡 {insight}</span></td></tr>' if insight else ''}
+                                            {f'<tr><td colspan="2" style="padding-top: 10px;"><span style="font-size: 12px; color: #4b5563; font-style: italic;">💡 {insight}</span></td></tr>' if insight else ''}
                                         </table>
                                     </td>
                                 </tr>'''
@@ -1803,18 +1960,18 @@ def _build_politicians_section(politicians: List[Dict]) -> str:
     return f'''
                     <!-- Politicians Trades -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🏛️</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Politicians' Stock Trades</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">🏛️</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Politicians' Stock Trades</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Latest Filings</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">Latest Filings</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -1822,9 +1979,9 @@ def _build_politicians_section(politicians: List[Dict]) -> str:
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 20px;">
-                                        <div style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px 20px;">
-                                            <span style="display: block; font-weight: 600; font-size: 14px; color: #f5f5f7; margin-bottom: 8px;">🤔 Why does this matter?</span>
-                                            <span style="display: block; font-size: 14px; color: #a0a0b0; line-height: 1.6;">Members of Congress are required by law to report their stock trades. Some investors watch these trades because politicians may have access to information before the public does.</span>
+                                        <div style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 20px;">
+                                            <span style="display: block; font-weight: 600; font-size: 14px; color: #1f2937; margin-bottom: 8px;">🤔 Why does this matter?</span>
+                                            <span style="display: block; font-size: 14px; color: #4b5563; line-height: 1.6;">Members of Congress are required by law to report their stock trades. Some investors watch these trades because politicians may have access to information before the public does.</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -1897,7 +2054,7 @@ def _build_recommendation_tracker(history: Dict, portfolio_performance: List[Dic
             return_color = "#00d4aa" if gain_loss >= 0 else "#ff6b6b"
             return_str = f"+{gain_loss:.1f}%" if gain_loss >= 0 else f"{gain_loss:.1f}%"
         else:
-            return_color = "#a0a0b0"
+            return_color = "#4b5563"
             return_str = str(gain_loss)
         
         # Status badge styling (these are existing holdings being tracked)
@@ -1917,18 +2074,18 @@ def _build_recommendation_tracker(history: Dict, portfolio_performance: List[Dic
         
         portfolio_rows += f'''
                                     <tr>
-                                        <td style="padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td style="padding: 16px; border-bottom: 1px solid #e5e7eb;">
                                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                 <tr>
                                                     <td width="30%">
                                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                                             <tr>
                                                                 <td width="36" style="vertical-align: middle;">
-                                                                    <div style="width: 36px; height: 36px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 36px; font-size: 11px; font-weight: 700; color: #d4af37;">{ticker[:4]}</div>
+                                                                    <div style="width: 36px; height: 36px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 36px; font-size: 11px; font-weight: 700; color: #b8860b;">{ticker[:4]}</div>
                                                                 </td>
                                                                 <td style="padding-left: 12px; vertical-align: middle;">
-                                                                    <span style="display: block; font-weight: 600; font-size: 14px; color: #f5f5f7;">{company[:18]}</span>
-                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 12px; color: #6b6b7b;">{rec_date}</span>
+                                                                    <span style="display: block; font-weight: 600; font-size: 14px; color: #1f2937;">{company[:18]}</span>
+                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 12px; color: #6b7280;">{rec_date}</span>
                                                                 </td>
                                                             </tr>
                                                         </table>
@@ -1937,10 +2094,10 @@ def _build_recommendation_tracker(history: Dict, portfolio_performance: List[Dic
                                                         <span style="font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; color: {rec_color}; background: {rec_bg};">{rec_upper[:4]}</span>
                                                     </td>
                                                     <td width="13%" align="center">
-                                                        <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #f5f5f7;">{rec_price_str}</span>
+                                                        <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #1f2937;">{rec_price_str}</span>
                                                     </td>
                                                     <td width="13%" align="center">
-                                                        <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #f5f5f7;">{current_price_str}</span>
+                                                        <span style="font-family: 'Consolas', monospace; font-size: 13px; color: #1f2937;">{current_price_str}</span>
                                                     </td>
                                                     <td width="15%" align="center">
                                                         <span style="font-family: 'Consolas', monospace; font-size: 13px; font-weight: 600; color: {return_color};">{return_str}</span>
@@ -1956,18 +2113,18 @@ def _build_recommendation_tracker(history: Dict, portfolio_performance: List[Dic
     return f'''
                     <!-- Recommendation Tracker -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📈</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Recommendation Tracker</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📈</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Recommendation Tracker</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Past 90 Days</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">Past 90 Days</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -1979,21 +2136,21 @@ def _build_recommendation_tracker(history: Dict, portfolio_performance: List[Dic
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td width="33%" style="padding: 0 8px 0 0;">
-                                                    <div style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 20px; text-align: center;">
+                                                    <div style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; text-align: center;">
                                                         <span style="display: block; font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #00d4aa;">{win_rate:.0f}%</span>
-                                                        <span style="display: block; font-size: 12px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Win Rate ({win_count}/{total_trades})</span>
+                                                        <span style="display: block; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Win Rate ({win_count}/{total_trades})</span>
                                                     </div>
                                                 </td>
                                                 <td width="33%" style="padding: 0 8px;">
-                                                    <div style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 20px; text-align: center;">
+                                                    <div style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; text-align: center;">
                                                         <span style="display: block; font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #00d4aa;">+{avg_return:.1f}%</span>
-                                                        <span style="display: block; font-size: 12px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Avg Return</span>
+                                                        <span style="display: block; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Avg Return</span>
                                                     </div>
                                                 </td>
                                                 <td width="33%" style="padding: 0 0 0 8px;">
-                                                    <div style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 20px; text-align: center;">
-                                                        <span style="display: block; font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #d4af37;">{active_positions}</span>
-                                                        <span style="display: block; font-size: 12px; color: #6b6b7b; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Active Positions</span>
+                                                    <div style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; text-align: center;">
+                                                        <span style="display: block; font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #b8860b;">{active_positions}</span>
+                                                        <span style="display: block; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 4px;">Active Positions</span>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -2003,17 +2160,17 @@ def _build_recommendation_tracker(history: Dict, portfolio_performance: List[Dic
                                 <!-- Tracking Table -->
                                 <tr>
                                     <td style="padding-top: 24px;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
                                             <tr>
-                                                <td style="padding: 12px 16px; background-color: #1a1a24; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                                <td style="padding: 12px 16px; background-color: #f8f9fa; border-bottom: 1px solid #e5e7eb;">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                         <tr>
-                                                            <td width="30%" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Stock</td>
-                                                            <td width="12%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Call</td>
-                                                            <td width="13%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Entry</td>
-                                                            <td width="13%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Current</td>
-                                                            <td width="15%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">Return</td>
-                                                            <td width="17%" align="right" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b;">$ P/L</td>
+                                                            <td width="30%" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280;">Stock</td>
+                                                            <td width="12%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280;">Call</td>
+                                                            <td width="13%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280;">Entry</td>
+                                                            <td width="13%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280;">Current</td>
+                                                            <td width="15%" align="center" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280;">Return</td>
+                                                            <td width="17%" align="right" style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280;">$ P/L</td>
                                                         </tr>
                                                     </table>
                                                 </td>
@@ -2076,7 +2233,7 @@ def _build_closed_positions_section(history: Dict) -> str:
             return_prefix = ""
             icon = "❌" if not is_trim else "✂️"
         else:
-            return_color = "#a0a0b0"
+            return_color = "#4b5563"
             return_prefix = ""
             icon = "➖" if not is_trim else "✂️"
         
@@ -2094,7 +2251,7 @@ def _build_closed_positions_section(history: Dict) -> str:
             lesson_html = f'''
                                                         <tr>
                                                             <td colspan="4" style="padding: 8px 16px 12px 16px;">
-                                                                <span style="font-size: 11px; color: #d4af37; font-style: italic;">💡 Lesson: {lesson_display}</span>
+                                                                <span style="font-size: 11px; color: #b8860b; font-style: italic;">💡 Lesson: {lesson_display}</span>
                                                             </td>
                                                         </tr>'''
         
@@ -2104,33 +2261,33 @@ def _build_closed_positions_section(history: Dict) -> str:
                                                             <span style="font-size: 18px;">{icon}</span>
                                                         </td>
                                                         <td style="padding: 16px 8px;">
-                                                            <span style="display: block; font-weight: 700; font-size: 15px; color: #f5f5f7;">{ticker_display}</span>
-                                                            <span style="display: block; font-size: 11px; color: #6b6b7b; padding-top: 2px;">Held {hold_days} days</span>
+                                                            <span style="display: block; font-weight: 700; font-size: 15px; color: #1f2937;">{ticker_display}</span>
+                                                            <span style="display: block; font-size: 11px; color: #6b7280; padding-top: 2px;">Held {hold_days} days</span>
                                                         </td>
                                                         <td style="padding: 16px 8px; text-align: right;">
                                                             <span style="display: block; font-family: 'Consolas', monospace; font-size: 16px; font-weight: 700; color: {return_color};">{return_prefix}{return_pct:.1f}%</span>
-                                                            <span style="display: block; font-size: 10px; color: #6b6b7b; padding-top: 2px;">{sell_date}</span>
+                                                            <span style="display: block; font-size: 10px; color: #6b7280; padding-top: 2px;">{sell_date}</span>
                                                         </td>
                                                         <td style="padding: 16px; width: 200px;">
-                                                            <span style="font-size: 12px; color: #a0a0b0;">{reason_display}</span>
+                                                            <span style="font-size: 12px; color: #4b5563;">{reason_display}</span>
                                                         </td>
                                                     </tr>{lesson_html}'''
     
     return f'''
                     <!-- Recent Closed Positions -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📚</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Recent Closed Positions</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📚</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">Recent Closed Positions</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Last 10 Trades</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">Last 10 Trades</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -2141,23 +2298,23 @@ def _build_closed_positions_section(history: Dict) -> str:
                                     <td style="padding-top: 20px;">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
-                                                <td width="24%" style="background-color: #1a1a24; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
-                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Wins</span>
+                                                <td width="24%" style="background-color: #f8f9fa; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #e5e7eb;">
+                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Wins</span>
                                                     <span style="display: block; font-size: 24px; font-weight: 700; color: #00d4aa; padding-top: 4px;">{len(wins)}</span>
                                                 </td>
                                                 <td width="1%"></td>
-                                                <td width="24%" style="background-color: #1a1a24; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
-                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Losses</span>
+                                                <td width="24%" style="background-color: #f8f9fa; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #e5e7eb;">
+                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Losses</span>
                                                     <span style="display: block; font-size: 24px; font-weight: 700; color: #ff6b6b; padding-top: 4px;">{len(losses)}</span>
                                                 </td>
                                                 <td width="1%"></td>
-                                                <td width="24%" style="background-color: #1a1a24; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
-                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Trims ✂️</span>
+                                                <td width="24%" style="background-color: #f8f9fa; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #e5e7eb;">
+                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Trims ✂️</span>
                                                     <span style="display: block; font-size: 24px; font-weight: 700; color: #ff9f43; padding-top: 4px;">{len(trims)}</span>
                                                 </td>
                                                 <td width="1%"></td>
-                                                <td width="24%" style="background-color: #1a1a24; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
-                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Avg Return</span>
+                                                <td width="24%" style="background-color: #f8f9fa; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #e5e7eb;">
+                                                    <span style="display: block; font-size: 11px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Avg Return</span>
                                                     <span style="display: block; font-size: 24px; font-weight: 700; color: {"#00d4aa" if avg_return >= 0 else "#ff6b6b"}; padding-top: 4px;">{avg_return:+.1f}%</span>
                                                 </td>
                                             </tr>
@@ -2167,12 +2324,12 @@ def _build_closed_positions_section(history: Dict) -> str:
                                 <!-- Position List -->
                                 <tr>
                                     <td style="padding-top: 20px;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1a1a24; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-                                            <tr style="background-color: #22222e;">
-                                                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;"></th>
-                                                <th style="padding: 12px 8px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Ticker</th>
-                                                <th style="padding: 12px 8px; text-align: right; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Return</th>
-                                                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b6b7b; letter-spacing: 0.5px;">Reason for Selling</th>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; border: 1px solid #e5e7eb;">
+                                            <tr style="background-color: #e5e7eb;">
+                                                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;"></th>
+                                                <th style="padding: 12px 8px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Ticker</th>
+                                                <th style="padding: 12px 8px; text-align: right; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Return</th>
+                                                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Reason for Selling</th>
                                             </tr>
                                             {position_rows}
                                         </table>
@@ -2182,8 +2339,8 @@ def _build_closed_positions_section(history: Dict) -> str:
                                 <tr>
                                     <td style="padding-top: 16px;">
                                         <div style="background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(212,175,55,0.02) 100%); border: 1px solid rgba(212,175,55,0.2); border-radius: 8px; padding: 14px 18px;">
-                                            <span style="font-size: 13px; color: #d4af37;">💡 <strong>Learning from history:</strong></span>
-                                            <span style="font-size: 13px; color: #a0a0b0;"> Claude reviews these closed positions each run to avoid repeating mistakes and identify winning patterns.</span>
+                                            <span style="font-size: 13px; color: #b8860b;">💡 <strong>Learning from history:</strong></span>
+                                            <span style="font-size: 13px; color: #4b5563;"> Claude reviews these closed positions each run to avoid repeating mistakes and identify winning patterns.</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -2209,18 +2366,18 @@ def _build_sp500_comparison(history: Dict) -> str:
     return f'''
                     <!-- S&P 500 Comparison -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(212,175,55,0.03) 0%, transparent 100%);">
+                        <td style="padding: 32px; border-bottom: 1px solid #e5e7eb; background: linear-gradient(180deg, rgba(212,175,55,0.03) 0%, transparent 100%);">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">⚡</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">How We Compare to the Market</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #e5e7eb; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">⚡</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937; padding-left: 10px; vertical-align: middle;">How We Compare to the Market</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Since We Started</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; background-color: #e5e7eb; padding: 6px 10px; border-radius: 4px;">Since We Started</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -2231,18 +2388,18 @@ def _build_sp500_comparison(history: Dict) -> str:
                                     <td style="padding-top: 24px;">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
-                                                <td width="45%" style="background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, #1a1a24 100%); border: 1px solid rgba(212,175,55,0.4); border-radius: 16px; padding: 28px 20px; text-align: center;">
-                                                    <span style="display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #d4af37;">Stock Pulse Picks</span>
+                                                <td width="45%" style="background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, #f8f9fa 100%); border: 1px solid rgba(212,175,55,0.4); border-radius: 16px; padding: 28px 20px; text-align: center;">
+                                                    <span style="display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #b8860b;">Stock Pulse Picks</span>
                                                     <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: #00d4aa; padding-top: 8px;">+{our_return:.1f}%</span>
-                                                    <span style="display: block; font-size: 12px; color: #6b6b7b; padding-top: 4px;">Total Return</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b7280; padding-top: 4px;">Total Return</span>
                                                 </td>
                                                 <td width="10%" align="center">
-                                                    <span style="display: inline-block; font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #6b6b7b; background-color: #22222e; width: 48px; height: 48px; line-height: 48px; border-radius: 50%; text-align: center;">VS</span>
+                                                    <span style="display: inline-block; font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #6b7280; background-color: #e5e7eb; width: 48px; height: 48px; line-height: 48px; border-radius: 50%; text-align: center;">VS</span>
                                                 </td>
-                                                <td width="45%" style="background-color: #1a1a24; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 28px 20px; text-align: center;">
-                                                    <span style="display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b6b7b;">S&P 500 (Market)</span>
-                                                    <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: #a0a0b0; padding-top: 8px;">+{sp500_return:.1f}%</span>
-                                                    <span style="display: block; font-size: 12px; color: #6b6b7b; padding-top: 4px;">Total Return</span>
+                                                <td width="45%" style="background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px 20px; text-align: center;">
+                                                    <span style="display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b7280;">S&P 500 (Market)</span>
+                                                    <span style="display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 700; color: #4b5563; padding-top: 8px;">+{sp500_return:.1f}%</span>
+                                                    <span style="display: block; font-size: 12px; color: #6b7280; padding-top: 4px;">Total Return</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -2253,7 +2410,7 @@ def _build_sp500_comparison(history: Dict) -> str:
                                     <td style="padding-top: 24px;">
                                         <div style="background: linear-gradient(135deg, rgba(0,212,170,0.12) 0%, rgba(212,175,55,0.12) 100%); border: 1px solid rgba(0,212,170,0.3); border-radius: 10px; padding: 16px 24px; text-align: center;">
                                             <span style="font-size: 24px; vertical-align: middle;">🏆</span>
-                                            <span style="font-size: 16px; color: #f5f5f7; padding-left: 12px; vertical-align: middle;">We've made <strong style="color: #00d4aa; font-weight: 700;">+{outperformance:.1f}% more</strong> than if you just bought the market average</span>
+                                            <span style="font-size: 16px; color: #1f2937; padding-left: 12px; vertical-align: middle;">We've made <strong style="color: #00d4aa; font-weight: 700;">+{outperformance:.1f}% more</strong> than if you just bought the market average</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -2314,16 +2471,16 @@ def _build_retail_investor_section(retail_analysis: Dict[str, Any], portfolio_va
             
             tlh_rows += f'''
                 <tr>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                        <span style="font-weight: 600; color: #f5f5f7;">{t.get('ticker', 'N/A')}</span>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600; color: #1f2937;">{t.get('ticker', 'N/A')}</span>
                     </td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #ff6b6b;">
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; color: #ff6b6b;">
                         {loss_pct:.1f}%
                     </td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #4ade80;">
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; color: #4ade80;">
                         ~${tax_benefit:.0f}
                     </td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #8b8b8e; font-size: 12px;">
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; color: #8b8b8e; font-size: 12px;">
                         {similar_str}
                     </td>
                 </tr>'''
@@ -2365,10 +2522,10 @@ def _build_retail_investor_section(retail_analysis: Dict[str, Any], portfolio_va
             corr_val = _safe_float(p.get('correlation', 0))
             pairs_list += f'''
                 <tr>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                        <span style="color: #f5f5f7;">{p['pair'][0]}</span> / <span style="color: #f5f5f7;">{p['pair'][1]}</span>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb;">
+                        <span style="color: #1f2937;">{p['pair'][0]}</span> / <span style="color: #1f2937;">{p['pair'][1]}</span>
                     </td>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #fbbf24;">
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; color: #fbbf24;">
                         {corr_val:.0%}
                     </td>
                 </tr>'''
@@ -2404,16 +2561,16 @@ def _build_retail_investor_section(retail_analysis: Dict[str, Any], portfolio_va
             
             stop_rows += f'''
                 <tr>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                        <span style="font-weight: 600; color: #f5f5f7;">{ticker}</span>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600; color: #1f2937;">{ticker}</span>
                     </td>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #4ade80;">
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; color: #4ade80;">
                         +{gain:.1f}%
                     </td>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #8b8b8e;">
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; color: #8b8b8e;">
                         ${old_stop:.2f}
                     </td>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #4ade80; font-weight: 600;">
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; color: #4ade80; font-weight: 600;">
                         ${new_stop:.2f}
                     </td>
                 </tr>'''
@@ -2448,13 +2605,13 @@ def _build_retail_investor_section(retail_analysis: Dict[str, Any], portfolio_va
             
             squeeze_rows += f'''
                 <tr>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                        <span style="font-weight: 600; color: #f5f5f7;">{ticker}</span>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-weight: 600; color: #1f2937;">{ticker}</span>
                     </td>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #ff6b6b;">
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; color: #ff6b6b;">
                         {short_pct:.1f}%
                     </td>
-                    <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #4ade80;">
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; color: #4ade80;">
                         +{price_chg:.1f}%
                     </td>
                 </tr>'''
@@ -2493,10 +2650,10 @@ def _build_retail_investor_section(retail_analysis: Dict[str, Any], portfolio_va
                         <p style="margin: 8px 0; font-size: 12px; color: #8b8b8e;">{rotation.get('phase_description', '')}</p>
                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="font-size: 12px; margin-top: 8px;">
                             <tr>
-                                <td style="padding: 4px 0;"><span style="color: #4ade80;">✓ Favor:</span> <span style="color: #f5f5f7;">{rec_sectors}</span></td>
+                                <td style="padding: 4px 0;"><span style="color: #4ade80;">✓ Favor:</span> <span style="color: #1f2937;">{rec_sectors}</span></td>
                             </tr>
                             <tr>
-                                <td style="padding: 4px 0;"><span style="color: #ff6b6b;">✗ Avoid:</span> <span style="color: #f5f5f7;">{avoid_sectors}</span></td>
+                                <td style="padding: 4px 0;"><span style="color: #ff6b6b;">✗ Avoid:</span> <span style="color: #1f2937;">{avoid_sectors}</span></td>
                             </tr>
                         </table>
                     </td>
@@ -2511,7 +2668,7 @@ def _build_retail_investor_section(retail_analysis: Dict[str, Any], portfolio_va
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
-                                        <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7;">💰 Retail Investor Insights</span>
+                                        <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #1f2937;">💰 Retail Investor Insights</span>
                                         <p style="margin: 8px 0 24px 0; font-size: 13px; color: #8b8b8e;">Actionable intelligence specifically for individual investors</p>
                                     </td>
                                 </tr>
@@ -2534,17 +2691,17 @@ def _build_footer() -> str:
     return '''
                     <!-- Footer -->
                     <tr>
-                        <td style="padding: 32px; background-color: #0a0a0f; text-align: center;">
+                        <td style="padding: 32px; background-color: #f4f4f4; text-align: center;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td align="center">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                             <tr>
-                                                <td style="width: 32px; height: 32px; background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border-radius: 6px; text-align: center; vertical-align: middle;">
-                                                    <span style="font-family: Georgia, serif; font-weight: 700; font-size: 16px; color: #0a0a0f;">SP</span>
+                                                <td style="width: 32px; height: 32px; background: linear-gradient(135deg, #b8860b 0%, #f4d03f 50%, #b8860b 100%); border-radius: 6px; text-align: center; vertical-align: middle;">
+                                                    <span style="font-family: Georgia, serif; font-weight: 700; font-size: 16px; color: #f4f4f4;">SP</span>
                                                 </td>
                                                 <td style="padding-left: 10px;">
-                                                    <span style="font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #f5f5f7;">Stock Pulse</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #1f2937;">Stock Pulse</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -2552,7 +2709,7 @@ def _build_footer() -> str:
                                 </tr>
                                 <tr>
                                     <td align="center" style="padding-top: 20px;">
-                                        <span style="font-size: 11px; color: #6b6b7b; line-height: 1.6; max-width: 500px; display: inline-block;">This newsletter is for informational purposes only and should not be considered financial advice. Past performance does not guarantee future results. Always conduct your own research before making investment decisions.</span>
+                                        <span style="font-size: 11px; color: #6b7280; line-height: 1.6; max-width: 500px; display: inline-block;">This newsletter is for informational purposes only and should not be considered financial advice. Past performance does not guarantee future results. Always conduct your own research before making investment decisions.</span>
                                     </td>
                                 </tr>
                             </table>
