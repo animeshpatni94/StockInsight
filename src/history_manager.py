@@ -5,6 +5,7 @@ Handles loading, saving, and updating portfolio state across months.
 
 import json
 import os
+import yfinance as yf
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
@@ -12,6 +13,53 @@ from collections import defaultdict
 
 from config import PATHS, ALLOCATION_RULES
 from data_fetcher import get_current_prices
+
+
+def get_spy_return_from_inception(inception_date: str, spy_inception_price: float = None) -> Tuple[float, float, float]:
+    """
+    Calculate SPY return from portfolio inception date to now.
+    
+    Args:
+        inception_date: Portfolio start date (YYYY-MM-DD format)
+        spy_inception_price: Cached SPY price at inception (if available)
+    
+    Returns:
+        Tuple of (spy_return_pct, spy_inception_price, spy_current_price)
+    """
+    try:
+        spy = yf.Ticker('SPY')
+        
+        # Get current SPY price
+        current_data = spy.history(period='1d')
+        if current_data.empty:
+            return 0.0, 0.0, 0.0
+        spy_current = current_data['Close'].iloc[-1]
+        
+        # If we have cached inception price, use it
+        if spy_inception_price and spy_inception_price > 0:
+            spy_return = ((spy_current / spy_inception_price) - 1) * 100
+            return round(spy_return, 2), spy_inception_price, round(spy_current, 2)
+        
+        # Otherwise fetch historical price at inception
+        inception_dt = datetime.strptime(inception_date, '%Y-%m-%d')
+        # Fetch a few days around inception in case market was closed
+        hist = spy.history(start=inception_dt, period='5d')
+        
+        if hist.empty:
+            # Fallback: try broader range
+            hist = spy.history(start=inception_date, end=datetime.now().strftime('%Y-%m-%d'))
+        
+        if hist.empty:
+            return 0.0, 0.0, round(spy_current, 2)
+        
+        spy_inception = hist['Close'].iloc[0]
+        spy_return = ((spy_current / spy_inception) - 1) * 100
+        
+        return round(spy_return, 2), round(spy_inception, 2), round(spy_current, 2)
+        
+    except Exception as e:
+        print(f"  Warning: Could not calculate SPY return from inception: {e}")
+        return 0.0, 0.0, 0.0
 
 
 def load_history(file_path: Optional[str] = None) -> Dict:
@@ -55,6 +103,16 @@ def _validate_and_fix_history(history: Dict) -> Dict:
     Called automatically when loading history.
     """
     needs_recalc = False
+    metadata = history.get('metadata', {})
+    
+    # Backfill SPY inception price for existing portfolios
+    if 'spy_inception_price' not in metadata or metadata.get('spy_inception_price', 0) == 0:
+        inception_date = metadata.get('created', datetime.now().strftime('%Y-%m-%d'))
+        _, spy_inception_price, _ = get_spy_return_from_inception(inception_date)
+        if spy_inception_price > 0:
+            metadata['spy_inception_price'] = spy_inception_price
+            print(f"  Backfilled SPY inception price: ${spy_inception_price:.2f} (from {inception_date})")
+            needs_recalc = True
     
     # Fix duplicate months in history
     monthly = history.get('monthly_history', [])
@@ -142,12 +200,17 @@ def _create_empty_history() -> Dict:
     Returns:
         Empty portfolio history dictionary
     """
+    # Get SPY price at inception for accurate benchmark tracking
+    today = datetime.now().strftime('%Y-%m-%d')
+    _, spy_inception_price, _ = get_spy_return_from_inception(today)
+    
     return {
         "metadata": {
             "created": datetime.now().strftime('%Y-%m-%d'),
             "last_updated": datetime.now().strftime('%Y-%m-%d'),
             "total_months": 0,
-            "starting_capital": 100000
+            "starting_capital": 100000,
+            "spy_inception_price": spy_inception_price  # Track SPY price at portfolio start
         },
         "current_portfolio": [],
         "cash": {
@@ -622,9 +685,18 @@ def _calculate_portfolio_return(portfolio: List[Dict], cash_allocation_pct: floa
 
 
 def _update_performance_summary(history: Dict) -> Dict:
-    """Update cumulative performance summary using proper compound returns."""
+    """
+    Update cumulative performance summary.
+    
+    Portfolio return: Calculated from LIVE portfolio value (current prices)
+    SPY return: Calculated from inception date to now for accurate benchmark comparison
+    
+    Both are now aligned to the same time period: inception → now
+    """
     closed = history.get('closed_positions', [])
     monthly = history.get('monthly_history', [])
+    metadata = history.get('metadata', {})
+    portfolio = history.get('current_portfolio', [])
     
     # Use a small threshold for breakeven - trades within +/- 0.5% are considered breakeven
     # Only count as win if > 0.5%, only count as loss if < -0.5%
@@ -633,21 +705,60 @@ def _update_performance_summary(history: Dict) -> Dict:
     losses = [c for c in closed if c.get('return_pct', 0) < -breakeven_threshold]
     # Note: trades between -0.5% and +0.5% are breakeven and don't count toward win/loss
     
-    # FIXED: Use compound returns instead of simple sum
-    # Compound formula: (1 + r1) * (1 + r2) * ... * (1 + rn) - 1
-    portfolio_compound = 1.0
-    sp500_compound = 1.0
+    # Calculate portfolio total return from LIVE current prices (not stale monthly snapshot)
+    starting_capital = metadata.get('starting_capital', 100000)
     
-    for m in monthly:
-        portfolio_return = m.get('portfolio_return_pct', 0) / 100  # Convert to decimal
-        sp500_return_month = m.get('sp500_return_pct', 0) / 100
+    if portfolio:
+        # Get live prices for all holdings
+        tickers = [h['ticker'] for h in portfolio if h.get('ticker')]
+        current_prices = get_current_prices(tickers) if tickers else {}
         
-        portfolio_compound *= (1 + portfolio_return)
-        sp500_compound *= (1 + sp500_return_month)
+        # Calculate actual current portfolio value
+        current_value = 0
+        for h in portfolio:
+            ticker = h.get('ticker')
+            alloc_pct = h.get('allocation_pct', 0)
+            invested_amount = starting_capital * (alloc_pct / 100)
+            entry_price = h.get('recommended_price', 0)
+            current_price = current_prices.get(ticker, entry_price)
+            
+            if entry_price > 0 and current_price > 0:
+                position_value = invested_amount * (current_price / entry_price)
+                current_value += position_value
+        
+        # Add any remaining allocation as cash (unchanged value)
+        total_alloc = sum(h.get('allocation_pct', 0) for h in portfolio)
+        cash_pct = 100 - total_alloc
+        if cash_pct > 0:
+            current_value += starting_capital * (cash_pct / 100)
+        
+        total_return = ((current_value / starting_capital) - 1) * 100
+        
+        # Store the live value for reference
+        metadata['live_portfolio_value'] = round(current_value, 2)
+    elif monthly:
+        # Fallback to last recorded value if no portfolio
+        current_value = monthly[-1].get('ending_value', starting_capital)
+        total_return = ((current_value / starting_capital) - 1) * 100
+    else:
+        total_return = 0.0
     
-    # Convert back to percentage
-    total_return = (portfolio_compound - 1) * 100
-    sp500_return = (sp500_compound - 1) * 100
+    # Calculate SPY return from inception date (not compounded monthly returns)
+    # This gives accurate benchmark comparison over the same time period
+    inception_date = metadata.get('created', datetime.now().strftime('%Y-%m-%d'))
+    spy_inception_price = metadata.get('spy_inception_price', 0)
+    
+    sp500_return, new_spy_inception, spy_current = get_spy_return_from_inception(
+        inception_date, 
+        spy_inception_price
+    )
+    
+    # Update SPY inception price in metadata if we just fetched it
+    if new_spy_inception > 0 and spy_inception_price == 0:
+        metadata['spy_inception_price'] = new_spy_inception
+    
+    # Store current SPY price for reference
+    metadata['spy_current_price'] = spy_current
     
     avg_win = sum(w.get('return_pct', 0) for w in wins) / len(wins) if wins else 0
     avg_loss = sum(l.get('return_pct', 0) for l in losses) / len(losses) if losses else 0
