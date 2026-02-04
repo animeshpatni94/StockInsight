@@ -328,6 +328,7 @@ class MarketScanner:
                             'ticker': ticker,
                             'name': info.get('name'),
                             'sector': info.get('sector'),
+                            'current_price': info.get('current_price'),  # Add current price
                             'current_volume': int(current_volume),
                             'avg_volume': int(avg_volume),
                             'volume_ratio': round(volume_ratio, 2),
