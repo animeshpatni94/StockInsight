@@ -609,6 +609,7 @@ def analyze_with_claude(analysis_input: Dict,
 def _format_analysis_prompt(analysis_input: Dict) -> str:
     """
     Format all analysis data into a structured prompt.
+    OPTIMIZED: Uses compact CSV-style format to fit within 200k token limit.
     
     Args:
         analysis_input: Raw analysis data
@@ -618,611 +619,297 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
     """
     sections = []
     
-    # Current date
-    sections.append(f"## ANALYSIS DATE: {analysis_input.get('current_date', 'Unknown')}\n")
+    # Current date - compact
+    sections.append(f"DATE: {analysis_input.get('current_date', 'Unknown')}")
     
-    # ==================== BIWEEKLY BUDGET ====================
+    # ==================== BIWEEKLY BUDGET - COMPACT ====================
     fresh_budget = BIWEEKLY_INVESTMENT_BUDGET
     sections.append(f"""
-## 💰 BIWEEKLY INVESTMENT BUDGET
-
-**Fresh Investment Capital This Period**: ${fresh_budget:,}
-
-This is NEW MONEY to invest, on top of existing holdings.
-- Existing holdings = already invested, just need HOLD/SELL review
-- This ${fresh_budget:,} = fresh capital to deploy into new or existing positions
-
-🔴 YOUR TASK:
-1. Review each existing holding → HOLD, TRIM, or SELL
-2. Deploy the ${fresh_budget:,} fresh budget into the best opportunities
-3. If you SELL/TRIM positions, that cash adds to the fresh budget pool
-4. Express new recommendations as DOLLAR AMOUNTS (e.g., "Invest $400 in NVDA")
-""")
+## BUDGET: ${fresh_budget:,} fresh capital to deploy
+Task: 1) Review holdings→HOLD/TRIM/SELL 2) Deploy ${fresh_budget:,} into best opportunities""")
     
-    # ==================== INVESTOR PROFILE ====================
+    # ==================== INVESTOR PROFILE - COMPACT ====================
     years_to_retirement = USER_PROFILE.get('years_to_retirement', 33)
     current_age = USER_PROFILE.get('current_age', 32)
     risk_tolerance = USER_PROFILE.get('risk_tolerance', 'high')
     investment_style = USER_PROFILE.get('investment_style', 'growth')
     stock_to_etf_ratio = USER_PROFILE.get('stock_to_etf_ratio', '70:30')
-    include_small_caps = USER_PROFILE.get('include_small_caps', True)
-    include_international = USER_PROFILE.get('include_international', True)
     
     sections.append(f"""
-## 🎯 INVESTOR PROFILE
-
-**Age**: {current_age} | **Retirement**: {USER_PROFILE.get('retirement_age', 65)} | **Years to Retirement**: {years_to_retirement}
-**Risk Tolerance**: {risk_tolerance.upper()} | **Investment Style**: {investment_style.upper()}
-**Portfolio Mix**: {stock_to_etf_ratio} (Individual Stocks : ETFs)
-**Small Caps**: {'✅ Yes' if include_small_caps else '❌ No'} | **International**: {'✅ Yes' if include_international else '❌ No'}
-
-**Financial Situation**: Strong - No debts, emergency fund covered, 401k handled separately.
-**Focus**: AGGRESSIVE GROWTH. This portfolio is for maximum wealth building over {years_to_retirement} years.
-
-🔴 IMPORTANT FOR YOUR RECOMMENDATIONS:
-- Prioritize INDIVIDUAL STOCKS over ETFs ({stock_to_etf_ratio} ratio target)
-- Can tolerate 30-40% drawdowns for higher long-term returns
-- Include high-growth small/mid caps, not just mega-caps
-- International exposure welcome for diversification
-- Beat the S&P 500 - that's the benchmark!
-""")
+## INVESTOR: Age {current_age}, {years_to_retirement}yr to retire, {risk_tolerance.upper()} risk, {investment_style.upper()} style, {stock_to_etf_ratio} stocks:ETFs""")
     
-    # Current Portfolio
+    # Current Portfolio - COMPACT CSV FORMAT
     portfolio = analysis_input.get('current_portfolio', [])
     if portfolio:
-        sections.append("## CURRENT PORTFOLIO (Existing Holdings - Review for HOLD/SELL)")
-        sections.append("These are ALREADY INVESTED positions. Do NOT reallocate them - just decide: HOLD, TRIM, or SELL.")
+        sections.append("\n## PORTFOLIO (ticker,entry,current,gain%,invested,target,stop,status)")
         for h in portfolio:
-            # Calculate current value of the position
             investment_amount = h.get('investment_amount', 0)
-            allocation_pct = h.get('allocation_pct', 0)
             current_price = h.get('current_price') or 0
             entry_price = h.get('recommended_price') or 0
-            
-            # Estimate current value based on investment or allocation
-            if investment_amount > 0 and entry_price > 0 and current_price > 0:
-                shares = investment_amount / entry_price
-                current_value = shares * current_price
-            else:
-                current_value = investment_amount if investment_amount > 0 else 0
-            
-            sections.append(f"""
-**{h.get('ticker')}** - {h.get('company_name') or 'Unknown'}
-- Sector: {h.get('sector') or 'Unknown'}
-- Entry Price: ${entry_price:.2f}
-- Current Price: ${current_price:.2f}
-- Gain/Loss: {(h.get('gain_loss_pct') or 0):+.2f}%
-- Invested Amount: ${investment_amount:,.2f} (Current Value: ~${current_value:,.2f})
-- Price Target: ${(h.get('price_target') or 0):.2f}
-- Stop Loss: ${(h.get('stop_loss') or 0):.2f}
-- Thesis: {h.get('thesis') or 'N/A'}
-- Status: {h.get('status') or 'HOLD'}
-""")
+            gain_loss = h.get('gain_loss_pct') or 0
+            target = h.get('price_target') or 0
+            stop = h.get('stop_loss') or 0
+            status = h.get('status') or 'HOLD'
+            sections.append(f"{h.get('ticker')},{entry_price:.2f},{current_price:.2f},{gain_loss:+.1f}%,${investment_amount:.0f},{target:.2f},{stop:.2f},{status}")
     else:
         sections.append(f"## CURRENT PORTFOLIO: Empty - First run, deploy the full ${BIWEEKLY_INVESTMENT_BUDGET:,} budget!\n")
     
-    # Historical Performance
+    # Historical Performance - COMPACT
     perf = analysis_input.get('performance_summary', {})
     sections.append(f"""
-## TRACK RECORD (Since Inception)
-- **Total Return**: {(perf.get('total_return_pct', 0) or 0):.2f}%
-- **S&P 500 Return**: {(perf.get('sp500_total_return_pct', 0) or 0):.2f}%
-- **Alpha (You vs S&P)**: {(perf.get('total_alpha_pct', 0) or 0):+.2f}%
-- **Win Rate**: {(perf.get('win_rate_pct', 0) or 0):.1f}%
-- Average Win: {(perf.get('average_win_pct', 0) or 0):+.2f}%
-- Average Loss: {(perf.get('average_loss_pct', 0) or 0):.2f}%
-""")
+## TRACK RECORD: Return {(perf.get('total_return_pct', 0) or 0):.1f}% | S&P {(perf.get('sp500_total_return_pct', 0) or 0):.1f}% | Alpha {(perf.get('total_alpha_pct', 0) or 0):+.1f}% | Win {(perf.get('win_rate_pct', 0) or 0):.0f}%""")
     
-    # Risk Management Status (industry-standard drawdown protection)
+    # Risk Management Status - COMPACT
     risk_metrics = analysis_input.get('risk_metrics', {})
     if risk_metrics:
         status = risk_metrics.get('risk_status', 'NORMAL')
         metrics = risk_metrics.get('metrics', {})
         rules = risk_metrics.get('rules', {})
-        recommendations = risk_metrics.get('recommendations', [])
-        reasons = risk_metrics.get('risk_reasons', [])
-        
-        status_emoji = {
-            'NORMAL': '🟢',
-            'CAUTION': '🟡', 
-            'DEFENSIVE': '🟠',
-            'CRITICAL': '🔴'
-        }.get(status, '⚪')
         
         sections.append(f"""
-## ⚠️ RISK MANAGEMENT STATUS: {status_emoji} {status}
-
-### Current Metrics
-- Portfolio Value: ${(metrics.get('current_value', 100000) or 100000):,.2f}
-- Peak Value: ${(metrics.get('peak_value', 100000) or 100000):,.2f}
-- Drawdown from Peak: {(metrics.get('drawdown_pct', 0) or 0):.1f}%
-- Consecutive Losses: {metrics.get('consecutive_losses', 0) or 0}
-- Win Rate: {(metrics.get('win_rate_pct', 0) or 0):.1f}%
-- Alpha vs S&P 500: {(metrics.get('alpha_vs_sp500', 0) or 0):+.1f}%
-""")
-        
-        if reasons:
-            sections.append("### Risk Triggers Active")
-            for reason in reasons:
-                sections.append(f"- ⚠️ {reason}")
-        
-        sections.append(f"""
-### MANDATORY RULES FOR {status} MODE
-- Maximum position size: {rules.get('max_position_size', 15)}%
-- Minimum cash allocation: {rules.get('min_cash', 5)}%
-- Aggressive positions allowed: {'Yes' if rules.get('aggressive_allowed', True) else 'NO'}
-- Speculative positions allowed: {'Yes' if rules.get('speculative_allowed', True) else 'NO'}
-- Maximum new positions this period: {rules.get('max_new_positions', 5)}
-
-### Required Actions
-""")
-        for rec in recommendations:
-            sections.append(f"- {rec}")
-        
-        sections.append("")  # Empty line
+## RISK: {status} | Drawdown {(metrics.get('drawdown_pct', 0) or 0):.1f}% | MaxPos {rules.get('max_position_size', 15)}% | MinCash {rules.get('min_cash', 5)}%""")
     
-    # Closed Positions (lessons learned)
+    # Closed Positions - COMPACT
     closed = analysis_input.get('closed_positions', [])
     if closed:
-        sections.append("## RECENT CLOSED POSITIONS (Learn from these)")
-        for c in closed[-5:]:  # Last 5
-            sections.append(f"- {c.get('ticker')}: {c.get('return_pct', 0):+.2f}% | Reason: {c.get('reason', 'N/A')}")
+        sections.append("\n## CLOSED: " + " | ".join([f"{c.get('ticker')}:{c.get('return_pct', 0):+.1f}%" for c in closed[-5:]]))
     
-    # Market Data
+    # Market Data - COMPACT
     market = analysis_input.get('market_data', {})
     
-    # Indexes
+    # Indexes - single line
     if market.get('indexes'):
-        sections.append("\n## MARKET INDEXES")
-        for name, data in market['indexes'].items():
-            returns = data.get('returns', {})
-            current = data.get('current', 0) or 0
-            mo1 = returns.get('1mo', 0) or 0
-            ytd = returns.get('ytd', 0) or 0
-            sections.append(f"- {name}: {current:.2f} | 1mo: {mo1:+.2f}% | YTD: {ytd:+.2f}%")
+        idx_str = " | ".join([f"{n.split()[0]}:{d.get('returns', {}).get('1mo', 0) or 0:+.1f}%" for n, d in list(market['indexes'].items())[:4]])
+        sections.append(f"\n## INDEXES: {idx_str}")
     
-    # Sectors
+    # Sectors - compact
     if market.get('sectors'):
-        sections.append("\n## SECTOR PERFORMANCE")
-        for sector, data in market['sectors'].items():
-            returns = data.get('returns', {})
-            rs = data.get('relative_strength_3mo', 0) or 0
-            mo1 = returns.get('1mo', 0) or 0
-            sections.append(f"- {sector} ({data.get('etf')}): 1mo {mo1:+.2f}% | RS: {rs:+.2f}")
+        sect_str = " | ".join([f"{s[:4]}:{d.get('returns', {}).get('1mo', 0) or 0:+.1f}%" for s, d in market['sectors'].items()])
+        sections.append(f"## SECTORS: {sect_str}")
     
-    # Commodities - Show dynamic data from screens
+    # Commodities - COMPACT
     if market.get('commodities'):
-        sections.append("\n## COMMODITIES & METALS")
-        sections.append("For commodity exposure, consider both ETFs and individual miners/producers from the screens below:")
-        for name, data in market['commodities'].items():
-            returns = data.get('returns', {})
-            current = data.get('current', 0) or 0
-            mo1 = returns.get('1mo', 0) or 0
-            sections.append(f"- {name}: ${current:.2f} | 1mo: {mo1:+.2f}%")
+        comm_str = " | ".join([f"{n}:${d.get('current', 0) or 0:.0f}({d.get('returns', {}).get('1mo', 0) or 0:+.0f}%)" for n, d in market['commodities'].items()])
+        sections.append(f"## COMMODITIES: {comm_str}")
     
-    # Growth/Thematic ETFs
+    # Growth/Thematic ETFs - COMPACT
     growth_etfs = market.get('growth_etfs', {})
     if growth_etfs:
-        sections.append("\n## 🚀 GROWTH & THEMATIC ETF PERFORMANCE")
-        sections.append("Use these for sector trends - but prefer individual stocks within hot themes:")
+        etf_parts = []
         for theme, etfs in growth_etfs.items():
             etf_data = list(etfs.values())
             if etf_data:
                 best_etf = max(etf_data, key=lambda x: x.get('returns', {}).get('1mo', 0) or 0)
                 ticker = [k for k, v in etfs.items() if v == best_etf][0]
-                returns = best_etf.get('returns', {})
-                current = best_etf.get('current', 0) or 0
-                mo1 = returns.get('1mo', 0) or 0
-                sections.append(f"- {theme}: {ticker} @ ${current:.2f} | 1mo: {mo1:+.2f}%")
+                mo1 = best_etf.get('returns', {}).get('1mo', 0) or 0
+                etf_parts.append(f"{theme[:6]}:{ticker}({mo1:+.0f}%)")
+        sections.append(f"## THEMATIC ETFs: {' | '.join(etf_parts)}")
     
-    # Macro indicators
+    # Macro - COMPACT
     macro = market.get('macro', {})
     if macro:
         vix = macro.get('vix', {})
-        sections.append(f"""
-## MACRO INDICATORS & VOLATILITY CONTEXT
-### VIX (Fear Index)
-- Current: {vix.get('current', 'N/A')}
-- 30-day Average: {vix.get('avg_30d', 'N/A')}
-- 1-year Average: {vix.get('avg_1y', 'N/A')}
-- 1-year Range: {vix.get('low_1y', 'N/A')} - {vix.get('high_1y', 'N/A')}
-- Alert Level: {vix.get('alert_level', 'NORMAL')} {vix.get('alert_emoji', '')}
-- Recommendation: {vix.get('recommendation', 'Normal conditions')}
-
-### Dollar & Yields
-- Dollar (UUP): {macro.get('dollar', {}).get('trend', 'N/A')}
-""")
+        sections.append(f"## VIX: {vix.get('current', 'N/A')} ({vix.get('alert_level', 'NORMAL')})")
     
-    # Market News & Geopolitical Context (from Yahoo Finance)
+    # Market News - COMPACT (just headlines)
     market_news = market.get('market_news', [])
     if market_news:
-        sections.append("\n## 📰 LATEST MARKET & GEOPOLITICAL NEWS (Yahoo Finance)")
-        sections.append("Consider these headlines when evaluating sectors and stocks:\n")
-        for news in market_news[:12]:
-            geo_tag = "🌍 " if news.get('is_geopolitical') else ""
-            title = news.get('title', 'No title')
-            publisher = news.get('publisher', 'Unknown')
-            related = news.get('related_tickers', [])
-            related_str = f" [{', '.join(related[:3])}]" if related else ""
-            sections.append(f"- {geo_tag}**{title}** — {publisher}{related_str}")
-        sections.append("\n⚠️ Factor these news items into your risk assessment and thesis.")
+        sections.append("\n## NEWS (top 8):")
+        for news in market_news[:8]:
+            title = news.get('title', '')[:80]
+            sections.append(f"- {title}")
     
-    # Historical context (5-year perspective to reduce recency bias)
+    # Historical context - COMPACT
     historical = market.get('historical_context', {})
     if historical:
-        sections.append("\n## 5-YEAR HISTORICAL CONTEXT (Reduce Recency Bias)")
-        
-        # P/E context
         pe_context = historical.get('sp500_pe_context', {})
         if pe_context.get('current_pe'):
-            sections.append(f"""
-### S&P 500 Valuation
-- Current P/E: {pe_context.get('current_pe', 'N/A')}
-- Historical Average P/E: {pe_context.get('historical_avg', 17)}
-- Deviation from Average: {pe_context.get('deviation_from_avg', 0):+.1f}%
-- Assessment: {pe_context.get('assessment', 'unknown').upper()}
-""")
-        
-        # 5-year sector performance
-        sector_5yr = historical.get('sector_5yr_performance', {})
-        if sector_5yr:
-            sections.append("### 5-Year Sector Performance (Annualized)")
-            sorted_sectors = sorted(sector_5yr.items(), key=lambda x: x[1].get('avg_annual_5y', 0), reverse=True)
-            for sector, data in sorted_sectors[:5]:
-                sections.append(f"- {sector}: {data.get('avg_annual_5y', 0):+.1f}%/yr (5yr total: {data.get('return_5y', 0):+.1f}%)")
-            sections.append("... (Top 5 shown)")
-        
-        # Historical VIX
-        hist_vix = historical.get('historical_vix', {})
-        if hist_vix:
-            sections.append(f"""
-### Historical VIX Context
-- 5-year Average: {hist_vix.get('avg_5y', 'N/A')}
-- 5-year Range: {hist_vix.get('min_5y', 'N/A')} - {hist_vix.get('max_5y', 'N/A')}
-- Current vs 5yr Avg: {hist_vix.get('current_vs_5y_avg', 0):+.1f}%
-""")
+            sections.append(f"## S&P P/E: {pe_context.get('current_pe', 'N/A')} (avg {pe_context.get('historical_avg', 17)}, {pe_context.get('assessment', 'unknown')})")
     
-    # Earnings Calendar Warnings
+    # Earnings Calendar - COMPACT
     earnings = analysis_input.get('earnings_calendar', {})
     if earnings:
-        sections.append(f"\n## ⚠️ UPCOMING EARNINGS ({len(earnings)} stocks)")
-        sections.append("Be cautious recommending these stocks - earnings volatility risk:")
-        for ticker, data in list(earnings.items())[:10]:
-            sections.append(f"- {ticker}: Earnings in {data.get('days_until', '?')} days ({data.get('earnings_date', 'TBD')})")
+        earn_str = " ".join([f"{t}:{d.get('days_until', '?')}d" for t, d in list(earnings.items())[:15]])
+        sections.append(f"## EARNINGS SOON: {earn_str}")
     
-    # Screen Results - WITH REAL PRICES (yfinance is source of truth)
+    # Screen Results - COMPACT CSV FORMAT
     screens = analysis_input.get('screen_results', {})
     
-    sections.append("""
-## 🔴 CRITICAL: REAL-TIME PRICE DATA
-The prices shown below are REAL MARKET PRICES from Yahoo Finance (yfinance).
-YOU MUST USE THESE EXACT PRICES when making recommendations.
-DO NOT use prices from your training data - they are outdated.
-Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
-""")
+    sections.append("\n## SCREENS (USE THESE REAL PRICES)")
     
     if screens.get('momentum'):
-        sections.append("\n## MOMENTUM SCREENS")
-        
+        # GAINERS: ticker:$price(+ret%)
         gainers = screens['momentum'].get('top_gainers', [])
         if gainers:
-            sections.append("Top Gainers (1mo):")
-            for g in gainers:
-                price = g.get('current_price', 0) or 0
-                ret = g.get('return_pct', 0) or 0
-                sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Return: {ret:+.2f}%")
+            g_str = " ".join([f"{g.get('ticker')}:${g.get('current_price', 0) or 0:.0f}({g.get('return_pct', 0) or 0:+.0f}%)" for g in gainers])
+            sections.append(f"GAINERS: {g_str}")
         
+        # LOSERS
         losers = screens['momentum'].get('top_losers', [])
         if losers:
-            sections.append("Top Losers (potential value):")
-            for l in losers:
-                price = l.get('current_price', 0) or 0
-                ret = l.get('return_pct', 0) or 0
-                sections.append(f"  - {l.get('ticker')}: ${price:.2f} | Return: {ret:+.2f}%")
+            l_str = " ".join([f"{l.get('ticker')}:${l.get('current_price', 0) or 0:.0f}({l.get('return_pct', 0) or 0:+.0f}%)" for l in losers])
+            sections.append(f"LOSERS: {l_str}")
         
+        # 52W HIGHS
         breakouts = screens['momentum'].get('52w_high_breakouts', [])
         if breakouts:
-            sections.append("52-Week High Breakouts:")
-            for b in breakouts:
-                price = b.get('current_price', 0) or 0
-                sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
+            b_str = " ".join([f"{b.get('ticker')}:${b.get('current_price', 0) or 0:.0f}" for b in breakouts])
+            sections.append(f"52W_HIGHS: {b_str}")
         
+        # 52W LOWS
         bounces = screens['momentum'].get('52w_low_bounces', [])
         if bounces:
-            sections.append("52-Week Low Bounces:")
-            for b in bounces:
-                price = b.get('current_price', 0) or 0
-                sections.append(f"  - {b.get('ticker')}: ${price:.2f}")
+            bo_str = " ".join([f"{b.get('ticker')}:${b.get('current_price', 0) or 0:.0f}" for b in bounces])
+            sections.append(f"52W_LOWS: {bo_str}")
         
+        # UNUSUAL VOLUME
         volume = screens['momentum'].get('unusual_volume', [])
         if volume:
-            sections.append("Unusual Volume:")
-            for v in volume:
-                price = v.get('current_price', 0) or 0
-                vol_ratio = v.get('volume_ratio', 0) or 0
-                sections.append(f"  - {v.get('ticker')}: ${price:.2f} | Vol ratio: {vol_ratio:.1f}x")
+            v_str = " ".join([f"{v.get('ticker')}:${v.get('current_price', 0) or 0:.0f}({v.get('volume_ratio', 0) or 0:.0f}x)" for v in volume])
+            sections.append(f"HIGH_VOL: {v_str}")
     
     if screens.get('fundamental'):
-        sections.append("\n## FUNDAMENTAL SCREENS")
-        
+        # VALUE: ticker:$price,PE,EPS%
         value = screens['fundamental'].get('value_stocks', [])
         if value:
-            sections.append("Value Stocks (P/E<15, EPS growth>10%):")
-            for v in value:
-                price = v.get('current_price', 0) or 0
-                pe = v.get('pe_ratio', 0) or 0
-                eps_growth = v.get('earnings_growth', 0) or 0
-                div_yield = v.get('dividend_yield', 0) or 0
-                sections.append(f"  - {v.get('ticker')}: ${price:.2f} | P/E {pe:.1f} | EPS +{eps_growth:.0f}% | Div {div_yield:.1f}%")
+            val_str = " ".join([f"{v.get('ticker')}:${v.get('current_price', 0) or 0:.0f},PE{v.get('pe_ratio', 0) or 0:.0f},E{v.get('earnings_growth', 0) or 0:+.0f}%" for v in value])
+            sections.append(f"VALUE: {val_str}")
         
+        # GROWTH: ticker:$price,Rev%,EPS%,PEG
         growth = screens['fundamental'].get('growth_stocks', [])
         if growth:
-            sections.append("Growth Stocks:")
-            for g in growth:
-                price = g.get('current_price', 0) or 0
-                rev_growth = g.get('revenue_growth', 0) or 0
-                eps_growth = g.get('earnings_growth', 0) or 0
-                peg = g.get('peg_ratio', 0) or 0
-                roe = g.get('roe', 0) or 0
-                score = g.get('growth_score', 0) or 0
-                sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Rev +{rev_growth:.0f}% | EPS +{eps_growth:.0f}% | PEG {peg:.2f} | ROE {roe:.0f}% | Score {score}")
+            gr_str = " ".join([f"{g.get('ticker')}:${g.get('current_price', 0) or 0:.0f},R{g.get('revenue_growth', 0) or 0:+.0f}%,E{g.get('earnings_growth', 0) or 0:+.0f}%,PEG{g.get('peg_ratio', 0) or 0:.1f}" for g in growth])
+            sections.append(f"GROWTH: {gr_str}")
         
+        # GARP stocks
+        garp = screens['fundamental'].get('garp_stocks', [])
+        if garp:
+            garp_str = " ".join([f"{g.get('ticker')}:${g.get('current_price', 0) or 0:.0f},PEG{g.get('peg_ratio', 0) or 0:.1f}" for g in garp])
+            sections.append(f"GARP: {garp_str}")
+        
+        # DIVIDEND: ticker:$price,Yield%
         dividend = screens['fundamental'].get('dividend_stocks', [])
         if dividend:
-            sections.append("Dividend Stocks (>3% yield):")
-            for d in dividend:
-                price = d.get('current_price', 0) or 0
-                div_yield = d.get('dividend_yield', 0) or 0
-                payout = d.get('payout_ratio', 0) or 0
-                pe = d.get('pe_ratio', 0) or 0
-                sections.append(f"  - {d.get('ticker')}: ${price:.2f} | Yield: {div_yield:.2f}% | Payout {payout:.0f}% | P/E {pe:.1f}")
+            div_str = " ".join([f"{d.get('ticker')}:${d.get('current_price', 0) or 0:.0f},Y{d.get('dividend_yield', 0) or 0:.1f}%" for d in dividend])
+            sections.append(f"DIVIDEND: {div_str}")
     
     if screens.get('technical'):
-        sections.append("\n## TECHNICAL SCREENS")
-        
+        # OVERSOLD: ticker:$price,RSI
         oversold = screens['technical'].get('oversold', [])
         if oversold:
-            sections.append("Oversold (RSI < 30):")
-            for o in oversold:
-                price = o.get('current_price', 0) or 0
-                rsi = o.get('rsi', 0) or 0
-                sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {rsi:.1f}")
+            os_str = " ".join([f"{o.get('ticker')}:${o.get('current_price', 0) or 0:.0f},RSI{o.get('rsi', 0) or 0:.0f}" for o in oversold])
+            sections.append(f"OVERSOLD: {os_str}")
         
+        # OVERBOUGHT
         overbought = screens['technical'].get('overbought', [])
         if overbought:
-            sections.append("Overbought (RSI > 70):")
-            for o in overbought:
-                price = o.get('current_price', 0) or 0
-                rsi = o.get('rsi', 0) or 0
-                sections.append(f"  - {o.get('ticker')}: ${price:.2f} | RSI {rsi:.1f}")
+            ob_str = " ".join([f"{o.get('ticker')}:${o.get('current_price', 0) or 0:.0f},RSI{o.get('rsi', 0) or 0:.0f}" for o in overbought])
+            sections.append(f"OVERBOUGHT: {ob_str}")
         
+        # GOLDEN CROSSES
         golden = screens['technical'].get('golden_crosses', [])
         if golden:
-            sections.append("Golden Crosses:")
-            for g in golden:
-                price = g.get('current_price', 0) or 0
-                sections.append(f"  - {g.get('ticker')}: ${price:.2f}")
+            gc_str = " ".join([f"{g.get('ticker')}:${g.get('current_price', 0) or 0:.0f}" for g in golden])
+            sections.append(f"GOLDEN_CROSS: {gc_str}")
         
+        # DEATH CROSSES
         death = screens['technical'].get('death_crosses', [])
         if death:
-            sections.append("Death Crosses (avoid or short):")
-            for d in death:
-                price = d.get('current_price', 0) or 0
-                sections.append(f"  - {d.get('ticker')}: ${price:.2f}")
+            dc_str = " ".join([f"{d.get('ticker')}:${d.get('current_price', 0) or 0:.0f}" for d in death])
+            sections.append(f"DEATH_CROSS: {dc_str}")
     
-    # Politician Trades
+    # Politician Trades - COMPACT
     pol_trades = analysis_input.get('politician_trades', [])
     flagged = analysis_input.get('flagged_trades', [])
     
     if pol_trades:
-        sections.append(f"\n## POLITICIAN TRADES ({len(pol_trades)} recent trades)")
-        
-        # Show all trades to Claude
-        sections.append("Recent congressional stock transactions:")
-        for t in pol_trades[:20]:  # Show up to 20 trades
-            sections.append(f"""
-- {t.get('politician', 'Unknown')} ({t.get('party', 'Unknown')}, {t.get('chamber', 'Unknown')})
-  {t.get('transaction_type', 'Unknown')} {t.get('ticker', 'N/A')} ({t.get('company', 'N/A')})
-  Amount: {t.get('amount', 'N/A')} | Date: {t.get('trade_date', 'N/A')}""")
+        sections.append(f"\n## POLITICIAN TRADES ({len(pol_trades)} trades)")
+        # Compact: Name(Party) Action TICKER $Amount
+        for t in pol_trades[:15]:
+            sections.append(f"{t.get('politician', '?')}({t.get('party', '?')}) {t.get('transaction_type', '?')} {t.get('ticker', '?')} {t.get('amount', '?')}")
         
         if flagged:
-            sections.append(f"\n⚠️ SUSPICIOUS TRADES ({len(flagged)} flagged for committee correlation):")
-            for f in flagged[:5]:
-                sections.append(f"""
-- {f.get('politician')} ({f.get('party')})
-  {f.get('transaction_type')} {f.get('ticker')} ({f.get('company')})
-  Amount: {f.get('amount')}
-  🚨 {f.get('correlation_reason')}
-""")
+            sections.append(f"FLAGGED: " + " | ".join([f"{f.get('politician')} {f.get('ticker')}" for f in flagged[:5]]))
     
-    # Just one rule
-    sections.append(f"""
-## ⛔ ONE RULE
-Max {ALLOCATION_RULES['single_stock_max']*100:.0f}% in any single stock. That's it.
-
-You're the advisor. Make the calls. Beat the S&P 500.
-""")
+    # Rule - COMPACT
+    sections.append(f"\n## RULE: Max {ALLOCATION_RULES['single_stock_max']*100:.0f}% per stock. Beat S&P 500.")
     
-    # Retail Investor Analysis Section
+    # Retail Investor Analysis Section - COMPACT
     retail = analysis_input.get('retail_analysis', {})
     if retail:
-        sections.append("\n## 💰 RETAIL INVESTOR ANALYSIS (ACTION REQUIRED)")
+        sections.append("\n## RETAIL ANALYSIS")
         
-        # Tax-Loss Harvesting Opportunities
+        # Tax-Loss Harvesting - compact
         tlh = retail.get('tax_loss_harvesting', [])
         if tlh:
-            high_priority = [t for t in tlh if t.get('priority') == 'HIGH']
-            sections.append(f"\n### 🏦 TAX-LOSS HARVESTING ({len(tlh)} opportunities, {len(high_priority)} HIGH priority)")
-            for t in tlh[:5]:
-                loss_pct = t.get('loss_pct', 0) or 0
-                tax_savings = t.get('estimated_tax_savings', 0) or 0
-                sections.append(f"""
-- **{t.get('ticker')}**: {loss_pct:.1f}% loss | Est. tax savings: ${tax_savings:.0f}
-  Priority: {t.get('priority')} | {'SHORT-TERM (32% tax benefit)' if t.get('is_short_term') else 'LONG-TERM (15% tax benefit)'}
-  Replacement options: {', '.join(t.get('similar_securities', [])[:3])}
-  {t.get('recommendation', '')}""")
+            tlh_str = " | ".join([f"{t.get('ticker')}:{t.get('loss_pct', 0) or 0:.0f}%loss" for t in tlh[:5]])
+            sections.append(f"TLH: {tlh_str}")
         
-        # Correlation Analysis
+        # Correlation - compact
         corr = retail.get('correlation_analysis', {})
         if corr.get('status') == 'SUCCESS':
-            sections.append(f"\n### 📊 PORTFOLIO CORRELATION")
             div_score = corr.get('diversification_score', 0) or 0
-            avg_corr = corr.get('average_correlation', 0) or 0
-            sections.append(f"- Diversification Score: {div_score:.0f}/100 ({corr.get('diversification_grade', 'N/A')})")
-            sections.append(f"- Average Correlation: {avg_corr:.2f}")
-            
             high_corr = corr.get('high_correlation_pairs', [])
-            if high_corr:
-                sections.append("- ⚠️ HIGHLY CORRELATED PAIRS (>80%):")
-                for p in high_corr[:3]:
-                    sections.append(f"  - {p['pair'][0]} / {p['pair'][1]}: {p['correlation']:.0%} correlated")
-            
-            for rec in corr.get('recommendations', []):
-                sections.append(f"  {rec}")
+            corr_str = " ".join([f"{p['pair'][0]}/{p['pair'][1]}:{p['correlation']:.0%}" for p in high_corr[:3]])
+            sections.append(f"CORRELATION: DivScore {div_score:.0f}/100 | HighCorr: {corr_str}")
         
-        # Liquidity Warnings
+        # Liquidity Warnings - compact
         liq_warnings = retail.get('liquidity_warnings', [])
         if liq_warnings:
-            sections.append(f"\n### 💧 LIQUIDITY WARNINGS ({len(liq_warnings)} stocks)")
-            for w in liq_warnings[:5]:
-                sections.append(f"- {w.get('ticker')}: {w.get('warning', 'Low liquidity')}")
+            liq_str = " ".join([w.get('ticker') for w in liq_warnings[:5]])
+            sections.append(f"LOW_LIQUIDITY: {liq_str}")
         
-        # Trailing Stop Recommendations
-        trailing = retail.get('trailing_stops', [])
-        profitable_unprotected = [t for t in trailing if 'UNPROTECTED' in t.get('status', '')]
-        if profitable_unprotected:
-            sections.append(f"\n### 🛡️ TRAILING STOP UPDATES NEEDED")
-            for t in profitable_unprotected[:5]:
-                gain_pct = t.get('gain_pct', 0) or 0
-                orig_stop = t.get('original_stop', 0) or 0
-                trail_stop = t.get('trailing_stop', 0) or 0
-                sections.append(f"- {t.get('ticker')}: +{gain_pct:.1f}% gain, current stop ${orig_stop:.2f}")
-                sections.append(f"  → Recommended: Raise stop to ${trail_stop:.2f} ({t.get('action', '')})")
-        
-        # Short Interest Signals
+        # Short Interest - compact
         short = retail.get('short_interest', [])
         squeeze_candidates = [s for s in short if s.get('potential_squeeze')]
-        high_short = [s for s in short if (s.get('short_pct_of_float', 0) or 0) >= 20]
-        if squeeze_candidates or high_short:
-            sections.append(f"\n### 🎯 SHORT INTEREST SIGNALS")
-            if squeeze_candidates:
-                sections.append("POTENTIAL SQUEEZES:")
-                for s in squeeze_candidates[:3]:
-                    short_pct = s.get('short_pct_of_float', 0) or 0
-                    price_chg = s.get('price_change_1mo', 0) or 0
-                    sections.append(f"- 🚀 {s.get('ticker')}: {short_pct:.1f}% short, +{price_chg:.1f}% this month")
-            if high_short:
-                sections.append("HIGH SHORT INTEREST (caution):")
-                for s in high_short[:3]:
-                    short_pct = s.get('short_pct_of_float', 0) or 0
-                    sections.append(f"- ⚠️ {s.get('ticker')}: {short_pct:.1f}% short | {s.get('analysis', '')}")
+        if squeeze_candidates:
+            sq_str = " ".join([f"{s.get('ticker')}:{s.get('short_pct_of_float', 0) or 0:.0f}%short" for s in squeeze_candidates[:3]])
+            sections.append(f"SQUEEZE_CANDIDATES: {sq_str}")
         
-        # Sector Rotation
+        # Sector Rotation - compact
         rotation = retail.get('sector_rotation', {})
         if rotation.get('status') == 'SUCCESS':
-            sections.append(f"\n### 🔄 SECTOR ROTATION PHASE: {rotation.get('current_phase', 'Unknown')}")
-            sections.append(f"{rotation.get('phase_description', '')}")
-            sections.append(f"- Recommended Sectors: {', '.join(rotation.get('recommended_sectors', []))}")
-            sections.append(f"- Avoid: {', '.join(rotation.get('sectors_to_avoid', []))}")
-        
-        # Fee Impact
-        fees = retail.get('fee_analysis', {})
-        if fees.get('status') == 'SUCCESS' and fees.get('high_fee_holdings'):
-            sections.append(f"\n### 💸 HIGH FEE ALERT")
-            weighted_exp = fees.get('portfolio_weighted_expense_pct', 0) or 0
-            fee_drag = fees.get('5yr_total_fee_drag_pct', 0) or 0
-            sections.append(f"Portfolio weighted expense: {weighted_exp:.2f}%")
-            sections.append(f"5-year fee drag: {fee_drag:.1f}%")
-            for h in fees.get('high_fee_holdings', [])[:3]:
-                exp_ratio = h.get('expense_ratio', 0) or 0
-                sections.append(f"- {h.get('ticker')}: {exp_ratio:.2f}% annual | {h.get('warning', '')}")
-        
-        # Dividend Timing
-        div = retail.get('dividend_timing', {})
-        hold_recs = div.get('hold_recommendations', [])
-        if hold_recs:
-            sections.append(f"\n### 📅 DIVIDEND TIMING ({len(hold_recs)} upcoming)")
-            for d in hold_recs[:3]:
-                qtr_div = d.get('quarterly_dividend', 0) or 0
-                sections.append(f"- {d.get('ticker')}: Ex-div {d.get('ex_div_date')} | ${qtr_div:.2f}/share")
-                sections.append(f"  → {d.get('action', 'HOLD')}: {d.get('reason', '')}")
-        
-        # Priority Alerts Summary
-        alerts = retail.get('priority_alerts', [])
-        if alerts:
-            sections.append(f"\n### 🚨 PRIORITY ALERTS FOR RETAIL INVESTOR")
-            for a in alerts[:5]:
-                sections.append(f"- [{a.get('priority')}] {a.get('title')}")
-                sections.append(f"  Action: {a.get('action', '')}")
+            sections.append(f"ROTATION: {rotation.get('current_phase', '?')} | Buy: {','.join(rotation.get('recommended_sectors', [])[:3])} | Avoid: {','.join(rotation.get('sectors_to_avoid', [])[:2])}")
     
-    # Historical Financials Section (4-year trends)
-    # Show historical data for ALL stocks in screens to avoid bias
+    # Historical Financials Section - ULTRA COMPACT
+    # Format: TICKER:Rev[y1,y2,y3,y4]|EPS[y1,y2,y3,y4]|Growth[g1,g2,g3]
     hist_fin = analysis_input.get('historical_financials', {})
     if hist_fin:
-        sections.append(f"\n## 📈 4-YEAR HISTORICAL FINANCIALS ({len(hist_fin)} tickers)")
-        sections.append("Use these trends to validate growth stories and spot red flags.")
-        sections.append("Historical data is provided for ALL stocks shown in screens above - no selection bias.")
+        sections.append(f"\n## HISTORICAL FINANCIALS ({len(hist_fin)} tickers)")
+        sections.append("Format: TICKER Rev[B]→→→→ | EPS[$]→→→→ | Growth[%]→→→")
         
-        for ticker, data in hist_fin.items():  # Show ALL stocks with historical data
+        for ticker, data in hist_fin.items():
             periods = data.get('periods', [])
             if not periods:
                 continue
-                
-            sections.append(f"\n### {ticker}")
-            sections.append(f"Periods: {' → '.join(str(p) for p in periods)}")
             
-            # Revenue trend
+            # Build compact string
+            parts = [ticker]
+            
+            # Revenue (in billions, rounded)
             rev = data.get('revenue_history', [])
             if rev and any(r is not None for r in rev):
-                rev_str = ' → '.join([f"${r:.1f}B" if r else "N/A" for r in rev])
-                sections.append(f"Revenue: {rev_str}")
+                rev_vals = ','.join([f"{r:.0f}" if r else "-" for r in rev])
+                parts.append(f"R[{rev_vals}]")
             
-            # Net Income trend
-            ni = data.get('net_income_history', [])
-            if ni and any(n is not None for n in ni):
-                ni_str = ' → '.join([f"${n:.2f}B" if n else "N/A" for n in ni])
-                sections.append(f"Net Income: {ni_str}")
-            
-            # EPS trend  
+            # EPS
             eps = data.get('eps_history', [])
             if eps and any(e is not None for e in eps):
-                eps_str = ' → '.join([f"${e:.2f}" if e else "N/A" for e in eps])
-                sections.append(f"EPS: {eps_str}")
+                eps_vals = ','.join([f"{e:.2f}" if e else "-" for e in eps])
+                parts.append(f"E[{eps_vals}]")
             
-            # FCF trend
-            fcf = data.get('fcf_history', [])
-            if fcf and any(f is not None for f in fcf):
-                fcf_str = ' → '.join([f"${f:.2f}B" if f else "N/A" for f in fcf])
-                sections.append(f"Free Cash Flow: {fcf_str}")
-            
-            # Revenue growth trend
+            # Revenue growth
             growth = data.get('revenue_growth_trend', [])
             if growth and any(g is not None for g in growth):
-                growth_str = ' → '.join([f"{g:+.1f}%" if g else "N/A" for g in growth])
-                sections.append(f"Revenue Growth YoY: {growth_str}")
+                gr_vals = ','.join([f"{g:+.0f}" if g else "-" for g in growth])
+                parts.append(f"G[{gr_vals}]")
+            
+            if len(parts) > 1:
+                sections.append(" ".join(parts))
     
-    # Final instruction
+    # Final instruction - COMPACT
     sections.append("""
-## YOUR TASK
-Based on all the above data:
-1. Review each current holding - HOLD, SELL, or TRIM?
-2. Identify 3-7 NEW recommendations across asset classes
-3. Ensure all allocations comply with diversification rules
-4. Analyze politician trades for signals
-5. Assess macro regime and adjust accordingly
-6. **USE HISTORICAL FINANCIALS**: Check 4-year trends before recommending any stock
-   - Validate growth claims with actual revenue/EPS trends
-   - Favor consistent growers over one-hit wonders
-   - Watch for margin compression or FCF deterioration
-7. **FOR RETAIL INVESTOR - Include in your response:**
-   - Tax-loss harvesting recommendations (if applicable)
-   - Trailing stop updates for profitable positions
-   - DCA entry suggestions for new positions
-   - Liquidity warnings for any illiquid recommendations
-   - Correlation concerns if adding correlated positions
-
-Respond with valid JSON following the output format specified in your instructions.
-""")
+## TASK: 1)Review holdings 2)10-15 new picks 3)Use real prices above 4)JSON response""")
     
     return "\n".join(sections)
 
