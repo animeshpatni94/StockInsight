@@ -938,14 +938,14 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
         if value:
             sections.append("Value Stocks (P/E<15, EPS growth>10%):")
             for v in value:
-                price = v.get('current_price', 0)
-                pe = v.get('pe_ratio', 0)
-                fwd_pe = v.get('forward_pe', 0)
-                ev_ebitda = v.get('ev_to_ebitda', 0)
-                fcf = v.get('free_cashflow', 0)
+                price = v.get('current_price', 0) or 0
+                pe = v.get('pe_ratio', 0) or 0
+                fwd_pe = v.get('forward_pe', 0) or 0
+                ev_ebitda = v.get('ev_to_ebitda', 0) or 0
+                fcf = v.get('free_cashflow', 0) or 0
                 fcf_str = f"FCF ${fcf/1e9:.1f}B" if fcf else ""
-                analyst = v.get('analyst_recommendation', '')
-                target = v.get('target_mean_price', 0)
+                analyst = v.get('analyst_recommendation', '') or ''
+                target = v.get('target_mean_price', 0) or 0
                 target_str = f"Target ${target:.0f}" if target else ""
                 sections.append(f"  - {v.get('ticker')}: ${price:.2f} | P/E {pe:.1f} (Fwd {fwd_pe:.1f}) | EV/EBITDA {ev_ebitda:.1f} | {fcf_str} | {analyst} {target_str}")
         
@@ -953,12 +953,12 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
         if growth:
             sections.append("Growth Stocks:")
             for g in growth:
-                price = g.get('current_price', 0)
-                rev_growth = g.get('revenue_growth', 0)
-                qtr_growth = g.get('earnings_quarterly_growth', 0)
-                peg = g.get('peg_ratio', 0)
-                analyst = g.get('analyst_recommendation', '')
-                target = g.get('target_mean_price', 0)
+                price = g.get('current_price', 0) or 0
+                rev_growth = g.get('revenue_growth', 0) or 0
+                qtr_growth = g.get('earnings_quarterly_growth', 0) or 0
+                peg = g.get('peg_ratio', 0) or 0
+                analyst = g.get('analyst_recommendation', '') or ''
+                target = g.get('target_mean_price', 0) or 0
                 target_str = f"Target ${target:.0f}" if target else ""
                 sections.append(f"  - {g.get('ticker')}: ${price:.2f} | Rev growth {rev_growth:.1f}% | Q/Q EPS {qtr_growth:.1f}% | PEG {peg:.2f} | {analyst} {target_str}")
         
@@ -966,10 +966,10 @@ Your entry_zone, price_target, and stop_loss MUST be based on these real prices.
         if dividend:
             sections.append("Dividend Stocks (>3% yield):")
             for d in dividend:
-                price = d.get('current_price', 0)
-                div_yield = d.get('dividend_yield', 0)
-                payout = d.get('payout_ratio', 0)
-                ex_div = d.get('ex_dividend_date', '')
+                price = d.get('current_price', 0) or 0
+                div_yield = d.get('dividend_yield', 0) or 0
+                payout = d.get('payout_ratio', 0) or 0
+                ex_div = d.get('ex_dividend_date', '') or ''
                 sections.append(f"  - {d.get('ticker')}: ${price:.2f} | Yield: {div_yield:.2f}% | Payout {payout:.0f}% | Ex-div: {ex_div}")
     
     if screens.get('technical'):
