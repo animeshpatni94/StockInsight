@@ -80,6 +80,15 @@ SECTORS = {
 # (largest, most liquid) that rarely change - similar to using SPY for S&P 500.
 
 # =============================================================================
+# BIWEEKLY INVESTMENT BUDGET
+# =============================================================================
+# This is the fresh money available to invest each biweekly run.
+# It represents NEW capital on top of existing investments.
+# Existing holdings should be evaluated for HOLD/SELL.
+# New recommendations should only spend this fresh budget.
+BIWEEKLY_INVESTMENT_BUDGET = 1000  # $1,000 fresh investment each run
+
+# =============================================================================
 # GUARDRAILS - Minimal. Let Claude be the advisor.
 # =============================================================================
 ALLOCATION_RULES = {

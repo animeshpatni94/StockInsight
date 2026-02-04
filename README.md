@@ -2,6 +2,53 @@
 
 AI-powered **bi-weekly** stock analysis with portfolio memory, politician trade tracking, risk management, and actionable recommendations designed specifically for **retail investors**.
 
+## 💰 Biweekly Fresh Budget System
+
+Every time the agent runs, you invest **$1,000 fresh money** on top of your existing holdings:
+
+| Category | Budget | Actions |
+|----------|--------|---------|
+| **Existing Holdings** | Already invested | HOLD / SELL / TRIM / ADD |
+| **New Picks** | Fresh $1,000 | BUY new positions |
+
+### How It Works
+
+1. **Fresh Money Each Run**: You add $1,000 new capital every 2 weeks
+2. **Review Existing Holdings**: Claude analyzes your current positions and recommends:
+   - **HOLD** — Keep the position as-is
+   - **SELL** — Exit completely (take profits or cut losses)
+   - **TRIM** — Reduce position size (e.g., sell 50%)
+   - **ADD** — Double down using fresh budget money
+3. **Allocate New Budget**: The fresh $1,000 is distributed across:
+   - New stock picks (never owned before)
+   - Adding to existing winners (ADD action)
+
+### Example Allocation
+
+```
+Fresh Budget: $1,000
+├── NVDA (ADD to existing position): $300
+├── PLTR (NEW BUY): $250
+├── SOFI (NEW BUY): $200
+├── MSTR (NEW speculative): $150
+└── CELH (NEW growth): $100
+```
+
+### ADD (Double Down) Support
+
+When Claude recommends "ADD" on an existing position:
+- Uses money from your fresh $1,000 budget
+- Tracks weighted average cost basis
+- Maintains complete add history with dates and amounts
+
+### Configuration
+
+Set your biweekly budget in `src/config.py`:
+
+```python
+BIWEEKLY_INVESTMENT_BUDGET = 1000  # Fresh money to invest each run
+```
+
 ## ✨ Features
 
 ### Core Analysis
@@ -214,12 +261,12 @@ The email uses a **dark-theme-first design** that looks great in both light and 
 | 📊 **Market Pulse** | Major indices with % changes |
 | 📰 **News Sentiment** | AI-analyzed sentiment for recommended stocks |
 | 📊 **Performance Attribution** | What moved your portfolio this period |
-| 💼 **Current Holdings** | Real-time P&L with status indicators |
-| 🎯 **Action Plan** | BUY/HOLD/SELL/TRIM with allocation bar |
-| 📊 **Stock Picks** | Detailed cards with position sizing |
+| 💼 **Existing Holdings** | Real-time P&L with HOLD/SELL/TRIM/ADD status |
+| 🎯 **Action Plan** | BUY/HOLD/SELL/TRIM with allocation guidance |
+| 💰 **New Picks** | Fresh $1,000 budget allocation (up to 15 stocks) |
 | 📅 **Dividend Calendar** | Upcoming ex-dividend dates |
 | 💰 **Retail Insights** | Tax harvesting, correlation, stops, squeezes |
-| 🏛️ **Politician Trades** | Congressional trading activity |
+| 🏛️ **Politician Trades** | Congressional trading activity (up to 10 trades) |
 | 📈 **Recommendation Tracker** | Win rate and historical performance |
 | ⚡ **S&P 500 Comparison** | Portfolio vs benchmark |
 

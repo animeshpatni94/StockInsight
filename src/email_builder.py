@@ -451,13 +451,18 @@ def _build_holdings_analysis_section(current_portfolio: List[Dict], current_valu
                                             <tr>
                                                 <td>
                                                     <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💼</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Current Holdings</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">Your Existing Holdings</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">{len(current_portfolio)} Positions</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #ffd93d; background-color: rgba(255,217,61,0.15); padding: 6px 10px; border-radius: 4px;">REVIEW: Hold / Sell / Trim</span>
                                                 </td>
                                             </tr>
                                         </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 12px; padding-bottom: 8px;">
+                                        <span style="font-size: 14px; color: #a0a0b0;">These are your <strong style="color: #f5f5f7;">already invested</strong> positions from previous runs. Check the status column for recommended action.</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -1261,7 +1266,7 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
                                                     <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">This Week's Action Plan</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">What To Do With Your Money</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">Fresh $1,000 Budget</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -1269,7 +1274,7 @@ def _build_action_plan(recommendations: List[Dict], allocation: Dict, analysis_r
                                 </tr>
                                 <tr>
                                     <td style="padding-top: 20px; padding-bottom: 24px;">
-                                        <span style="font-size: 16px; color: #a0a0b0; line-height: 1.6;">If you have <strong style="color: #f5f5f7;">$1,000 to invest</strong> (or any amount), here's exactly how we recommend splitting it up this week:</span>
+                                        <span style="font-size: 16px; color: #a0a0b0; line-height: 1.6;">Your <strong style="color: #00d4aa;">fresh $1,000 biweekly budget</strong> is here! Below shows how to invest your new money. Your existing holdings are reviewed separately (hold/sell).</span>
                                     </td>
                                 </tr>
                                 {allocation_bar}
@@ -1294,27 +1299,32 @@ def _build_stock_picks(recommendations: List[Dict], analysis_result: Dict, curre
         return ""
     
     stock_cards = ""
-    for rec in all_recs[:5]:  # Limit to 5 picks
+    for rec in all_recs[:15]:  # Show up to 15 picks
         stock_cards += _build_stock_card(rec, current_value)
     
     return f'''
                     <!-- This Week's Picks -->
                     <tr>
-                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <td style="padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(0,212,170,0.03) 0%, transparent 100%);">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td>
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
                                                 <td>
-                                                    <span style="display: inline-block; width: 32px; height: 32px; background-color: #22222e; border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">📊</span>
-                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">This Week's Picks</span>
+                                                    <span style="display: inline-block; width: 32px; height: 32px; background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%); border-radius: 8px; text-align: center; line-height: 32px; font-size: 16px; vertical-align: middle;">💰</span>
+                                                    <span style="font-family: Georgia, serif; font-size: 22px; font-weight: 600; color: #f5f5f7; padding-left: 10px; vertical-align: middle;">New Picks — Fresh $1,000 Budget</span>
                                                 </td>
                                                 <td align="right">
-                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6b6b7b; background-color: #22222e; padding: 6px 10px; border-radius: 4px;">{len(all_recs)} Calls</span>
+                                                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #00d4aa; background-color: rgba(0,212,170,0.15); padding: 6px 10px; border-radius: 4px;">BUY with new money</span>
                                                 </td>
                                             </tr>
                                         </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 12px; padding-bottom: 8px;">
+                                        <span style="font-size: 14px; color: #a0a0b0;">Deploy your <strong style="color: #00d4aa;">fresh $1,000</strong> into these new opportunities. This is NEW money on top of your existing holdings.</span>
                                     </td>
                                 </tr>
                                 {stock_cards}
@@ -1333,7 +1343,11 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
     target = rec.get("price_target", rec.get("target_price", rec.get("target", None)))
     stop_loss = rec.get("stop_loss", None)
     thesis = rec.get("thesis", rec.get("reason", rec.get("rationale", rec.get("summary", ""))))
+    
+    # Support both dollar-based (investment_amount) and percentage-based (allocation_pct)
+    investment_amount = rec.get("investment_amount", 0)
     allocation = rec.get("allocation_pct", rec.get("allocation", 10))
+    
     pe_ratio = rec.get("pe_ratio", rec.get("pe", "N/A"))
     market_cap = rec.get("market_cap", rec.get("marketCap", "N/A"))
     ytd_return = rec.get("ytd_return", rec.get("ytd", rec.get("change_pct", 0)))
@@ -1344,7 +1358,11 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
         badge_bg = "rgba(0,212,170,0.12)"
         badge_border = "rgba(0,212,170,0.3)"
         badge_text = "Strong Buy" if "STRONG" in action else "Buy"
-        tag_text = f"Recommended allocation: <strong>{allocation}% of your investment money</strong>"
+        # Prefer dollar amount if available, otherwise use percentage
+        if investment_amount > 0:
+            tag_text = f"Invest: <strong>${investment_amount:,.0f}</strong> from your fresh budget"
+        else:
+            tag_text = f"Recommended allocation: <strong>{allocation}% of your investment money</strong>"
     elif "SELL" in action:
         badge_color = "#ff6b6b"
         badge_bg = "rgba(255,107,107,0.12)"
@@ -1356,7 +1374,7 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
         badge_bg = "rgba(255,217,61,0.12)"
         badge_border = "rgba(255,217,61,0.3)"
         badge_text = "Hold"
-        tag_text = f"If you already own it: <strong>Keep your {allocation}% position, don't add more</strong>"
+        tag_text = f"Keep your existing position — <strong>no new purchase needed</strong>"
     
     # Format price
     price_str = f"${price:,.2f}" if isinstance(price, (int, float)) and price > 0 else "N/A"
@@ -1382,9 +1400,14 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
     # Position sizing calculations
     position_sizing_box = ""
     if "BUY" in action and price and isinstance(price, (int, float)) and price > 0:
-        investment_amount = current_value * (allocation / 100)
-        shares_to_buy = int(investment_amount / price)
-        actual_investment = shares_to_buy * price
+        # Use investment_amount if provided (dollar-based), otherwise calculate from allocation
+        if investment_amount > 0:
+            actual_investment = investment_amount
+        else:
+            actual_investment = current_value * (allocation / 100)
+        
+        shares_to_buy = int(actual_investment / price)
+        actual_investment = shares_to_buy * price  # Adjust for whole shares
         
         # Calculate potential profit if target hit
         if target and isinstance(target, (int, float)) and target > 0:
@@ -1405,7 +1428,7 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
                                             <tr>
                                                 <td style="padding-top: 16px;">
                                                     <div style="background-color: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25); border-radius: 8px; padding: 16px;">
-                                                        <span style="display: block; font-size: 13px; font-weight: 600; color: #d4af37; margin-bottom: 12px;">🎯 Position Sizing (Based on ${current_value:,.0f} Portfolio)</span>
+                                                        <span style="display: block; font-size: 13px; font-weight: 600; color: #d4af37; margin-bottom: 12px;">💰 How to Execute This Trade</span>
                                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                             <tr>
                                                                 <td width="25%">
@@ -1543,7 +1566,7 @@ def _build_politicians_section(politicians: List[Dict]) -> str:
         return ""
     
     trade_rows = ""
-    for trade in politicians[:5]:
+    for trade in politicians[:10]:  # Show up to 10 trades
         name = trade.get("politician", trade.get("name", "Unknown"))
         role = trade.get("role", trade.get("position", "Representative"))
         party = trade.get("party", "")
@@ -1678,7 +1701,7 @@ def _build_recommendation_tracker(history: Dict, current_value: float = 100000) 
     
     # Build portfolio rows with dollar amounts
     portfolio_rows = ""
-    for holding in current_portfolio[:5]:
+    for holding in current_portfolio[:15]:  # Show up to 15 holdings
         ticker = holding.get("ticker", holding.get("symbol", "N/A"))
         company = holding.get("company_name", holding.get("company", ticker))
         rec_price = holding.get("recommended_price", holding.get("entry_price", 0))

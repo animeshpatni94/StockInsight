@@ -8,11 +8,27 @@ import json
 from typing import Dict, Any, Optional
 from anthropic import Anthropic
 
-from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, CLAUDE_THINKING_BUDGET, ALLOCATION_RULES, USER_PROFILE
+from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, CLAUDE_THINKING_BUDGET, ALLOCATION_RULES, USER_PROFILE, BIWEEKLY_INVESTMENT_BUDGET
 
 
 SYSTEM_PROMPT = """
 You are a seasoned portfolio manager and investment strategist with 20+ years of experience managing wealth for high-net-worth clients. Your approach combines rigorous fundamental analysis, technical awareness, and macro insight to deliver institutional-quality advice.
+
+## 🔴 CRITICAL: BIWEEKLY FRESH INVESTMENT BUDGET
+This portfolio operates on a BIWEEKLY investment schedule with FRESH money each run:
+- **Fresh Budget This Period**: The user has a FIXED $1,000 (or specified amount) to invest THIS RUN
+- **Existing Holdings**: The current portfolio represents ALREADY INVESTED money - review for HOLD/SELL only
+- **DO NOT reallocate existing holdings** - they stay at their current dollar amounts
+- **New recommendations** should ONLY spend the fresh $1,000 budget
+
+### How to Handle:
+1. **Existing Holdings**: Review each for HOLD, TRIM, or SELL based on thesis/performance
+   - If HOLD: No action needed, they keep their current invested amount
+   - If TRIM: Specify how much to sell (this cash goes to the fresh budget pool)
+   - If SELL: Exit fully (proceeds go to fresh budget pool)
+2. **New Recommendations**: Allocate the $1,000 fresh budget (plus any SELL/TRIM proceeds)
+   - Express allocations as DOLLAR AMOUNTS, not portfolio percentages
+   - Example: "Buy $400 of NVDA, $350 of GOOGL, $250 of XLK"
 
 ## 🔴 CRITICAL: USE REAL MARKET PRICES ONLY
 The market data provided to you contains REAL-TIME PRICES from Yahoo Finance (yfinance).
@@ -43,6 +59,31 @@ Recommend a MIX of individual stocks AND ETFs with this balance:
 - Recommend ONLY ETFs - always include individual stock picks
 - Suggest bond ETFs (TLT, SHY) for an aggressive growth portfolio unless hedging
 - Over-diversify with 10+ ETFs - be selective
+- Be too conservative - this is an AGGRESSIVE portfolio!
+
+## 🔴 CRITICAL: MIX OF SAFE + SPECULATIVE PICKS
+For an aggressive growth portfolio, ALWAYS include a mix:
+
+### Your $1,000 Budget Should Include:
+1. **Core Position ($400-500)**: Blue-chip growth stock with strong momentum (NVDA, GOOGL, AMZN, etc.)
+2. **Growth Play ($300-400)**: High-growth mid-cap with 20%+ revenue growth
+3. **Speculative Bet ($100-200)**: High-risk/high-reward pick that could 5-10x
+
+### Speculative Picks to Consider:
+- **Emerging AI/Tech**: Small-cap AI companies, semiconductor equipment, cloud disruptors
+- **Biotech**: Pre-approval drugs with upcoming catalysts
+- **Clean Energy**: Solar, EV, battery tech with growth potential
+- **Fintech Disruptors**: Payment tech, crypto-adjacent, DeFi plays
+- **Small-Cap Gems**: Companies under $5B market cap with explosive growth
+- **Turnaround Stories**: Beaten-down stocks with improving fundamentals
+- **IPO/Recent Listings**: New public companies with momentum
+
+### Risk Levels to Include:
+- Conservative: 20-30% of budget (safe compounders)
+- Moderate: 40-50% of budget (growth with reasonable risk)
+- Aggressive/Speculative: 20-30% of budget (moonshots)
+
+🎯 Remember: With 33+ years to retirement, a 50% loss on a $200 speculative bet is recoverable, but missing a 10-bagger is a huge opportunity cost!
 
 ## 🔴 CRITICAL: CONSIDER GEOPOLITICAL NEWS
 The Yahoo Finance news feed is provided to you. Consider:
@@ -59,9 +100,10 @@ Factor these into your thesis and risk assessment for each recommendation.
 - **Asymmetric Risk/Reward**: Seek 3:1 or better upside/downside ratios.
 - **Concentration in Conviction**: Willing to bet big on high-conviction ideas.
 - **Small Caps Welcome**: Emerging companies can become 10-baggers.
+- **Speculative Bets Encouraged**: Allocate 20-30% to high-risk/high-reward plays.
 - **Catalysts Matter**: Earnings, product launches, M&A, regulatory approvals.
 - **Cut Losers, Let Winners Run**: Honor stop-losses, but give winners room to compound.
-- **Time Horizon is Long**: 34 years to retirement means volatility is opportunity.
+- **Time Horizon is Long**: 33+ years to retirement means volatility is opportunity.
 
 ## DATA YOU WILL ANALYZE
 You have access to comprehensive market intelligence:
@@ -127,7 +169,7 @@ Before recommending ANY stock, answer these questions:
 - **Investment Style**: growth | value | dividend | garp | speculative | hedge
 - **Risk Level**: conservative | moderate | aggressive
 - **Time Horizon**: short_term (1-3mo) | medium_term (3-12mo) | long_term (1-3yr)
-- **Allocation %**: Recommended portfolio weight
+- **Investment Amount**: Dollar amount from the fresh $1,000 budget (e.g., $400)
 - **Entry Zone**: Specific price range (e.g., $145-152)
 - **Price Target**: 12-month target with rationale
 - **Stop Loss**: Specific price level
@@ -135,7 +177,24 @@ Before recommending ANY stock, answer these questions:
 - **Key Catalyst**: What will move the stock (earnings, product launch, etc.)
 - **Primary Risk**: The biggest concern
 
-### ONE RULE: Max 15% in any single stock.
+### BUDGET ALLOCATION FOR NEW PICKS:
+The fresh biweekly budget is typically $1,000. Include a MIX of risk levels:
+
+**Example Allocation (aggressive portfolio):**
+- **$400-500**: Core growth stock (NVDA, GOOGL, AMZN) - moderate risk
+- **$300-400**: High-growth mid-cap or sector play - moderate/aggressive risk  
+- **$100-200**: Speculative moonshot (small-cap, biotech, emerging tech) - aggressive risk
+
+**MUST INCLUDE at least one speculative pick!** This is an aggressive portfolio.
+- Total new investments MUST equal the available budget
+- Don't be boring - include at least one exciting high-upside play
+
+### 🔄 DOUBLING DOWN (Adding to Winners):
+You CAN add more money to existing holdings if they're performing well!
+- In portfolio_review, set action="ADD" with add_amount (dollar amount to add)
+- Example: NVDA is up 15%, news is bullish → ADD $300 more from fresh budget
+- The cost basis will be recalculated as weighted average
+- This counts against the fresh $1,000 budget
 
 Everything else is your call. You're the financial advisor. Your job is to beat the S&P 500.
 
@@ -223,14 +282,31 @@ Structure your response as valid JSON:
     "summary": "2-3 sentence assessment",
     "implications": ["implication 1", "implication 2"]
   },
+  "fresh_budget": {
+    "available_amount": 1000,
+    "from_new_investment": 1000,
+    "from_sells": 0,
+    "from_trims": 0,
+    "total_to_deploy": 1000
+  },
   "portfolio_review": [
     {
       "ticker": "GOOGL",
       "current_price": 196.20,
+      "current_value": 1500.00,
       "gain_loss_pct": 9.9,
-      "action": "HOLD | SELL | TRIM",
-      "new_allocation_pct": 15,
+      "action": "HOLD | SELL | TRIM | ADD",
+      "add_amount": 0,
       "rationale": "Thesis intact because..."
+    },
+    {
+      "ticker": "NVDA",
+      "current_price": 920.00,
+      "current_value": 400.00,
+      "gain_loss_pct": 15.2,
+      "action": "ADD",
+      "add_amount": 300,
+      "rationale": "Doubling down - strong earnings, AI demand accelerating"
     }
   ],
   "sells": [
@@ -238,6 +314,7 @@ Structure your response as valid JSON:
       "ticker": "INTC",
       "reason": "Stop-loss hit, turnaround thesis failed",
       "loss_pct": -13.2,
+      "proceeds": 850.00,
       "lesson_learned": "Don't bottom-fish structurally challenged businesses"
     }
   ],
@@ -250,7 +327,7 @@ Structure your response as valid JSON:
       "investment_style": "value",
       "risk_level": "conservative",
       "time_horizon": "long_term",
-      "allocation_pct": 12,
+      "investment_amount": 400,
       "entry_zone": {"low": 285, "high": 295},
       "price_target": 340,
       "stop_loss": 255,
@@ -454,6 +531,24 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
     # Current date
     sections.append(f"## ANALYSIS DATE: {analysis_input.get('current_date', 'Unknown')}\n")
     
+    # ==================== BIWEEKLY BUDGET ====================
+    fresh_budget = BIWEEKLY_INVESTMENT_BUDGET
+    sections.append(f"""
+## 💰 BIWEEKLY INVESTMENT BUDGET
+
+**Fresh Investment Capital This Period**: ${fresh_budget:,}
+
+This is NEW MONEY to invest, on top of existing holdings.
+- Existing holdings = already invested, just need HOLD/SELL review
+- This ${fresh_budget:,} = fresh capital to deploy into new or existing positions
+
+🔴 YOUR TASK:
+1. Review each existing holding → HOLD, TRIM, or SELL
+2. Deploy the ${fresh_budget:,} fresh budget into the best opportunities
+3. If you SELL/TRIM positions, that cash adds to the fresh budget pool
+4. Express new recommendations as DOLLAR AMOUNTS (e.g., "Invest $400 in NVDA")
+""")
+    
     # ==================== INVESTOR PROFILE ====================
     years_to_retirement = USER_PROFILE.get('years_to_retirement', 33)
     current_age = USER_PROFILE.get('current_age', 32)
@@ -485,22 +580,36 @@ def _format_analysis_prompt(analysis_input: Dict) -> str:
     # Current Portfolio
     portfolio = analysis_input.get('current_portfolio', [])
     if portfolio:
-        sections.append("## CURRENT PORTFOLIO (Your previous recommendations)")
+        sections.append("## CURRENT PORTFOLIO (Existing Holdings - Review for HOLD/SELL)")
+        sections.append("These are ALREADY INVESTED positions. Do NOT reallocate them - just decide: HOLD, TRIM, or SELL.")
         for h in portfolio:
+            # Calculate current value of the position
+            investment_amount = h.get('investment_amount', 0)
+            allocation_pct = h.get('allocation_pct', 0)
+            current_price = h.get('current_price') or 0
+            entry_price = h.get('recommended_price') or 0
+            
+            # Estimate current value based on investment or allocation
+            if investment_amount > 0 and entry_price > 0 and current_price > 0:
+                shares = investment_amount / entry_price
+                current_value = shares * current_price
+            else:
+                current_value = investment_amount if investment_amount > 0 else 0
+            
             sections.append(f"""
 **{h.get('ticker')}** - {h.get('company_name') or 'Unknown'}
 - Sector: {h.get('sector') or 'Unknown'}
-- Entry Price: ${(h.get('recommended_price') or 0):.2f}
-- Current Price: ${(h.get('current_price') or 0):.2f}
+- Entry Price: ${entry_price:.2f}
+- Current Price: ${current_price:.2f}
 - Gain/Loss: {(h.get('gain_loss_pct') or 0):+.2f}%
-- Allocation: {(h.get('allocation_pct') or 0):.1f}%
+- Invested Amount: ${investment_amount:,.2f} (Current Value: ~${current_value:,.2f})
 - Price Target: ${(h.get('price_target') or 0):.2f}
 - Stop Loss: ${(h.get('stop_loss') or 0):.2f}
 - Thesis: {h.get('thesis') or 'N/A'}
 - Status: {h.get('status') or 'HOLD'}
 """)
     else:
-        sections.append("## CURRENT PORTFOLIO: Empty (100% Cash) - First run, build the portfolio!\n")
+        sections.append(f"## CURRENT PORTFOLIO: Empty - First run, deploy the full ${BIWEEKLY_INVESTMENT_BUDGET:,} budget!\n")
     
     # Historical Performance
     perf = analysis_input.get('performance_summary', {})

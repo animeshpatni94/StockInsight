@@ -375,20 +375,51 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
                     })
                 
                 # Handle ADD - update cost basis with weighted average
-                if action == 'ADD' and new_alloc > old_alloc:
-                    added_pct = new_alloc - old_alloc
+                # Support both dollar-based (add_amount) and percentage-based (new_allocation_pct)
+                if action == 'ADD':
+                    add_amount = review.get('add_amount', 0)  # Dollar amount to add
+                    old_investment = original.get('investment_amount', 0)
                     old_price = original.get('recommended_price', 0)
                     current_price = sold_prices.get(ticker) or original.get('current_price') or old_price
                     
-                    # Calculate new weighted average cost basis
-                    if old_alloc > 0 and old_price > 0:
-                        new_cost_basis = ((old_alloc * old_price) + (added_pct * current_price)) / new_alloc
+                    if add_amount > 0 and current_price > 0:
+                        # Dollar-based ADD
+                        new_investment = old_investment + add_amount
+                        
+                        # Calculate new weighted average cost basis
+                        if old_investment > 0 and old_price > 0:
+                            new_cost_basis = ((old_investment * old_price / old_price) + (add_amount)) / (old_investment / old_price + add_amount / current_price) if current_price > 0 else old_price
+                            # Simpler: weighted average based on shares
+                            old_shares = old_investment / old_price if old_price > 0 else 0
+                            new_shares = add_amount / current_price if current_price > 0 else 0
+                            total_shares = old_shares + new_shares
+                            if total_shares > 0:
+                                new_cost_basis = (old_investment + add_amount) / total_shares
+                            else:
+                                new_cost_basis = current_price
+                        else:
+                            new_cost_basis = current_price
+                        
                         original['recommended_price'] = round(new_cost_basis, 2)
+                        original['investment_amount'] = round(new_investment, 2)
                         original['add_history'] = original.get('add_history', []) + [{
                             'date': datetime.now().strftime('%Y-%m-%d'),
-                            'added_pct': added_pct,
+                            'added_amount': add_amount,
                             'price': round(current_price, 2)
                         }]
+                    elif new_alloc > old_alloc:
+                        # Percentage-based ADD (legacy support)
+                        added_pct = new_alloc - old_alloc
+                        
+                        # Calculate new weighted average cost basis
+                        if old_alloc > 0 and old_price > 0:
+                            new_cost_basis = ((old_alloc * old_price) + (added_pct * current_price)) / new_alloc
+                            original['recommended_price'] = round(new_cost_basis, 2)
+                            original['add_history'] = original.get('add_history', []) + [{
+                                'date': datetime.now().strftime('%Y-%m-%d'),
+                                'added_pct': added_pct,
+                                'price': round(current_price, 2)
+                            }]
                 
                 updated = {**original}
                 updated['allocation_pct'] = new_alloc
@@ -410,12 +441,35 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
     
     # Add new recommendations
     new_recs = analysis_result.get('new_recommendations', [])
+    
+    # Get total portfolio value for percentage calculations
+    monthly_history = history.get('monthly_history', [])
+    starting_capital = history['metadata'].get('starting_capital', 100000)
+    if monthly_history:
+        current_portfolio_value = monthly_history[-1].get('ending_value', starting_capital)
+    else:
+        current_portfolio_value = starting_capital
+    
     for rec in new_recs:
         # Use the actual recommended_price if set, otherwise use current_market_price,
         # otherwise fall back to entry_zone midpoint (not the low!)
         entry_zone = rec.get('entry_zone', {})
         entry_mid = (entry_zone.get('low', 0) + entry_zone.get('high', 0)) / 2 if entry_zone else 0
         rec_price = rec.get('recommended_price') or rec.get('current_market_price') or entry_mid
+        
+        # Handle both dollar-based (investment_amount) and percentage-based (allocation_pct)
+        investment_amount = rec.get('investment_amount', 0)
+        allocation_pct = rec.get('allocation_pct', 0)
+        
+        # If investment_amount is provided, calculate allocation_pct from it
+        if investment_amount > 0 and current_portfolio_value > 0:
+            allocation_pct = (investment_amount / current_portfolio_value) * 100
+        # If only allocation_pct is provided, calculate investment_amount
+        elif allocation_pct > 0 and current_portfolio_value > 0:
+            investment_amount = current_portfolio_value * (allocation_pct / 100)
+        
+        # Calculate shares based on investment amount and price
+        shares = int(investment_amount / rec_price) if rec_price > 0 else 0
         
         new_portfolio.append({
             'ticker': rec.get('ticker'),
@@ -428,8 +482,9 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
             'investment_style': rec.get('investment_style', 'value'),
             'risk_level': rec.get('risk_level', 'moderate'),
             'time_horizon': rec.get('time_horizon', 'medium_term'),
-            'allocation_pct': rec.get('allocation_pct', 0),
-            'shares': 0,  # Would need to calculate based on price and allocation
+            'allocation_pct': round(allocation_pct, 2),
+            'investment_amount': round(investment_amount, 2),
+            'shares': shares,
             'recommended_date': datetime.now().strftime('%Y-%m-%d'),
             'recommended_price': round(rec_price, 2),  # Use actual current price, not entry zone low
             'entry_zone': entry_zone,
