@@ -504,7 +504,8 @@ def update_history_with_month(history: Dict, analysis_result: Dict,
     history['cash']['allocation_pct'] = max(0, cash_alloc)
     
     # Add month to history - calculate return from OLD portfolio (what we held this month)
-    sp500_return = market_data.get('indexes', {}).get('S&P 500', {}).get('returns', {}).get('1mo', 0)
+    # Note: Index key in config is "S&P 500 (SPY)" not just "S&P 500"
+    sp500_return = market_data.get('indexes', {}).get('S&P 500 (SPY)', {}).get('returns', {}).get('1mo', 0)
     
     # Get cash info for proper return calculation
     cash_alloc = history.get('cash', {}).get('allocation_pct', 0)

@@ -180,14 +180,22 @@ Before recommending ANY stock, answer these questions:
 ### BUDGET ALLOCATION FOR NEW PICKS:
 The fresh biweekly budget is typically $1,000. Include a MIX of risk levels:
 
-**Example Allocation (aggressive portfolio):**
-- **$400-500**: Core growth stock (NVDA, GOOGL, AMZN) - moderate risk
-- **$300-400**: High-growth mid-cap or sector play - moderate/aggressive risk  
-- **$100-200**: Speculative moonshot (small-cap, biotech, emerging tech) - aggressive risk
+**REQUIRED: Recommend 5-7 new stock picks per run!** Don't be lazy with just 2-3 picks.
+- Diversify across different sectors and risk levels
+- Mix of large-cap, mid-cap, and small-cap opportunities
 
-**MUST INCLUDE at least one speculative pick!** This is an aggressive portfolio.
+**Example Allocation for $1,000 budget (aggressive portfolio):**
+- **$250-300**: Core large-cap growth (NVDA, GOOGL, AMZN) - moderate risk
+- **$200-250**: High-growth tech or sector leader - moderate risk
+- **$150-200**: Mid-cap momentum play - moderate/aggressive risk
+- **$100-150**: Emerging sector or thematic play - aggressive risk
+- **$100-150**: Speculative moonshot (small-cap, biotech, AI) - aggressive risk
+- **$50-100**: High-conviction spec play - aggressive risk
+
+**MUST INCLUDE at least 2 speculative picks!** This is an aggressive portfolio.
 - Total new investments MUST equal the available budget
-- Don't be boring - include at least one exciting high-upside play
+- Don't be boring - include multiple exciting high-upside plays
+- Smaller position sizes = more diversification = better risk management
 
 ### 🔄 DOUBLING DOWN (Adding to Winners):
 You CAN add more money to existing holdings if they're performing well!
