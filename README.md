@@ -32,14 +32,14 @@ Fresh Budget: $1,000 (spread across 10-15 positions)
 ├── GOOGL (Core position): $125
 ├── PLTR (Growth play): $100
 ├── AMD (Growth play): $100
-├── SOFI (Mid-cap momentum): $75
+├── BTC-USD (Crypto - Large cap): $100     ← NEW: Crypto
+├── ETH-USD (Crypto - Large cap): $75      ← NEW: Crypto
 ├── XLK (Sector ETF): $75
-├── MSTR (Speculative): $75
-├── CELH (Speculative): $75
+├── MSTR (Speculative): $50
+├── SOL-USD (Crypto - Mid cap): $50        ← NEW: Crypto
 ├── IONQ (Speculative AI): $50
 ├── RKLB (Small-cap growth): $50
-├── ARKG (Thematic ETF): $50
-└── DNA (Moonshot): $75
+└── ARKG (Thematic ETF): $75
 ```
 
 ### ADD (Double Down) Support
@@ -61,15 +61,25 @@ BIWEEKLY_INVESTMENT_BUDGET = 1000  # Fresh money to invest each run
 
 ### Core Analysis
 - **100% Dynamic Stock Universe**: Zero hardcoded stock lists - Yahoo Finance EquityQuery API screens 1,500+ stocks in real-time by market cap and sector
+- **🪙 Cryptocurrency Integration**: 150+ tradeable cryptocurrencies alongside stocks (BTC, ETH, SOL, etc.) with historical performance tracking
 - **Dynamic ETF Detection**: ETFs automatically identified via yfinance `quoteType` - no hardcoded ETF lists
-- **Full Market Coverage**: All 11 GICS sectors, mega-to-nano cap ($100M+), commodities, fixed income, international markets
+- **Full Market Coverage**: All 11 GICS sectors, mega-to-nano cap ($100M+), commodities, fixed income, international markets, AND crypto
 - **Real-Time Prices**: All prices sourced from yfinance - never uses stale training data
-- **10-15 Recommendations Per Run**: Diversified picks across sectors, risk levels, and market caps
+- **10-15 Recommendations Per Run**: Diversified picks across stocks, crypto, ETFs, sectors, and risk levels
 - **Portfolio Memory**: Tracks recommendations over time, calculates performance, learns from past trades
 - **Risk Management**: Industry-standard drawdown protection with automatic defensive modes
 - **Stop-Loss & Target Alerts**: Automatic detection when positions hit stop-loss or price targets
 - **Allocation Validation**: Auto-validates Claude's recommendations against allocation rules
 - **API Resilience**: Automatic retry with exponential backoff (3 retries) for network reliability
+
+### 🪙 Cryptocurrency Support (NEW)
+- **Dynamic Crypto Universe**: 150+ tradeable cryptocurrencies fetched from Yahoo Finance API
+- **Smart Filtering**: Automatically excludes stablecoins (USDT, USDC), wrapped tokens (WBTC), and low-cap coins (<$50M)
+- **Historical Performance**: Multi-year returns (1y, 2y, 3y), all-time high tracking, yearly performance breakdown
+- **Mixed Recommendations**: Claude recommends crypto alongside stocks in the same section
+- **Same Budget System**: Crypto uses the same $1,000 budget as stocks (10-20% suggested crypto allocation)
+- **Full P&L Tracking**: Crypto positions tracked identically to stocks with gain/loss vs S&P 500
+- **Portfolio History**: Complete transaction history for crypto including entry price, dates, and performance
 
 ### Retail Investor Focus 💰
 - **Tax-Loss Harvesting Detection**: Identifies positions for tax-efficient selling with replacement suggestions

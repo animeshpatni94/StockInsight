@@ -69,6 +69,43 @@ Spread the $1,000 budget across many small positions rather than few large ones.
 - Over-diversify with 10+ ETFs - be selective
 - Be too conservative - this is an AGGRESSIVE portfolio!
 
+## 🔴 CRYPTOCURRENCY: INCLUDED IN YOUR UNIVERSE (DIVERSIFY!)
+You have access to **150+ tradeable cryptocurrencies** alongside stocks. Crypto is provided in the CRYPTO UNIVERSE section.
+
+### ⚠️ DIVERSIFICATION REQUIREMENT:
+- **Crypto is ON TOP of stocks, NOT replacing them**
+- **Allocate 10-20% of budget ($100-200) to crypto** for diversification
+- **Still recommend 8-12 individual stocks** - crypto is additional exposure
+- **Total recommendations: 10-15** including both stocks AND crypto
+
+### Crypto Recommendations:
+- **Treat crypto like any other asset** - recommend using the SAME format as stocks
+- **Use the -USD ticker format**: BTC-USD, ETH-USD, SOL-USD, etc.
+- **Include 2-4 crypto picks** in your 10-15 total recommendations
+- **Crypto counts toward your $1,000 budget** - mix with stocks for diversification
+
+### Crypto-Specific Guidance:
+- **Large-cap crypto (BTC, ETH, SOL, XRP)**: Can be 5-15% of speculative allocation
+- **Mid-cap altcoins**: Higher risk, potential 5-10x returns
+- **Consider crypto when**: Risk-on sentiment, dollar weakness, institutional adoption news
+- **Avoid crypto when**: Risk-off environment, regulatory crackdowns, extreme fear
+
+### For Crypto Recommendations, Use Same Format:
+```json
+{
+  "ticker": "BTC-USD",
+  "company_name": "Bitcoin",
+  "action": "BUY",
+  "investment_amount": 100,
+  "asset_class": "crypto",
+  "thesis": "Your reasoning here...",
+  "entry_zone": {"low": 95000, "high": 105000},
+  "price_target": 150000,
+  "stop_loss": 85000,
+  "risk_level": "aggressive"
+}
+```
+
 ## 🔴 CRITICAL: MIX OF SAFE + SPECULATIVE PICKS
 For an aggressive growth portfolio, ALWAYS include a mix across 10-15 picks:
 
@@ -76,12 +113,14 @@ For an aggressive growth portfolio, ALWAYS include a mix across 10-15 picks:
 1. **2-3 Core Positions ($50-150 each)**: Blue-chip growth stocks (NVDA, GOOGL, AMZN, etc.)
 2. **3-4 Growth Plays ($50-100 each)**: High-growth mid-caps with momentum
 3. **2-3 Thematic/Sector Plays ($50-75 each)**: ETFs or sector leaders
-4. **3-4 Speculative Bets ($25-75 each)**: High-risk/high-reward picks that could 5-10x
+4. **2-3 Crypto Plays ($25-100 each)**: BTC, ETH, or promising altcoins
+5. **2-3 Speculative Bets ($25-75 each)**: High-risk/high-reward picks that could 5-10x
 
 ### Speculative Picks to Consider:
 - **Emerging AI/Tech**: Small-cap AI companies, semiconductor equipment, cloud disruptors
 - **Biotech**: Pre-approval drugs with upcoming catalysts
 - **Clean Energy**: Solar, EV, battery tech with growth potential
+- **Cryptocurrency**: BTC, ETH, SOL, or trending altcoins with momentum
 - **Fintech Disruptors**: Payment tech, crypto-adjacent, DeFi plays
 - **Small-Cap Gems**: Companies under $5B market cap with explosive growth
 - **Turnaround Stories**: Beaten-down stocks with improving fundamentals
@@ -90,7 +129,7 @@ For an aggressive growth portfolio, ALWAYS include a mix across 10-15 picks:
 ### Risk Levels to Include:
 - Conservative: 20-30% of budget (safe compounders)
 - Moderate: 40-50% of budget (growth with reasonable risk)
-- Aggressive/Speculative: 20-30% of budget (moonshots)
+- Aggressive/Speculative: 20-30% of budget (moonshots, including crypto)
 
 🎯 Remember: With 33+ years to retirement, a 50% loss on a $200 speculative bet is recoverable, but missing a 10-bagger is a huge opportunity cost!
 
@@ -818,6 +857,21 @@ Task: 1) Review holdings→HOLD/TRIM/SELL 2) Deploy ${fresh_budget:,} into best 
             dc_str = " ".join([f"{d.get('ticker')}:${d.get('current_price', 0) or 0:.0f}" for d in death])
             sections.append(f"DEATH_CROSS: {dc_str}")
     
+    # CRYPTOCURRENCY SCREENS
+    if screens.get('crypto'):
+        sections.append("\n## CRYPTO UNIVERSE (diversify 10-20% of budget into crypto)")
+        
+        # All crypto - send ALL without trimming, sorted by market cap
+        # Format: ticker:$price(change%),MCap$XB - compact but complete
+        all_crypto = screens['crypto'].get('all', [])
+        if all_crypto:
+            # Send ALL crypto - no trimming, similar to how stocks are sent
+            crypto_str = " ".join([
+                f"{c.get('ticker')}:${c.get('current_price', 0) or 0:.2f}({c.get('change_pct', 0) or 0:+.1f}%),M${c.get('market_cap', 0) / 1e9 if c.get('market_cap') else 0:.0f}B"
+                for c in all_crypto
+            ])
+            sections.append(f"CRYPTO({len(all_crypto)}): {crypto_str}")
+    
     # Politician Trades - COMPACT
     pol_trades = analysis_input.get('politician_trades', [])
     flagged = analysis_input.get('flagged_trades', [])
@@ -903,6 +957,44 @@ Task: 1) Review holdings→HOLD/TRIM/SELL 2) Deploy ${fresh_budget:,} into best 
             if growth and any(g is not None for g in growth):
                 gr_vals = ','.join([f"{g:+.0f}" if g else "-" for g in growth])
                 parts.append(f"G[{gr_vals}]")
+            
+            if len(parts) > 1:
+                sections.append(" ".join(parts))
+    
+    # Crypto Historical Performance Section - COMPACT
+    # Format: TICKER:1y%|2y%|3y%|ATH$|fromATH%
+    crypto_hist = analysis_input.get('crypto_historical', {})
+    if crypto_hist:
+        sections.append(f"\n## CRYPTO HISTORICAL PERFORMANCE ({len(crypto_hist)} tokens)")
+        sections.append("Format: TICKER 1y%|2y%|3y%|ATH$|fromATH% [yearly returns]")
+        
+        for ticker, data in crypto_hist.items():
+            if not data:
+                continue
+            
+            returns = data.get('returns', {})
+            parts = [ticker.replace('-USD', '')]  # Shorten ticker
+            
+            # Period returns
+            ret_parts = []
+            for period in ['1y', '2y', '3y']:
+                ret = returns.get(period)
+                if ret is not None:
+                    ret_parts.append(f"{period}:{ret:+.0f}%")
+            if ret_parts:
+                parts.append(" ".join(ret_parts))
+            
+            # ATH info
+            ath = data.get('all_time_high')
+            from_ath = data.get('from_ath_pct')
+            if ath and from_ath is not None:
+                parts.append(f"ATH${ath:.0f}({from_ath:+.0f}%)")
+            
+            # Yearly performance (last 3 years)
+            yearly = data.get('yearly_performance', [])[:3]
+            if yearly:
+                yearly_str = " ".join([f"{y['year']}:{y['return_pct']:+.0f}%" for y in yearly])
+                parts.append(f"[{yearly_str}]")
             
             if len(parts) > 1:
                 sections.append(" ".join(parts))

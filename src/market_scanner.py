@@ -18,7 +18,7 @@ from config import (
 from data_fetcher import (
     fetch_ticker_data, fetch_ticker_info, fetch_multiple_ticker_info,
     calculate_technical_indicators, get_current_prices, get_dynamic_stock_universe,
-    log_stocks, logger
+    get_crypto_universe, log_stocks, logger
 )
 
 
@@ -1094,13 +1094,41 @@ def run_all_screens() -> Dict:
         'vs_spy': scanner.get_sector_vs_spy()
     }
     
+    # Fetch crypto universe and add screens
+    print("  Fetching crypto universe...")
+    crypto_universe = get_crypto_universe(min_market_cap=50_000_000, max_count=200)
+    
+    if crypto_universe:
+        # Sort crypto by different criteria for screens
+        crypto_by_gainers = sorted(crypto_universe, key=lambda x: x.get('change_pct', 0), reverse=True)
+        crypto_by_losers = sorted(crypto_universe, key=lambda x: x.get('change_pct', 0))
+        crypto_by_volume = sorted(crypto_universe, key=lambda x: x.get('volume_24h', 0), reverse=True)
+        crypto_by_mcap = sorted(crypto_universe, key=lambda x: x.get('market_cap', 0), reverse=True)
+        
+        results['crypto'] = {
+            'all': crypto_universe,  # Full list for Claude
+            'top_gainers': crypto_by_gainers[:30],
+            'top_losers': crypto_by_losers[:30],
+            'high_volume': crypto_by_volume[:30],
+            'large_cap': crypto_by_mcap[:50]
+        }
+        
+        logger.info(f"  🪙 CRYPTO SCREENS:")
+        log_stocks("Crypto Gainers", [c['ticker'] for c in crypto_by_gainers[:15]], max_display=15)
+        log_stocks("Crypto Losers", [c['ticker'] for c in crypto_by_losers[:15]], max_display=15)
+        log_stocks("Crypto High Volume", [c['ticker'] for c in crypto_by_volume[:15]], max_display=15)
+    else:
+        results['crypto'] = {'all': [], 'top_gainers': [], 'top_losers': [], 'high_volume': [], 'large_cap': []}
+        print("    WARNING: Could not fetch crypto data")
+    
     # Summary
     total_screened = (
         len(results['momentum'].get('top_gainers', [])) +
         len(results['fundamental'].get('growth_stocks', [])) +
         len(results['fundamental'].get('value_stocks', [])) +
-        len(results['technical'].get('golden_crosses', []))
+        len(results['technical'].get('golden_crosses', [])) +
+        len(results['crypto'].get('all', []))
     )
-    logger.info(f"  ✅ SCREENING COMPLETE: {total_screened}+ stocks analyzed across all screens")
+    logger.info(f"  ✅ SCREENING COMPLETE: {total_screened}+ stocks & crypto analyzed across all screens")
     
     return results

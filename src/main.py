@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 
 from config import CLAUDE_MODEL, CLAUDE_MAX_TOKENS, PATHS
-from data_fetcher import fetch_all_market_data, fetch_historical_context, get_earnings_calendar, get_dividend_calendar, fetch_historical_financials_batch
+from data_fetcher import fetch_all_market_data, fetch_historical_context, get_earnings_calendar, get_dividend_calendar, fetch_historical_financials_batch, fetch_crypto_historical_performance
 from market_scanner import run_all_screens
 from politician_tracker import fetch_recent_trades, analyze_committee_correlation
 from history_manager import (
@@ -255,6 +255,17 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
                 periods = data.get('periods', [])
                 print(f"    📈 {ticker}: Revenue {periods} = {['$' + str(round(r, 1)) + 'B' if r else 'N/A' for r in rev]}")
     
+    # Fetch crypto historical performance (price history, yearly returns, ATH)
+    crypto_tickers = [c['ticker'] for c in screen_results.get('crypto', {}).get('all', [])][:50]  # Top 50 by market cap
+    crypto_historical = {}
+    if crypto_tickers:
+        print(f"    Fetching historical performance for {len(crypto_tickers)} crypto...")
+        crypto_historical = fetch_crypto_historical_performance(crypto_tickers, max_workers=5)
+        print(f"    ✅ Fetched crypto history for {len(crypto_historical)}/{len(crypto_tickers)} tickers")
+        if crypto_historical:
+            sample = list(crypto_historical.values())[0]
+            print(f"    📈 Sample ({sample['ticker']}): 1y={sample['returns'].get('1y', 'N/A')}%, ATH=${sample['all_time_high']}, from ATH={sample['from_ath_pct']}%")
+    
     # Step 6: Prepare analysis input (NO sentiment - Claude decides purely on fundamentals)
     print("\n[6/10] Preparing analysis input...")
     analysis_input = {
@@ -274,6 +285,8 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
         "current_date": datetime.now().isoformat(),
         # Historical financials (4-year trends for portfolio + top candidates)
         "historical_financials": historical_financials,
+        # Crypto historical performance (price history, yearly returns, ATH)
+        "crypto_historical": crypto_historical,
         # Retail investor specific data
         "retail_analysis": {
             "tax_loss_harvesting": retail_analysis.get('tax_loss_harvesting', []),
@@ -316,6 +329,14 @@ def main(dry_run: bool = False, skip_email: bool = False, verbose: bool = False)
     print(f"   Golden Crosses ({len(technical.get('golden_crosses', []))}): {', '.join([s['ticker'] for s in technical.get('golden_crosses', [])[:10]])}...")
     print(f"   Oversold RSI ({len(technical.get('oversold', []))}): {', '.join([s['ticker'] for s in technical.get('oversold', [])[:10]])}...")
     print(f"   Overbought RSI ({len(technical.get('overbought', []))}): {', '.join([s['ticker'] for s in technical.get('overbought', [])[:10]])}...")
+    
+    # Log crypto screens
+    crypto = screen_results.get('crypto', {})
+    print(f"\n🪙 CRYPTO SCREENS:")
+    print(f"   All Tradeable ({len(crypto.get('all', []))}): {', '.join([c['ticker'] for c in crypto.get('all', [])[:15]])}...")
+    print(f"   Top Gainers ({len(crypto.get('top_gainers', []))}): {', '.join([c['ticker'] for c in crypto.get('top_gainers', [])[:10]])}...")
+    print(f"   Top Losers ({len(crypto.get('top_losers', []))}): {', '.join([c['ticker'] for c in crypto.get('top_losers', [])[:10]])}...")
+    print(f"   High Volume ({len(crypto.get('high_volume', []))}): {', '.join([c['ticker'] for c in crypto.get('high_volume', [])[:10]])}...")
     
     # Log market data summary
     print(f"\n🌍 MARKET DATA:")

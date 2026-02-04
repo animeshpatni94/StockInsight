@@ -13,7 +13,7 @@ import time
 import requests
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set
+from typing import Dict, List, Optional, Any, Set, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config import (
@@ -145,6 +145,224 @@ def get_dynamic_stock_universe() -> Dict[str, List[str]]:
         print(f"  Added {len(etf_tickers)} from ETF fallback, total: {len(all_tickers)}")
     
     return universe
+
+
+def get_crypto_universe(min_market_cap: int = 50_000_000, max_count: int = 200) -> List[Dict]:
+    """
+    Dynamically fetch cryptocurrency universe from Yahoo Finance.
+    Filters out stablecoins, wrapped tokens, and low liquidity coins.
+    
+    Args:
+        min_market_cap: Minimum market cap in USD (default $50M)
+        max_count: Maximum number of crypto to return
+    
+    Returns:
+        List of crypto dicts with symbol, name, price, market_cap, volume, change_pct
+    """
+    print("  Fetching crypto universe from Yahoo Finance...")
+    
+    all_quotes = []
+    
+    # Use pagination to get more crypto (Yahoo limits to 250 per request)
+    for offset in [0, 250]:
+        url = f'https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?formatted=true&lang=en-US&region=US&scrIds=all_cryptocurrencies_us&count=250&offset={offset}'
+        try:
+            resp = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
+            data = resp.json()
+            result = data.get('finance', {}).get('result', [{}])
+            if result:
+                quotes = result[0].get('quotes', [])
+                all_quotes.extend(quotes)
+                print(f"    Offset {offset}: fetched {len(quotes)} crypto")
+        except Exception as e:
+            print(f"    Offset {offset} error: {e}")
+        time.sleep(0.5)
+    
+    print(f"    Total raw crypto fetched: {len(all_quotes)}")
+    
+    # Keywords to filter out (stablecoins, wrapped tokens, etc.)
+    skip_keywords = [
+        'wrapped', 'staked', 'tether', 'usdt', 'usdc', 'usds', 'wbtc', 'weth', 
+        'steth', 'bridged', 'paxos', 'trueusd', 'frax', 'dai', 'busd', 'tusd',
+        'pyusd', 'gusd', 'usdp', 'fdusd', 'lusd', 'susd', 'eurs', 'usdd',
+        'crvusd', 'gho', 'eurc', 'usdg', 'usdy', 'usd0', 'usde', 'ausd'
+    ]
+    
+    tradeable = []
+    seen_symbols = set()
+    
+    for q in all_quotes:
+        symbol = q.get('symbol', '')
+        if symbol in seen_symbols:
+            continue
+        seen_symbols.add(symbol)
+        
+        name = (q.get('shortName', '') or '').lower()
+        
+        # Helper to extract raw value from Yahoo's formatted response
+        def get_raw(field):
+            val = q.get(field, {})
+            if isinstance(val, dict):
+                return val.get('raw', 0) or 0
+            return val or 0
+        
+        market_cap = get_raw('marketCap')
+        price = get_raw('regularMarketPrice')
+        volume = get_raw('regularMarketVolume')
+        change_pct = get_raw('regularMarketChangePercent')
+        
+        # Skip if not USD pair
+        if not symbol.endswith('-USD'):
+            continue
+        
+        # Skip stablecoins and wrapped tokens
+        if any(kw in symbol.lower() or kw in name for kw in skip_keywords):
+            continue
+        
+        # Skip low market cap
+        if market_cap < min_market_cap:
+            continue
+        
+        # Skip zero price or volume (not tradeable)
+        if price <= 0 or volume <= 0:
+            continue
+        
+        # Skip obviously broken data (market cap > $1 quadrillion)
+        if market_cap > 1e15:
+            continue
+        
+        tradeable.append({
+            'ticker': symbol,
+            'symbol': symbol,
+            'name': q.get('shortName', symbol),
+            'shortName': q.get('shortName', symbol),
+            'price': round(price, 6),
+            'regularMarketPrice': round(price, 6),
+            'market_cap': market_cap,
+            'marketCap': market_cap,
+            'volume_24h': volume,
+            'regularMarketVolume': volume,
+            'change_pct': round(change_pct, 2),
+            'regularMarketChangePercent': round(change_pct, 2),
+            'asset_type': 'crypto',
+            'quoteType': 'CRYPTOCURRENCY'
+        })
+    
+    # Sort by market cap descending
+    tradeable.sort(key=lambda x: x['market_cap'], reverse=True)
+    
+    result = tradeable[:max_count]
+    print(f"  Found {len(result)} tradeable crypto (filtered from {len(all_quotes)} raw)")
+    
+    # Log top crypto
+    top_symbols = [c['symbol'] for c in result[:30]]
+    log_stocks("Top crypto by market cap", top_symbols, max_display=30)
+    
+    return result
+
+
+def fetch_crypto_historical_performance(tickers: List[str], max_workers: int = 5) -> Dict[str, Dict]:
+    """
+    Fetch historical price performance for crypto (similar to historical_financials for stocks).
+    Returns 1-year, 2-year, 3-year returns, all-time high, and yearly performance.
+    
+    Args:
+        tickers: List of crypto tickers (e.g., ['BTC-USD', 'ETH-USD'])
+        max_workers: Parallel threads
+    
+    Returns:
+        Dictionary mapping ticker to historical performance data
+    """
+    print(f"  Fetching historical performance for {len(tickers)} crypto...")
+    
+    def fetch_single(ticker: str) -> Tuple[str, Optional[Dict]]:
+        try:
+            crypto = yf.Ticker(ticker)
+            
+            # Get max history (up to 5 years)
+            hist = crypto.history(period='5y')
+            if hist.empty:
+                return ticker, None
+            
+            current_price = hist['Close'].iloc[-1]
+            
+            # Calculate returns for different periods
+            result = {
+                'ticker': ticker,
+                'current_price': round(current_price, 2),
+                'returns': {},
+                'yearly_performance': [],
+                'all_time_high': None,
+                'all_time_high_date': None,
+                'from_ath_pct': None,
+            }
+            
+            # All-time high from available data
+            ath = hist['High'].max()
+            ath_date = hist['High'].idxmax()
+            result['all_time_high'] = round(ath, 2)
+            result['all_time_high_date'] = ath_date.strftime('%Y-%m-%d') if hasattr(ath_date, 'strftime') else str(ath_date)
+            result['from_ath_pct'] = round(((current_price / ath) - 1) * 100, 1)
+            
+            # Period returns
+            periods = {
+                '1mo': 30,
+                '3mo': 90,
+                '6mo': 180,
+                '1y': 365,
+                '2y': 730,
+                '3y': 1095,
+                '5y': 1825
+            }
+            
+            for period_name, days in periods.items():
+                if len(hist) > days:
+                    old_price = hist['Close'].iloc[-days]
+                    ret = ((current_price / old_price) - 1) * 100
+                    result['returns'][period_name] = round(ret, 1)
+            
+            # Yearly performance (each calendar year)
+            hist['year'] = hist.index.year
+            years = sorted(hist['year'].unique(), reverse=True)[:5]  # Last 5 years
+            
+            for year in years:
+                year_data = hist[hist['year'] == year]
+                if len(year_data) > 1:
+                    year_open = year_data['Close'].iloc[0]
+                    year_close = year_data['Close'].iloc[-1]
+                    year_high = year_data['High'].max()
+                    year_low = year_data['Low'].min()
+                    year_return = ((year_close / year_open) - 1) * 100
+                    
+                    result['yearly_performance'].append({
+                        'year': int(year),
+                        'return_pct': round(year_return, 1),
+                        'high': round(year_high, 2),
+                        'low': round(year_low, 2)
+                    })
+            
+            return ticker, result
+            
+        except Exception as e:
+            print(f"    Error fetching history for {ticker}: {e}")
+            return ticker, None
+    
+    results = {}
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(fetch_single, ticker): ticker for ticker in tickers}
+        for future in as_completed(futures):
+            ticker, data = future.result()
+            if data:
+                results[ticker] = data
+    
+    print(f"    Fetched historical performance for {len(results)}/{len(tickers)} crypto")
+    
+    # Log sample
+    if results:
+        sample = list(results.values())[0]
+        print(f"    Sample ({sample['ticker']}): 1y={sample['returns'].get('1y', 'N/A')}%, ATH=${sample['all_time_high']}, from ATH={sample['from_ath_pct']}%")
+    
+    return results
 
 
 def _screen_by_market_cap(min_cap: int, max_cap: int, count: int = 50) -> List[str]:
