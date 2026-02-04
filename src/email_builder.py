@@ -1738,42 +1738,7 @@ def _build_stock_card(rec: Dict, current_value: float = 100000) -> str:
         else:
             profit_str = "N/A"
         
-        # Calculate max loss at stop-loss
-        if stop_loss and isinstance(stop_loss, (int, float)) and stop_loss > 0:
-            max_loss = (price - stop_loss) * shares_to_buy
-            loss_str = f"${max_loss:,.0f}"
-        else:
-            loss_str = "N/A"
-        
-        position_sizing_box = f'''
-                                            <!-- Position Sizing Guidance -->
-                                            <tr>
-                                                <td style="padding-top: 16px;">
-                                                    <div style="background-color: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25); border-radius: 8px; padding: 16px;">
-                                                        <span style="display: block; font-size: 13px; font-weight: 600; color: #b8860b; margin-bottom: 12px;">💰 How to Execute This Trade</span>
-                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                                            <tr>
-                                                                <td width="25%">
-                                                                    <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;">Invest</span>
-                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #1f2937; padding-top: 2px;">${actual_investment:,.0f}</span>
-                                                                </td>
-                                                                <td width="25%">
-                                                                    <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;">Buy Shares</span>
-                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #1f2937; padding-top: 2px;">{shares_to_buy:,}</span>
-                                                                </td>
-                                                                <td width="25%">
-                                                                    <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;">If Target Hit</span>
-                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #00d4aa; padding-top: 2px;">+{profit_str}</span>
-                                                                </td>
-                                                                <td width="25%">
-                                                                    <span style="display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;">Max Loss</span>
-                                                                    <span style="display: block; font-family: 'Consolas', monospace; font-size: 14px; font-weight: 600; color: #ff6b6b; padding-top: 2px;">-{loss_str}</span>
-                                                                </td>
-                                                            </tr>
-                                                        </table>
-                                                    </div>
-                                                </td>
-                                            </tr>'''
+        position_sizing_box = ""
     
     # Format YTD
     if isinstance(ytd_return, (int, float)):
