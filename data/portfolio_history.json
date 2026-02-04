@@ -304,7 +304,7 @@
       "price_target": 250.47,
       "stop_loss": 150.28,
       "thesis": "NVDA at $180.34 is the definitive AI infrastructure play with 62.5% revenue growth. Despite tech sector weakness (-6.94 RS), NVDA's monopoly on AI training/inference chips (H100, Blackwell) creates unparalleled moat. Data center spending accelerating with hyperscaler capex up 30%+ YoY. AMD's weak Q4 guidance (per news) reinforces NVDA's competitive lead. For a 33-year horizon aggressive portfolio, NVDA is a must-own core position.",
-      "status": "BUY",
+      "status": "HOLD",
       "last_reviewed": "2026-02-04"
     },
     {
@@ -330,7 +330,7 @@
       "price_target": 59.57,
       "stop_loss": 34.75,
       "thesis": "PYPL at $41.70 with RSI 15.4 represents extreme oversold value in fintech. Trading at just 8.4x P/E with 31% EPS growth and $5B+ annual FCF is a massive valuation disconnect. New CEO Alex Chriss executing turnaround with Venmo monetization, branded checkout improvements, and expense discipline. Unusual volume (8.7x average) signals potential capitulation bottom. Risk/reward heavily skewed to upside with 44% upside to target vs 16% downside to stop.",
-      "status": "BUY",
+      "status": "HOLD",
       "last_reviewed": "2026-02-04"
     },
     {
@@ -356,12 +356,168 @@
       "price_target": 130.1,
       "stop_loss": 65.05,
       "thesis": "HOOD at $87.07 with RSI 3.4 (extremely oversold) and 100% revenue growth is the speculative moonshot this aggressive portfolio needs. The retail trading platform has diversified into crypto, retirement accounts, and credit cards. Gold subscription revenue growing 60%+ provides recurring revenue stability. At $87, market cap ~$75B reflects optimism but 100% revenue growth justifies premium. This is a high-conviction speculative bet on retail finance disruption with potential 5-10x returns over 33-year horizon.",
+      "status": "HOLD",
+      "last_reviewed": "2026-02-04"
+    },
+    {
+      "ticker": "MU",
+      "company_name": "Micron Technology Inc.",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.3,
+      "investment_amount": 300,
+      "shares": 0,
+      "recommended_date": "2026-02-04",
+      "recommended_price": 419.44,
+      "entry_zone": {
+        "low": 406.86,
+        "high": 427.83
+      },
+      "price_target": 559.25,
+      "stop_loss": 355.89,
+      "thesis": "Micron is riding the memory supercycle driven by AI infrastructure demand. With +33% monthly momentum and 56.7% revenue growth, MU is the memory-specific AI play complementing NVDA's GPU dominance. HBM3E (High Bandwidth Memory) is critical for AI training/inference workloads and supply is constrained. The storage momentum (SNDK +152%, WDC +55%, STX +55%) confirms sector rotation into memory/storage. At current multiples, MU offers leveraged exposure to AI buildout without the extreme valuations of pure-play AI names.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-04"
+    },
+    {
+      "ticker": "KKR",
+      "company_name": "KKR & Co Inc.",
+      "asset_class": "us_stock",
+      "sector": "Financials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 0.2,
+      "investment_amount": 200,
+      "shares": 1,
+      "recommended_date": "2026-02-04",
+      "recommended_price": 103.28,
+      "entry_zone": {
+        "low": 100.18,
+        "high": 105.35
+      },
+      "price_target": 145.39,
+      "stop_loss": 85.23,
+      "thesis": "KKR at RSI 12.4 is one of the most oversold quality names in the market - a rare opportunity to buy an elite alternative asset manager at a discount. With $578B AUM and secular tailwinds from institutional allocation to private markets, KKR benefits regardless of public market volatility. Fee-related earnings are durable and management fees compound over fund lives. Late-cycle environments historically benefit alt managers as dry powder deployment accelerates. The selloff appears technical rather than fundamental.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-04"
+    },
+    {
+      "ticker": "SOFI",
+      "company_name": "SoFi Technologies Inc.",
+      "asset_class": "us_stock",
+      "sector": "Financials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.17,
+      "investment_amount": 175,
+      "shares": 8,
+      "recommended_date": "2026-02-04",
+      "recommended_price": 21.76,
+      "entry_zone": {
+        "low": 21.11,
+        "high": 22.2
+      },
+      "price_target": 35.42,
+      "stop_loss": 16.19,
+      "thesis": "SOFI at RSI 9.1 is capitulation territory for a fintech disruptor with improving fundamentals. The company achieved GAAP profitability, member growth exceeds 7.5M, and the bank charter enables higher-margin lending. Student loan restart provides tailwind for refinancing business. At ~$20, the risk/reward is asymmetric - limited downside with significant upside if fintech sentiment normalizes. This is a speculative bet on millennial financial services adoption with option value on banking platform maturation.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-04"
+    },
+    {
+      "ticker": "PINS",
+      "company_name": "Pinterest Inc.",
+      "asset_class": "us_stock",
+      "sector": "Communication Services",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "garp",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.15,
+      "investment_amount": 150,
+      "shares": 7,
+      "recommended_date": "2026-02-04",
+      "recommended_price": 20.77,
+      "entry_zone": {
+        "low": 20.15,
+        "high": 21.19
+      },
+      "price_target": 32.42,
+      "stop_loss": 16.21,
+      "thesis": "PINS at RSI 10.7 with P/E 7.3 and 225% EPS growth is a screaming value opportunity in a beaten-down social platform. Unlike Meta's engagement-driven model, Pinterest's intent-based platform aligns perfectly with e-commerce monetization. Shopping features are gaining traction with 1.5B monthly product saves. International user monetization remains at 10% of US levels - massive runway. The advertising recovery thesis will benefit all digital platforms, but PINS offers the most compelling valuation with defensible differentiation.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-04"
+    },
+    {
+      "ticker": "MP",
+      "company_name": "MP Materials Corp.",
+      "asset_class": "us_stock",
+      "sector": "Materials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "long_term",
+      "allocation_pct": 0.1,
+      "investment_amount": 100,
+      "shares": 1,
+      "recommended_date": "2026-02-04",
+      "recommended_price": 64.61,
+      "entry_zone": {
+        "low": 62.67,
+        "high": 65.9
+      },
+      "price_target": 95.91,
+      "stop_loss": 50.48,
+      "thesis": "MP Materials is the only US-based scaled rare earth producer at a critical moment for supply chain security. Materials sector showing +18.51 RS (strongest sector) and MP up +17.5% monthly confirms rotation. China controls 70%+ of rare earth processing - geopolitical tensions create strategic value for domestic production. The Mountain Pass mine produces NdPr oxide critical for EV motors and wind turbines. Vertical integration into magnet manufacturing adds margin and strategic importance. This is a speculative bet on US industrial policy and clean energy transition.",
+      "status": "BUY",
+      "last_reviewed": "2026-02-04"
+    },
+    {
+      "ticker": "FLNC",
+      "company_name": "Fluence Energy Inc.",
+      "asset_class": "us_stock",
+      "sector": "Industrials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "long_term",
+      "allocation_pct": 0.07,
+      "investment_amount": 75,
+      "shares": 2,
+      "recommended_date": "2026-02-04",
+      "recommended_price": 32.23,
+      "entry_zone": {
+        "low": 31.26,
+        "high": 32.87
+      },
+      "price_target": 56.27,
+      "stop_loss": 24.56,
+      "thesis": "FLNC is the energy storage pure-play riding grid modernization and renewable integration themes. With +40% monthly momentum, the market is recognizing secular tailwinds from IRA incentives, utility decarbonization mandates, and grid reliability requirements. The JV with Siemens and AES provides credibility and customer access. Battery storage deployments are growing 30%+ annually as intermittent renewable penetration requires grid-scale storage solutions. This is a speculative moonshot on the energy transition with 70%+ upside potential.",
       "status": "BUY",
       "last_reviewed": "2026-02-04"
     }
   ],
   "cash": {
-    "allocation_pct": 1.0,
+    "allocation_pct": 0.010000000000005116,
     "vehicle": "SGOV",
     "yield_pct": 5.1
   },
@@ -423,23 +579,38 @@
     {
       "month": "2026-02",
       "starting_value": 100425.0,
-      "ending_value": 100990.92,
+      "ending_value": 100986.7,
       "portfolio_return_pct": 0.56,
-      "sp500_return_pct": 0,
-      "alpha_pct": 0.56,
+      "sp500_return_pct": 0.93,
+      "alpha_pct": -0.37,
       "recommendations_made": [
         {
-          "ticker": "NVDA",
+          "ticker": "MU",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "PYPL",
+          "ticker": "KKR",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "HOOD",
+          "ticker": "SOFI",
+          "action": "BUY",
+          "allocation": null
+        },
+        {
+          "ticker": "PINS",
+          "action": "BUY",
+          "allocation": null
+        },
+        {
+          "ticker": "MP",
+          "action": "BUY",
+          "allocation": null
+        },
+        {
+          "ticker": "FLNC",
           "action": "BUY",
           "allocation": null
         }
@@ -450,25 +621,25 @@
           "politician": "David Taylor",
           "party": "R",
           "ticker": "JPM",
+          "transaction_type": "Purchase (x2)",
+          "amount": "$1K-$15K each",
+          "insight": "Double-bought JPMorgan on Jan 16 and Jan 29, signaling conviction in financials despite sector weakness. Quality bank positioning aligns with late-cycle playbook."
+        },
+        {
+          "politician": "David Taylor",
+          "party": "R",
+          "ticker": "AMZN",
           "transaction_type": "Purchase",
-          "amount": "$1K-$15K (multiple)",
-          "insight": "Two separate JPM purchases on Jan 16 and Jan 29 suggest conviction in financials - aligns with late-cycle rotation"
+          "amount": "$1K-$15K",
+          "insight": "Accumulated Amazon on Jan 29 after tech selloff. AWS and advertising strength may be underappreciated."
         },
         {
           "politician": "David Taylor",
           "party": "R",
           "ticker": "AVGO",
-          "transaction_type": "Sale then Purchase",
+          "transaction_type": "Purchase/Sale",
           "amount": "$1K-$15K",
-          "insight": "Sold Jan 16, bought back Jan 29 - possibly trading around earnings or tax-related repositioning"
-        },
-        {
-          "politician": "David Taylor",
-          "party": "R",
-          "ticker": "GOOGL",
-          "transaction_type": "Sale",
-          "amount": "$1K-$15K",
-          "insight": "Sold GOOGL ahead of Q4 earnings report - cautious signal but small position size"
+          "insight": "Bought on Jan 29, sold on Jan 16 - active trading in AI semiconductor name. Suggests opportunistic positioning around volatility."
         }
       ]
     }
@@ -490,8 +661,8 @@
   ],
   "performance_summary": {
     "total_return_pct": 0.98,
-    "sp500_total_return_pct": 0.0,
-    "total_alpha_pct": 0.98,
+    "sp500_total_return_pct": 0.93,
+    "total_alpha_pct": 0.05,
     "win_count": 0,
     "loss_count": 0,
     "win_rate_pct": 0,
