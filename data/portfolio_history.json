@@ -1,12 +1,12 @@
 {
   "metadata": {
     "created": "2026-02-01",
-    "last_updated": "2026-02-18",
+    "last_updated": "2026-03-04",
     "total_months": 2,
     "starting_capital": 100000,
     "spy_inception_price": 695.41,
-    "live_portfolio_value": 104267.22,
-    "spy_current_price": 688.52
+    "live_portfolio_value": 104968.01,
+    "spy_current_price": 684.47
   },
   "current_portfolio": [
     {
@@ -33,7 +33,7 @@
       "stop_loss": 150.28,
       "thesis": "NVDA at $180.34 is the definitive AI infrastructure play with 62.5% revenue growth. Despite tech sector weakness (-6.94 RS), NVDA's monopoly on AI training/inference chips (H100, Blackwell) creates unparalleled moat. Data center spending accelerating with hyperscaler capex up 30%+ YoY. AMD's weak Q4 guidance (per news) reinforces NVDA's competitive lead. For a 33-year horizon aggressive portfolio, NVDA is a must-own core position.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18",
+      "last_reviewed": "2026-03-04",
       "add_history": [
         {
           "date": "2026-02-04",
@@ -75,7 +75,7 @@
       "stop_loss": 164.44,
       "thesis": "Copper is the 'new oil' for electrification and AI infrastructure. SCCO (+30.82% 1mo) is the premier pure-play copper miner with lowest-cost Peruvian/Mexican operations, 39% revenue growth, and leverage to copper prices. AI data centers require massive copper wiring (per utility cost news), EVs need 3-4x copper vs ICE vehicles, and grid upgrades are copper-intensive. Materials sector's +12.86 RS is the second-strongest behind Energy. Supply constraints (permitting delays, grade decline) support structural bull market.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18",
+      "last_reviewed": "2026-03-04",
       "investment_amount": 200,
       "add_history": [
         {
@@ -114,7 +114,7 @@
       "stop_loss": 34.75,
       "thesis": "PYPL at $41.70 with RSI 15.4 represents extreme oversold value in fintech. Trading at just 8.4x P/E with 31% EPS growth and $5B+ annual FCF is a massive valuation disconnect. New CEO Alex Chriss executing turnaround with Venmo monetization, branded checkout improvements, and expense discipline. Unusual volume (8.7x average) signals potential capitulation bottom. Risk/reward heavily skewed to upside with 44% upside to target vs 16% downside to stop.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "HOOD",
@@ -140,7 +140,7 @@
       "stop_loss": 65.05,
       "thesis": "HOOD at $87.07 with RSI 3.4 (extremely oversold) and 100% revenue growth is the speculative moonshot this aggressive portfolio needs. The retail trading platform has diversified into crypto, retirement accounts, and credit cards. Gold subscription revenue growing 60%+ provides recurring revenue stability. At $87, market cap ~$75B reflects optimism but 100% revenue growth justifies premium. This is a high-conviction speculative bet on retail finance disruption with potential 5-10x returns over 33-year horizon.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "MU",
@@ -166,7 +166,7 @@
       "stop_loss": 355.89,
       "thesis": "Micron is riding the memory supercycle driven by AI infrastructure demand. With +33% monthly momentum and 56.7% revenue growth, MU is the memory-specific AI play complementing NVDA's GPU dominance. HBM3E (High Bandwidth Memory) is critical for AI training/inference workloads and supply is constrained. The storage momentum (SNDK +152%, WDC +55%, STX +55%) confirms sector rotation into memory/storage. At current multiples, MU offers leveraged exposure to AI buildout without the extreme valuations of pure-play AI names.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "KKR",
@@ -192,7 +192,7 @@
       "stop_loss": 85.23,
       "thesis": "KKR at RSI 12.4 is one of the most oversold quality names in the market - a rare opportunity to buy an elite alternative asset manager at a discount. With $578B AUM and secular tailwinds from institutional allocation to private markets, KKR benefits regardless of public market volatility. Fee-related earnings are durable and management fees compound over fund lives. Late-cycle environments historically benefit alt managers as dry powder deployment accelerates. The selloff appears technical rather than fundamental.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SOFI",
@@ -218,7 +218,7 @@
       "stop_loss": 16.19,
       "thesis": "SOFI at RSI 9.1 is capitulation territory for a fintech disruptor with improving fundamentals. The company achieved GAAP profitability, member growth exceeds 7.5M, and the bank charter enables higher-margin lending. Student loan restart provides tailwind for refinancing business. At ~$20, the risk/reward is asymmetric - limited downside with significant upside if fintech sentiment normalizes. This is a speculative bet on millennial financial services adoption with option value on banking platform maturation.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "MP",
@@ -244,7 +244,7 @@
       "stop_loss": 50.48,
       "thesis": "MP Materials is the only US-based scaled rare earth producer at a critical moment for supply chain security. Materials sector showing +18.51 RS (strongest sector) and MP up +17.5% monthly confirms rotation. China controls 70%+ of rare earth processing - geopolitical tensions create strategic value for domestic production. The Mountain Pass mine produces NdPr oxide critical for EV motors and wind turbines. Vertical integration into magnet manufacturing adds margin and strategic importance. This is a speculative bet on US industrial policy and clean energy transition.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TXN",
@@ -270,7 +270,7 @@
       "stop_loss": 196.93,
       "thesis": "TXN is the quality semiconductor play with +27.7% monthly momentum and breaking to 52-week highs. Unlike GPU-focused peers, TXN's analog/embedded chips serve diversified end markets (industrial, auto, personal electronics). 300mm fab investments in Texas create long-term cost advantages. Dividend aristocrat with 19 consecutive annual increases provides downside protection. P/E of ~25x reasonable for consistent high-teens FCF margins.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "UBER",
@@ -296,7 +296,7 @@
       "stop_loss": 65.79,
       "thesis": "UBER achieved GAAP profitability with 20.4% revenue growth and dominant position in mobility and delivery. Network effects create moat as driver supply and rider demand reinforce each other. Autonomous vehicle optionality (Waymo partnership) provides upside without current capex burden. Advertising platform growing 80%+ YoY adds high-margin revenue stream. Cash flow positive with $4B+ annual FCF.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "PEP",
@@ -322,7 +322,7 @@
       "stop_loss": 145.76,
       "thesis": "PEP breaking to 52-week highs confirms late-cycle rotation into staples (+13.17% RS). Snacks/beverages portfolio more diversified than KO, with Frito-Lay providing pricing power. 51 consecutive years of dividend increases (Dividend King). RSI 85.9 is strong momentum, not overbought for defensive compounder. Global brand portfolio hedges currency/geographic risk. 3%+ yield with 7% dividend growth.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "VRT",
@@ -347,8 +347,8 @@
       "price_target": 263.67,
       "stop_loss": 157.19,
       "thesis": "VRT is the AI infrastructure pick-and-shovel play providing thermal management and power systems for data centers. 29% revenue growth driven by hyperscaler capex expansion. News highlighting utility cost pressures for AI data centers (Apple's $100B+ plans) directly benefits Vertiv's cooling solutions. Backlog at record levels with multi-year visibility. Less crowded than NVDA with similar AI exposure.",
-      "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "status": "TRIM",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "PANW",
@@ -374,7 +374,7 @@
       "stop_loss": 140.2,
       "thesis": "PANW at RSI 16.3 is extremely oversold for the cybersecurity leader. Platformization strategy driving consolidation of security spending to integrated vendors. AI-driven threats increasing enterprise security budgets. 20%+ ARR growth with 85%+ gross margins. Next-gen firewall dominance plus Prisma Cloud and Cortex XDR provide comprehensive platform. Cash flow positive with buyback authorization.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SHOP",
@@ -400,7 +400,7 @@
       "stop_loss": 96.04,
       "thesis": "SHOP at RSI 13.6 represents extreme oversold for the e-commerce infrastructure leader. Powers 10%+ of US e-commerce with sticky merchant base. Shop Pay accelerating checkout conversions. Enterprise push gaining traction with larger merchants. 25%+ revenue growth with improving operating leverage after logistics divestiture. Platform model creates operating leverage as GMV scales.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "WDC",
@@ -426,7 +426,7 @@
       "stop_loss": 237.24,
       "thesis": "WDC +54.6% momentum confirms memory/storage super-cycle (SNDK +152%, STX +55%). Flash memory and HDD businesses benefiting from AI data storage demands. Data creation growing 25%+ annually requires massive storage capacity. Potential spin-off of flash business could unlock value. Trading at discount to peers despite similar exposure to AI storage tailwinds.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "RDDT",
@@ -452,7 +452,7 @@
       "stop_loss": 132.33,
       "thesis": "RDDT at RSI 9.5 with 67.9% revenue growth is a screaming buy for the 'front page of the internet'. 100M+ DAUs with highly engaged communities drive premium advertising rates. AI data licensing deals (Google, OpenAI) create new revenue stream for training data. User growth accelerating internationally. Recently IPO'd with limited public float creating squeeze potential.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "VALE",
@@ -478,7 +478,7 @@
       "stop_loss": 14.0,
       "thesis": "VALE +28.2% momentum benefiting from materials sector strength (+18.5% RS). World's largest iron ore producer with low-cost Brazilian operations. Nickel exposure provides EV battery materials optionality. Trading at 5x earnings with 8%+ dividend yield. China infrastructure stimulus historically benefits iron ore prices. Dollar weakness provides additional tailwind for commodity producers.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TROX",
@@ -504,7 +504,7 @@
       "stop_loss": 4.97,
       "thesis": "TROX +63% momentum with 17% short interest creates squeeze setup. Leading titanium dioxide producer benefiting from materials super-cycle. TiO2 used in paints, plastics, paper - tied to industrial recovery. Vertically integrated with mineral sands providing cost advantages. P/E under 10x for cyclical recovery play. Earnings Feb 18 could be catalyst.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SLV",
@@ -530,7 +530,7 @@
       "stop_loss": 65.39,
       "thesis": "Silver +17.05% outperforming gold with industrial demand overlay from solar panels and electronics. Gold-silver ratio historically reverts, suggesting silver undervalued relative to gold. Solar installations growing 30%+ annually consuming significant silver supply. Inflation hedge complements GLD position. ETF provides liquid exposure without physical storage concerns.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "VICR",
@@ -556,7 +556,7 @@
       "stop_loss": 131.39,
       "thesis": "VICR +42.7% momentum as AI power delivery specialist. Proprietary power architecture enabling next-gen data center efficiency. NVIDIA partnership for GPU power solutions positions VICR at heart of AI infrastructure. 48V power architecture becoming industry standard. Small-cap ($4B) with exposure to massive AI capex cycle. High gross margins (50%+) demonstrate technology moat.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SPIR",
@@ -582,7 +582,7 @@
       "stop_loss": 7.63,
       "thesis": "SPIR +46.6% momentum as space data analytics pure-play. Operates 100+ satellites providing weather, maritime, and aviation data. Space-as-a-service model with recurring revenue from governments and enterprises. Climate analytics becoming essential for insurance, agriculture, logistics. Small-cap ($600M) moonshot with asymmetric upside if space data market develops. Founder-led with aligned incentives.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SE",
@@ -608,7 +608,7 @@
       "stop_loss": 80.52,
       "thesis": "SE +38.3% revenue growth with dominant Southeast Asia e-commerce (Shopee), gaming (Garena), and fintech (SeaMoney) ecosystem. 700M+ population market with rising middle class and digital adoption. Returned to profitability after investment phase. Shopee gaining share in Brazil, expanding TAM beyond SEA. Gaming provides cash cow to fund e-commerce/fintech growth. International diversification for US-heavy portfolio.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "STX",
@@ -634,7 +634,7 @@
       "stop_loss": 378.79,
       "thesis": "Storage momentum play at +54.5% confirming memory super-cycle alongside WDC, MU, and SNDK. AI infrastructure requires massive data storage capacity with data creation growing 25%+ annually. Seagate's HDD technology sees renewed demand for cold storage in hyperscale data centers. Complements existing WDC position for diversified storage exposure.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TER",
@@ -660,7 +660,7 @@
       "stop_loss": 237.5,
       "thesis": "+36.3% momentum for semiconductor test equipment leader as chip complexity explodes with AI. Every advanced chip requires testing - Teradyne is the picks-and-shovels play on semiconductor innovation. Industrial automation (Universal Robots) provides diversification beyond semis. Memory test revenue growing with HBM3E demand.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "LRN",
@@ -686,7 +686,7 @@
       "stop_loss": 70.63,
       "thesis": "+32.8% momentum with 48% revenue growth and 108% EPS growth makes Stride a hidden education gem. Virtual education demand structurally higher post-COVID. K-12 online learning leader with expanding adult career learning segment. Asset-light model with high incremental margins. Under-followed mid-cap with room to run.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "PBR",
@@ -712,7 +712,7 @@
       "stop_loss": 12.63,
       "thesis": "+28.2% momentum on energy sector strength (+13.19%). Brazilian oil giant at ~3x earnings with 12%+ dividend yield is extreme value. Pre-salt deepwater reserves are world-class. New government more pragmatic on dividend policy than feared. Dollar weakness provides additional tailwind for emerging market commodity producers.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "NEM",
@@ -738,7 +738,7 @@
       "stop_loss": 98.96,
       "thesis": "World's largest gold miner benefiting from gold +14% 1mo surge. +15.7% momentum as gold hedge thesis plays out. Provides operating leverage to gold price - if gold hits $3,000/oz, NEM earnings explode. Complements GLD position with higher beta exposure. Earnings Feb 19 could be catalyst for re-rating.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "HON",
@@ -764,7 +764,7 @@
       "stop_loss": 200.79,
       "thesis": "+17.9% momentum on industrial sector strength (+8.59% RS). Diversified industrial conglomerate with aerospace, building tech, and automation segments. Late-cycle positioning favors quality industrials. Rumored activist involvement could unlock value. Strong FCF generation supports buybacks and dividends.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TEVA",
@@ -790,7 +790,7 @@
       "stop_loss": 29.61,
       "thesis": "+17.1% momentum for turnaround pharma story. World's largest generic drug maker at deep value. Opioid litigation overhang clearing. New CEO executing on cost cuts and portfolio optimization. Biosimilar pipeline (Humira, Stelara) provides growth runway. Healthcare sector defensive +5.93% RS supports allocation.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "RIVN",
@@ -816,7 +816,7 @@
       "stop_loss": 10.11,
       "thesis": "RSI 6.1 is extreme capitulation for EV pure-play with solid fundamentals (Amazon delivery van contract, R1 platform). Cash runway through 2026 with VW joint venture providing technology validation. At $14.41, market cap ~$14B for company with $7B+ cash. Speculative moonshot that could 5x if EV market recovers or 10x on buyout.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "ING",
@@ -842,7 +842,7 @@
       "stop_loss": 25.34,
       "thesis": "European bank with 44% revenue growth and 1595% EPS growth from low base. Trading at significant discount to US banks despite similar fundamentals. International diversification for US-heavy portfolio. Europe benefiting from higher rates after decade of NIRP. Digital banking platform leader in Netherlands/Europe.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "NXPI",
@@ -868,7 +868,7 @@
       "stop_loss": 185.56,
       "thesis": "Unusual volume (3.1x) signals institutional accumulation for auto semiconductor leader. Every new car has 500+ chips with NXPI as #1 supplier. AI in automotive (ADAS, autonomous) creates long runway. IoT and industrial edge computing provide diversification. Reasonable 18x P/E for 10%+ grower with buybacks.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "PTC",
@@ -894,7 +894,7 @@
       "stop_loss": 125.63,
       "thesis": "Industrial software leader with 43% revenue growth and 175% EPS growth. PLM (product lifecycle management) and IoT platforms critical for manufacturing digital transformation. Sticky enterprise relationships with 90%+ recurring revenue. ServiceMax acquisition adds field service management. Less crowded than pure SaaS names.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "EPD",
@@ -920,7 +920,7 @@
       "stop_loss": 29.32,
       "thesis": "Golden cross formation on energy infrastructure MLP with 7%+ distribution yield. Fee-based midstream model provides stable cash flows regardless of commodity prices. 25 consecutive years of distribution growth. Natural gas infrastructure critical for AI data center power needs. Late-cycle energy allocation with income component.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "MRK",
@@ -946,7 +946,7 @@
       "stop_loss": 104.85,
       "thesis": "Healthcare defensive at 52W high with Keytruda franchise generating massive cash flows. Pipeline includes promising weight loss drug candidates. Late-cycle sector rotation favorite. PE ~15x with solid dividend yield. Pharma offers defensive growth in uncertain macro.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "FCX",
@@ -972,7 +972,7 @@
       "stop_loss": 51.79,
       "thesis": "World's largest publicly traded copper producer. Copper essential for AI data center power infrastructure, EVs, and grid electrification. +16% YTD with materials sector rotating into favor. Late-cycle commodity play with secular demand drivers. 48% earnings growth expected.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "XLE",
@@ -998,7 +998,7 @@
       "stop_loss": 45.81,
       "thesis": "Energy sector ETF up +12% YTD, leading all sectors. Late-cycle rotation playbook favors energy. Oil at $77 with geopolitical support. Diversified exposure to XOM, CVX, SLB, etc. Expense ratio 0.09% efficient. Better than picking individual names in volatile sector.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "GDX",
@@ -1024,7 +1024,7 @@
       "stop_loss": 80.78,
       "thesis": "Gold at $451 (+10% YTD) with Wall Street legends calling for $10K. Gold miners offer 2-3x leverage to gold price. Provides leveraged precious metals exposure beyond GLD/SLV already in portfolio. Late-cycle hedge with upside. Miners have operational leverage as gold rises.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "NET",
@@ -1050,7 +1050,7 @@
       "stop_loss": 139.0,
       "thesis": "Cybersecurity and edge computing leader with 31% revenue growth. Golden cross technical pattern bullish. AI inference at edge emerging opportunity. Zero Trust security demand resilient. High-growth with path to profitability. Oversold tech creates entry opportunity.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "GLW",
@@ -1075,8 +1075,8 @@
       "price_target": 140.17,
       "stop_loss": 92.11,
       "thesis": "Optical communications leader +23% YTD benefiting from AI data center fiber buildout. 20% revenue growth, 76% earnings growth. Gorilla Glass provides smartphone diversification. Specialty materials underappreciated. Reasonably valued at current levels.",
-      "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "status": "TRIM",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TTMI",
@@ -1102,7 +1102,7 @@
       "stop_loss": 79.36,
       "thesis": "PCB manufacturer surging +45% as AI server demand drives high-layer-count board needs. 22% revenue growth, 257% earnings growth. Critical component for AI infrastructure. Small-cap growth with momentum. Less crowded than obvious AI plays.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "FDX",
@@ -1128,7 +1128,7 @@
       "stop_loss": 311.24,
       "thesis": "Logistics leader at 52W high, +22% YTD. DRIVE transformation cutting $4B costs. E-commerce structural tailwind. Potential FedEx Freight spin creates value. PE reasonable for industrial with restructuring upside. Late-cycle but transformation story unique.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "KMI",
@@ -1154,7 +1154,7 @@
       "stop_loss": 25.74,
       "thesis": "Energy infrastructure with golden cross technical setup. 5%+ dividend yield with 13% revenue growth, 50% earnings growth. Natural gas pipelines benefit from LNG exports and power generation demand. Toll-road model provides stability. Late-cycle energy with income.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "VZ",
@@ -1180,7 +1180,7 @@
       "stop_loss": 40.16,
       "thesis": "Telecom defensive with 6%+ dividend yield at overbought RSI 87 but late-cycle positioning warrants it. 5G monetization progressing. Fixed wireless gaining share. Stable cash flows for dividend safety. Defensive positioning for portfolio balance.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SLAB",
@@ -1206,7 +1206,7 @@
       "stop_loss": 165.2,
       "thesis": "IoT semiconductor specialist surging +47% on inventory restocking and smart home/industrial IoT demand. 17x volume spike signals institutional accumulation. AI at the edge requires low-power connectivity chips. Speculative recovery play with momentum.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SMR",
@@ -1232,7 +1232,7 @@
       "stop_loss": 10.21,
       "thesis": "Small modular nuclear reactor pure-play. Data centers need 24/7 clean baseload power - nuclear only viable solution at scale. Microsoft, Google, Amazon all pursuing nuclear for AI data centers. First-mover with NRC-approved design. Moonshot with massive TAM if nuclear renaissance materializes.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "AFRM",
@@ -1258,7 +1258,7 @@
       "stop_loss": 45.86,
       "thesis": "BNPL leader with improving unit economics and path to GAAP profitability. Amazon, Shopify partnerships provide distribution. Gen Z/Millennial credit preferences shifting to BNPL. Revenue growth 40%+. Speculative fintech with category leadership.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "GOOGL",
@@ -1283,7 +1283,7 @@
       "stop_loss": 292.6,
       "thesis": "Alphabet is breaking to 52-week highs at $338.53, signaling renewed institutional interest. The company is a primary AI beneficiary through Gemini integration across Search, Cloud, and YouTube, while maintaining advertising dominance. Google Cloud continues gaining enterprise share with 25%+ growth, and Waymo represents massive optionality in autonomous vehicles. Trading at ~20x forward earnings, it's reasonably valued relative to mega-cap peers while offering superior growth runway.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "AMZN",
@@ -1309,7 +1309,7 @@
       "stop_loss": 193.55,
       "thesis": "E-commerce and AWS dual-engine growth model. Revenue +13%, earnings +36%. AWS AI services (Bedrock, custom chips) driving enterprise adoption. Advertising business approaching $50B run-rate. Politicians accumulating shares (David Taylor purchases). Logistics efficiency gains improving retail margins.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "GILD",
@@ -1334,7 +1334,7 @@
       "stop_loss": 123.26,
       "thesis": "GILD at 52-week highs (+15.24% 1mo) represents a quality healthcare defensive trading at attractive valuations (~12x earnings) with 3%+ dividend yield. The HIV franchise provides durable cash flows while oncology (Trodelvy, Yescarta) drives growth. Healthcare's +5.61 RS confirms sector rotation into defensives. Unlike biotech peers, GILD has proven commercialization capability and doesn't require pipeline lottery tickets. Late-cycle positioning makes this an ideal hold through potential volatility.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "META",
@@ -1360,7 +1360,7 @@
       "stop_loss": 565.08,
       "thesis": "AI-powered advertising efficiency driving reacceleration. Revenue +24%, earnings +11% with significant operating leverage ahead. Reels monetization closing gap with TikTok. Reality Labs losses narrowing. Congressional trading activity (Cleo Fields $50K-$100K purchase) signals insider optimism. Dominant social graph across family of apps.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "GLD",
@@ -1385,7 +1385,7 @@
       "stop_loss": 392.16,
       "thesis": "Gold at $444.95 (+11.55% 1mo) is in a clear uptrend driven by central bank accumulation, dollar weakness (UUP weakening), persistent inflation concerns, and geopolitical uncertainty. News suggests 'gold sell-off may be last stop before $10,000.' While that's hyperbolic, the macro setup is compelling: real rates remain suppressed, de-dollarization trends continue, and gold serves as portfolio insurance. For a 33-year horizon, a 12% gold allocation provides crucial diversification and inflation protection without opportunity cost in a rising gold environment.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "AVGO",
@@ -1411,7 +1411,7 @@
       "stop_loss": 246.63,
       "thesis": "AI networking and custom silicon leader. Revenue +16%, earnings +188%. VMware integration unlocking software recurring revenue. Custom AI chips (Google TPU, Meta) provide diversified AI exposure. Dividend growth track record exceptional. Politicians accumulating (David Taylor AVGO trades). RSI 28 near oversold territory.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "PLTR",
@@ -1436,7 +1436,7 @@
       "stop_loss": 118.3,
       "thesis": "PLTR at RSI 14.3 represents a deeply oversold AI infrastructure play after a selloff from highs. With 62.8% revenue growth and expanding commercial customer base, Palantir is transitioning from government-dependent to enterprise AI leader. The AIP (Artificial Intelligence Platform) is gaining rapid adoption per bootcamp conversions. Government contracts provide recurring revenue floor while commercial accelerates. At $146.59, the risk/reward after this washout favors aggressive accumulation for a speculative position.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "ISRG",
@@ -1461,7 +1461,7 @@
       "stop_loss": 433.63,
       "thesis": "ISRG at RSI 7.2 represents one of the most extreme oversold conditions in quality large-caps. As the monopoly provider of surgical robotics with 8,000+ da Vinci systems installed globally, ISRG has an irreplaceable moat. Recurring revenue from instruments/accessories grows 15%+ annually with 70%+ gross margins. The new da Vinci 5 platform is accelerating upgrade cycles. Healthcare sector defensive characteristics (+5.61 relative strength) align with late-cycle positioning, making this a compelling quality-at-a-discount opportunity.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TSM",
@@ -1487,7 +1487,7 @@
       "stop_loss": 265.67,
       "thesis": "Foundry monopoly at leading-edge nodes. Revenue +20%, earnings +41%. AI chip demand (NVIDIA, AMD, Apple) driving utilization. Arizona/Japan fab diversification reduces Taiwan risk. Congressional trading interest (Cleo Fields purchase). Technology moat widening vs Samsung.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "PG",
@@ -1513,7 +1513,7 @@
       "stop_loss": 139.45,
       "thesis": "Premier consumer staples company benefiting from late-cycle rotation. Revenue growth steady at 6%, with strong pricing power protecting margins. Dividend aristocrat with 2.4% yield and 68 consecutive years of increases. Defensive positioning ideal for elevated recession risk environment.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "WMT",
@@ -1539,7 +1539,7 @@
       "stop_loss": 110.13,
       "thesis": "Retail behemoth at 52-week high trading through late-cycle strength. 6% revenue growth with 35% earnings growth driven by e-commerce acceleration and Walmart+ membership. RSI 74 shows momentum without extreme overbought. Consumer staples sector rotation play.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "MCD",
@@ -1565,7 +1565,7 @@
       "stop_loss": 281.95,
       "thesis": "Global QSR leader with defensive characteristics despite consumer discretionary classification. 52-week high at $325, RSI 76. Franchise model generates consistent cash flow with 2.2% dividend yield. Value menu strategy capturing trade-down consumers in uncertain economy.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SPOT",
@@ -1591,7 +1591,7 @@
       "stop_loss": 382.16,
       "thesis": "Audio streaming leader hitting RSI 21 (oversold) at $447 despite turning profitable with 126% earnings growth. 7% revenue growth accelerating with podcast monetization. Premium subscriber base growing with pricing power demonstrated. Quality growth at oversold levels.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SNOW",
@@ -1617,7 +1617,7 @@
       "stop_loss": 129.91,
       "thesis": "Cloud data platform at RSI 20 (extreme oversold) with 29% revenue growth. AI/ML workloads driving compute consumption growth. Golden cross formed. Enterprise customers expanding usage despite macro headwinds. Positioned for secular cloud data growth.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "NU",
@@ -1643,7 +1643,7 @@
       "stop_loss": 13.1,
       "thesis": "Latin America's largest digital bank with 47% revenue growth and turning profitable at $0.41 EPS. 100M+ customers across Brazil, Mexico, Colombia. Fintech disruption in underbanked region with massive TAM. Warren Buffett/Berkshire position validates thesis.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "ROAD",
@@ -1669,7 +1669,7 @@
       "stop_loss": 94.48,
       "thesis": "Infrastructure construction company with 67% revenue growth, 81% earnings growth. Direct beneficiary of Infrastructure Investment and Jobs Act funding. Southeast US focus with strong backlog visibility. Golden cross pattern formed.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "AZN",
@@ -1695,7 +1695,7 @@
       "stop_loss": 160.85,
       "thesis": "Global pharma leader with 18% revenue growth, 78% earnings growth. EARNINGS IN 5 DAYS with 9x normal volume signaling institutional interest. Oncology pipeline driving growth. Healthcare defensive with growth characteristics ideal for late cycle.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "STLD",
@@ -1721,7 +1721,7 @@
       "stop_loss": 164.2,
       "thesis": "Steel producer benefiting from materials late-cycle rotation (+10.7% sector). 14% revenue growth, 35% earnings growth. Infrastructure spending tailwind. RSI 72 with momentum. Low P/E of 15 with 1.0% dividend yield.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "UPST",
@@ -1747,7 +1747,7 @@
       "stop_loss": 27.19,
       "thesis": "AI lending platform at RSI 23 (oversold) with 65% revenue growth. Potential turnaround as credit conditions normalize. High short interest creates squeeze potential. Small position size appropriate for speculative nature. 33-year horizon allows recovery time.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SEDG",
@@ -1761,7 +1761,7 @@
       "risk_level": "aggressive",
       "time_horizon": "long_term",
       "allocation_pct": 0.04,
-      "investment_amount": 45,
+      "investment_amount": 80,
       "shares": 1,
       "recommended_date": "2026-02-04",
       "recommended_price": 33.06,
@@ -1772,8 +1772,15 @@
       "price_target": 60.1,
       "stop_loss": 22.04,
       "thesis": "Solar inverter leader beaten down 90%+ from highs. 44% revenue growth showing recovery potential. Clean energy secular trend intact despite near-term headwinds. High-risk turnaround with significant upside if execution improves. Speculative position sizing.",
-      "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "status": "ADD",
+      "last_reviewed": "2026-03-04",
+      "add_history": [
+        {
+          "date": "2026-03-04",
+          "added_amount": 35,
+          "price": 33.06
+        }
+      ]
     },
     {
       "ticker": "BTC-USD",
@@ -1787,7 +1794,7 @@
       "risk_level": "aggressive",
       "time_horizon": "long_term",
       "allocation_pct": 0.08,
-      "investment_amount": 85,
+      "investment_amount": 145,
       "shares": 0,
       "recommended_date": "2026-02-04",
       "recommended_price": 73392.8,
@@ -1798,8 +1805,15 @@
       "price_target": 120645.69,
       "stop_loss": 55295.94,
       "thesis": "Crypto Fear & Greed at 14 (Extreme Fear) historically signals excellent buying opportunity. BTC 42% below ATH of $126K. Institutional adoption via ETFs continuing. Halving cycle dynamics supportive. BTC dominance at 62.8% shows flight to quality within crypto.",
-      "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "status": "ADD",
+      "last_reviewed": "2026-03-04",
+      "add_history": [
+        {
+          "date": "2026-03-04",
+          "added_amount": 60,
+          "price": 73392.8
+        }
+      ]
     },
     {
       "ticker": "ETH-USD",
@@ -1813,7 +1827,7 @@
       "risk_level": "aggressive",
       "time_horizon": "long_term",
       "allocation_pct": 0.06,
-      "investment_amount": 60,
+      "investment_amount": 100,
       "shares": 0,
       "recommended_date": "2026-02-04",
       "recommended_price": 2149.55,
@@ -1824,8 +1838,15 @@
       "price_target": 3999.17,
       "stop_loss": 1599.67,
       "thesis": "Smart contract platform 57% below ATH in extreme fear environment. Layer 2 ecosystem growing, staking yield ~4%. ETF approval potential catalyst. DeFi and NFT infrastructure. Diversified crypto exposure alongside BTC.",
-      "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "status": "ADD",
+      "last_reviewed": "2026-03-04",
+      "add_history": [
+        {
+          "date": "2026-03-04",
+          "added_amount": 40,
+          "price": 2149.55
+        }
+      ]
     },
     {
       "ticker": "SOL-USD",
@@ -1851,7 +1872,7 @@
       "stop_loss": 61.53,
       "thesis": "High-performance L1 blockchain 69% below ATH. Ecosystem recovered from FTX contagion. Meme coin and DeFi activity driving usage. Transaction speed/cost advantages over Ethereum. Higher beta crypto play for aggressive allocation.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "ATOM-USD",
@@ -1877,7 +1898,7 @@
       "stop_loss": 1.15,
       "thesis": "Inter-blockchain communication protocol up 6.3% today showing momentum in extreme fear environment. 96% below ATH offers asymmetric upside. IBC ecosystem connecting disparate blockchains. Small speculative position with moonshot potential.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "XOM",
@@ -1902,7 +1923,7 @@
       "stop_loss": 119.18,
       "thesis": "Energy is the top-performing sector (+13.55% 1mo, +25.5% annualized 5yr) and XOM is breaking to 52-week highs at $141.40. Late-cycle environments historically favor energy, and oil at $79.52 (+14% 1mo) supports strong cash flows. Permian Basin dominance, Pioneer acquisition synergies, and disciplined capital returns (3.3% dividend + buybacks) make XOM the quality play. AI data center power demand creates incremental electricity/natural gas demand. Geopolitical tensions (per news) provide upside optionality.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "QCOM",
@@ -1927,7 +1948,7 @@
       "stop_loss": 125.07,
       "thesis": "QCOM is extremely oversold at RSI 11.1, presenting exceptional risk/reward. The memory chip shortage driving Apple's iPhone pricing challenges (per news) benefits Qualcomm as the leading mobile SoC provider with pricing power. Their Snapdragon X Elite chips are gaining PC market share, AI inference capabilities are driving premium pricing, and the automotive segment is growing 30%+ annually. At 13x forward earnings with 10%+ FCF yield, the valuation disconnect is severe.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "KO",
@@ -1952,7 +1973,7 @@
       "stop_loss": 66.72,
       "thesis": "KO at 52-week highs ($74.81) reflects classic late-cycle rotation into Consumer Staples (+6.86% 1mo, +7.95 RS). The Dividend King (60+ consecutive years of dividend increases) provides 3%+ yield with defensive characteristics. Global brand portfolio has pricing power through inflation. Warren Buffett's largest holding for a reason - this is the ultimate 'sleep well at night' position. For a 33-year horizon, reinvested dividends compound significantly.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "LMT",
@@ -1977,7 +1998,7 @@
       "stop_loss": 573.33,
       "thesis": "LMT is breaking to 52-week highs (+29.96% 1mo) amid escalating geopolitical tensions. The defense prime benefits from bipartisan support for increased military spending, multi-year F-35 program tailwinds, and hypersonic/space defense contracts. Industrials sector showing +5.23 RS aligns with late-cycle rotation. The company generates consistent FCF with 2.5%+ dividend yield providing downside support. RSI 85.5 is extended but momentum tends to persist in defense during geopolitical stress.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "LLY",
@@ -2003,7 +2024,7 @@
       "stop_loss": 910.99,
       "thesis": "GLP-1 weight loss drug leader - Mounjaro/Zepbound driving transformational growth. Revenue +54%, earnings +480% - extraordinary metrics. Obesity market expanding as payers cover. Pipeline depth in Alzheimer's (donanemab) and immunology. First-mover advantage in massive TAM.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "VEA",
@@ -2028,7 +2049,7 @@
       "stop_loss": 58.18,
       "thesis": "VEA at $66.20 (+5.43% 1mo) provides developed international diversification at a critical juncture. US equities at 28x P/E vs international ~14x P/E represents historic valuation gap likely to narrow. The weakening dollar creates tailwind for USD-based returns on international holdings. Portfolio currently has 0% international exposure - unacceptable for 33-year horizon through multiple cycles. Europe/Japan benefiting from reshoring trends and energy cost normalization.",
       "status": "HOLD",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TMO",
@@ -2053,8 +2074,8 @@
       "price_target": 625.29,
       "stop_loss": 453.84,
       "thesis": "RSI 10 is EXTREMELY oversold - Thermo Fisher rarely trades this cheap. Healthcare sector is late-cycle defensive. Life sciences tools demand from pharma R&D remains robust. Company has 14% revenue growth, strong free cash flow generation, and dominant market position in lab equipment and diagnostics.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "MSFT",
@@ -2079,8 +2100,8 @@
       "price_target": 502.0,
       "stop_loss": 356.42,
       "thesis": "RSI 20 oversold for the highest-quality tech name. Azure cloud growth 26%+, Copilot AI monetization ramping, Office 365 recurring revenue fortress. R+17%, E+60% growth. This is a 'buy the dip' opportunity on a generational compounder trading at rare discount.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "BRK-B",
@@ -2105,8 +2126,8 @@
       "price_target": 601.87,
       "stop_loss": 446.39,
       "thesis": "Buffett buying NYT per news, rotating out of tech into value. Golden cross signal on BRK-B. $300B+ cash pile provides optionality for acquisitions in distressed markets. Insurance float, BNSF railroad, energy utilities provide recession-resistant earnings. Ultimate defensive value compounder for late-cycle.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TEAM",
@@ -2131,8 +2152,8 @@
       "price_target": 127.61,
       "stop_loss": 63.81,
       "thesis": "RSI 6 is EXTREME oversold territory - capitulation selling. Atlassian's Jira/Confluence are mission-critical developer tools with 95%+ retention. R+23% growth, cloud transition complete. Enterprise software spending on collaboration tools remains sticky even in downturn. 55% upside potential on mean reversion alone.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "GSK",
@@ -2157,8 +2178,8 @@
       "price_target": 78.57,
       "stop_loss": 51.37,
       "thesis": "+27% gainer with momentum. UK pharma giant restructured, spun off consumer health. R+6%, E+55% growth. Vaccines (Shingrix), HIV treatments (ViiV), and oncology pipeline provide diversified revenue. 2.9% dividend yield. Healthcare is late-cycle defensive sector per rotation analysis.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "INTU",
@@ -2183,8 +2204,8 @@
       "price_target": 503.35,
       "stop_loss": 342.28,
       "thesis": "RSI 17 oversold for dominant SMB financial software franchise. TurboTax, QuickBooks, Mailchimp create recurring revenue moat. R+41%, E-18% (investment cycle) but 24% normalized earnings growth. AI-powered tax/accounting tools differentiate. Tax season catalyst approaching.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "VEEV",
@@ -2209,8 +2230,8 @@
       "price_target": 238.99,
       "stop_loss": 149.37,
       "thesis": "RSI 19 oversold for healthcare cloud leader. R+16%, E+24% growth. Veeva Vault is industry standard for pharma clinical trials, regulatory submissions. 80%+ gross margins, mission-critical stickiness. Transitioning to own stack (from Salesforce) improves margins. Biotech funding recovery catalyst.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "GEV",
@@ -2235,8 +2256,8 @@
       "price_target": 1048.26,
       "stop_loss": 698.84,
       "thesis": "+22% gainer in hot energy sector (+14%). GE Vernova is pure-play power generation - gas turbines, wind, grid solutions. R+4%, E+672% turnaround. Electrification megatrend benefits from AI data center power demand. Grid modernization $100B+ TAM. Late-cycle energy leadership.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "TOST",
@@ -2261,8 +2282,8 @@
       "price_target": 45.0,
       "stop_loss": 20.0,
       "thesis": "Restaurant tech platform with R+22%, E+233% growth explosion. Toast dominates restaurant POS with payments, payroll, marketing integrated suite. 120K+ restaurant locations growing 25%+ annually. Path to GAAP profitability. Fintech disruption of restaurant operations is early innings.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "SMCI",
@@ -2287,8 +2308,8 @@
       "price_target": 59.69,
       "stop_loss": 21.88,
       "thesis": "Beaten-down AI infrastructure play. R+123% revenue growth serving NVDA GPU server demand. Stock collapsed from $120 to $30 on accounting concerns - baby thrown out with bathwater. If audit is clean, massive re-rating potential. Speculative bet on AI data center buildout continuation.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "VAL",
@@ -2313,86 +2334,8 @@
       "price_target": 139.95,
       "stop_loss": 69.98,
       "thesis": "+68% top gainer. Offshore drilling contractor benefiting from tight rig supply and elevated oil prices. E+201% earnings growth. Energy sector +14% leading market. Day rates at multi-year highs. Contracting backlog provides visibility. Speculative energy beta for late-cycle.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
-    },
-    {
-      "ticker": "LMT",
-      "company_name": "Lockheed Martin Corporation",
-      "asset_class": "us_stock",
-      "sector": "Industrials",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "value",
-      "risk_level": "conservative",
-      "time_horizon": "long_term",
-      "allocation_pct": 0.05,
-      "investment_amount": 55,
-      "shares": 0,
-      "recommended_date": "2026-02-18",
-      "recommended_price": 654.3,
-      "entry_zone": {
-        "low": 634.67,
-        "high": 667.39
-      },
-      "price_target": 796.11,
-      "stop_loss": 567.23,
-      "thesis": "Defense giant at 52-week high ($657). Geopolitical tensions support elevated defense budgets globally. R+9%, E+161% growth. F-35 program, missiles, space systems provide decades of backlog. 2.5% dividend yield growing consistently. Golden cross signal. Ultimate defensive stock for uncertain times.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
-    },
-    {
-      "ticker": "BTC-USD",
-      "company_name": "Bitcoin",
-      "asset_class": "crypto",
-      "sector": "Cryptocurrency",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "speculative",
-      "risk_level": "aggressive",
-      "time_horizon": "long_term",
-      "allocation_pct": 0.08,
-      "investment_amount": 85,
-      "shares": 0,
-      "recommended_date": "2026-02-18",
-      "recommended_price": 67737.32,
-      "entry_zone": {
-        "low": 65705.2,
-        "high": 69092.07
-      },
-      "price_target": 102632.3,
-      "stop_loss": 53368.8,
-      "thesis": "EXTREME FEAR (8/100) is historically optimal entry. -46% from ATH of $126K. BTC dominance 62.3% shows flight to quality within crypto. Institutional adoption via ETFs provides floor. Halving supply dynamics. 33-year time horizon can absorb volatility. Contrarian accumulation zone.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
-    },
-    {
-      "ticker": "ETH-USD",
-      "company_name": "Ethereum",
-      "asset_class": "crypto",
-      "sector": "Cryptocurrency",
-      "sub_industry": "",
-      "market_cap": "",
-      "geography": "US",
-      "investment_style": "speculative",
-      "risk_level": "aggressive",
-      "time_horizon": "long_term",
-      "allocation_pct": 0.06,
-      "investment_amount": 60,
-      "shares": 0,
-      "recommended_date": "2026-02-18",
-      "recommended_price": 1989.54,
-      "entry_zone": {
-        "low": 1929.86,
-        "high": 2029.34
-      },
-      "price_target": 3570.98,
-      "stop_loss": 1479.4,
-      "thesis": "Layer 1 smart contract leader. -60% from ATH at $1,982. Extreme Fear buying opportunity. DeFi, NFT, and enterprise blockchain built on ETH. Proof-of-stake yields 4%+ staking return. Adding to existing position at oversold levels. ETF approval provides institutional access.",
-      "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
     },
     {
       "ticker": "LINK-USD",
@@ -2417,8 +2360,372 @@
       "price_target": 20.47,
       "stop_loss": 5.58,
       "thesis": "Oracle infrastructure for smart contracts. -83% from ATH creates asymmetric risk/reward. LINK is critical middleware connecting blockchains to real-world data. CCIP cross-chain protocol adoption growing. Every major DeFi protocol uses Chainlink. Diversifies crypto allocation beyond L1s.",
+      "status": "HOLD",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "MCK",
+      "company_name": "McKesson Corporation",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "garp",
+      "risk_level": "moderate",
+      "time_horizon": "long_term",
+      "allocation_pct": 0.08,
+      "investment_amount": 85,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 990.49,
+      "entry_zone": {
+        "low": 960.78,
+        "high": 1010.3
+      },
+      "price_target": 1206.69,
+      "stop_loss": 879.88,
+      "thesis": "Healthcare distribution leader benefiting from drug pricing complexity and GLP-1 distribution. Revenue +11%, earnings +38%. PE 11x represents value for defensive growth. Politician (Mullin) recent purchase adds smart money signal. Recession-resistant essential healthcare infrastructure.",
       "status": "BUY",
-      "last_reviewed": "2026-02-18"
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "TJX",
+      "company_name": "TJX Companies",
+      "asset_class": "us_stock",
+      "sector": "Consumer Discretionary",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "garp",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 0.07,
+      "investment_amount": 75,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 161.15,
+      "entry_zone": {
+        "low": 156.32,
+        "high": 164.38
+      },
+      "price_target": 194.58,
+      "stop_loss": 139.7,
+      "thesis": "Off-price retail thrives in recession as consumers trade down. Revenue +8%, earnings +28%. Near 52-week high with overbought RSI 76. Market share gains from department stores. Counter-cyclical positioning perfect for current environment.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "HCA",
+      "company_name": "HCA Healthcare",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.07,
+      "investment_amount": 70,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 544.94,
+      "entry_zone": {
+        "low": 528.59,
+        "high": 555.84
+      },
+      "price_target": 655.95,
+      "stop_loss": 484.39,
+      "thesis": "Largest hospital operator with pricing power. Revenue +7%, earnings +44%. Surgical volume recovery post-COVID. Labor cost normalization improving margins. Defensive healthcare with growth characteristics.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "KEYS",
+      "company_name": "Keysight Technologies",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.07,
+      "investment_amount": 70,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 305.52,
+      "entry_zone": {
+        "low": 296.35,
+        "high": 311.63
+      },
+      "price_target": 403.99,
+      "stop_loss": 262.6,
+      "thesis": "Test and measurement leader for 5G/AI chip validation. Revenue +23%, earnings +68%, +36% YTD gain. Critical infrastructure for semiconductor industry. Golden cross technical pattern. Overbought RSI 82 suggests wait for pullback.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "UI",
+      "company_name": "Ubiquiti Inc",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.05,
+      "investment_amount": 55,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 788.64,
+      "entry_zone": {
+        "low": 764.98,
+        "high": 804.41
+      },
+      "price_target": 1004.64,
+      "stop_loss": 683.15,
+      "thesis": "Networking hardware disruptor with +45% YTD gain. Revenue +36%, earnings +71%. Capital-light model with high margins. Small-cap growth with loyal prosumer base. Undervalued vs traditional networking peers.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "MPC",
+      "company_name": "Marathon Petroleum",
+      "asset_class": "us_stock",
+      "sector": "Energy",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.06,
+      "investment_amount": 65,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 217.01,
+      "entry_zone": {
+        "low": 210.49,
+        "high": 221.35
+      },
+      "price_target": 277.56,
+      "stop_loss": 186.73,
+      "thesis": "Largest US refiner benefiting from crack spread strength. +23% YTD, near 52-week high. Dividend yield 180%. Energy sector momentum with inflation hedge characteristics. Tariff/Iran tensions support oil prices.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "SSRM",
+      "company_name": "SSR Mining",
+      "asset_class": "us_stock",
+      "sector": "Materials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.04,
+      "investment_amount": 45,
+      "shares": 1,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 32.33,
+      "entry_zone": {
+        "low": 31.36,
+        "high": 32.98
+      },
+      "price_target": 50.52,
+      "stop_loss": 25.26,
+      "thesis": "Gold miner with +43% YTD gain benefiting from +11% gold rally. Revenue +61%, earnings swinging positive. Leveraged play on precious metals thesis. Inflation and uncertainty driving gold demand.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "TCOM",
+      "company_name": "Trip.com Group",
+      "asset_class": "international_stock",
+      "sector": "Consumer Discretionary",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "value",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.05,
+      "investment_amount": 55,
+      "shares": 1,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 50.71,
+      "entry_zone": {
+        "low": 49.19,
+        "high": 51.72
+      },
+      "price_target": 75.31,
+      "stop_loss": 40.17,
+      "thesis": "Chinese OTA leader at oversold RSI 25. PE 13x with +98% earnings growth. China travel recovery thesis. Revenue +21%. Deep value in beaten-down Chinese internet. Outbound travel normalization catalyst.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "ZIM",
+      "company_name": "ZIM Integrated Shipping",
+      "asset_class": "international_stock",
+      "sector": "Industrials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "short_term",
+      "allocation_pct": 0.04,
+      "investment_amount": 45,
+      "shares": 1,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 28.5,
+      "entry_zone": {
+        "low": 27.64,
+        "high": 29.07
+      },
+      "price_target": 42.75,
+      "stop_loss": 22.39,
+      "thesis": "Container shipping with +27% YTD on Red Sea disruptions. Spot rate strength from supply constraints. High cyclicality but current dislocation creates opportunity. Massive dividend potential if rates persist.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "THC",
+      "company_name": "Tenet Healthcare",
+      "asset_class": "us_stock",
+      "sector": "Healthcare",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.05,
+      "investment_amount": 50,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 244.3,
+      "entry_zone": {
+        "low": 236.97,
+        "high": 249.19
+      },
+      "price_target": 312.3,
+      "stop_loss": 201.48,
+      "thesis": "Hospital operator with ambulatory surgery focus. +30% YTD, at 52-week high with overbought RSI 71. Revenue +9%, earnings +28%. Outpatient shift beneficiary. Complements HCA exposure with different asset mix.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "EIX",
+      "company_name": "Edison International",
+      "asset_class": "us_stock",
+      "sector": "Utilities",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "dividend",
+      "risk_level": "conservative",
+      "time_horizon": "long_term",
+      "allocation_pct": 0.05,
+      "investment_amount": 50,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 74.47,
+      "entry_zone": {
+        "low": 72.24,
+        "high": 75.96
+      },
+      "price_target": 95.61,
+      "stop_loss": 63.4,
+      "thesis": "California utility benefiting from electrification and wildfire mitigation progress. +22% YTD, PE 6x extremely cheap. Dividend yield 475%. Utilities sector leading in recession rotation. Regulatory risk diminishing.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "SAIA",
+      "company_name": "SAIA Inc",
+      "asset_class": "us_stock",
+      "sector": "Industrials",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "growth",
+      "risk_level": "moderate",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.05,
+      "investment_amount": 50,
+      "shares": 0,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 416.02,
+      "entry_zone": {
+        "low": 403.54,
+        "high": 424.34
+      },
+      "price_target": 532.71,
+      "stop_loss": 355.14,
+      "thesis": "LTL freight carrier gaining share from Yellow bankruptcy. +13% YTD. Network expansion creating operating leverage. E-commerce returns driving LTL demand. Industrial bellwether with structural tailwinds.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "VIAV",
+      "company_name": "Viavi Solutions",
+      "asset_class": "us_stock",
+      "sector": "Technology",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.04,
+      "investment_amount": 40,
+      "shares": 1,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 32.91,
+      "entry_zone": {
+        "low": 31.92,
+        "high": 33.57
+      },
+      "price_target": 49.86,
+      "stop_loss": 25.93,
+      "thesis": "Network test equipment with +30% YTD gain. Revenue +8% stabilizing. 5G/fiber deployment testing demand. Beaten-down small-cap with recovery potential. Optical communications exposure complements GLW.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
+    },
+    {
+      "ticker": "XRP-USD",
+      "company_name": "XRP",
+      "asset_class": "crypto",
+      "sector": "Cryptocurrency",
+      "sub_industry": "",
+      "market_cap": "",
+      "geography": "US",
+      "investment_style": "speculative",
+      "risk_level": "aggressive",
+      "time_horizon": "medium_term",
+      "allocation_pct": 0.03,
+      "investment_amount": 35,
+      "shares": 24,
+      "recommended_date": "2026-03-04",
+      "recommended_price": 1.45,
+      "entry_zone": {
+        "low": 1.4,
+        "high": 1.47
+      },
+      "price_target": 2.89,
+      "stop_loss": 1.01,
+      "thesis": "Payment-focused crypto at -60% from ATH with SEC clarity improving. Extreme fear sentiment (F&G 10) = opportunity. Cross-border payment use case gaining institutional traction. Higher beta play on crypto recovery.",
+      "status": "BUY",
+      "last_reviewed": "2026-03-04"
     }
   ],
   "cash": {
@@ -2482,119 +2789,109 @@
       ]
     },
     {
-      "month": "2026-02",
+      "month": "2026-03",
       "starting_value": 100425.0,
-      "ending_value": 100288.79,
-      "portfolio_return_pct": -0.14,
-      "sp500_return_pct": -0.56,
-      "alpha_pct": 0.42,
+      "ending_value": 100480.22,
+      "portfolio_return_pct": 0.05,
+      "sp500_return_pct": -1.39,
+      "alpha_pct": 1.44,
       "recommendations_made": [
         {
-          "ticker": "TMO",
+          "ticker": "MCK",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "MSFT",
+          "ticker": "TJX",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "BRK-B",
+          "ticker": "HCA",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "TEAM",
+          "ticker": "KEYS",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "GSK",
+          "ticker": "UI",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "INTU",
+          "ticker": "MPC",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "VEEV",
+          "ticker": "SSRM",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "GEV",
+          "ticker": "TCOM",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "TOST",
+          "ticker": "ZIM",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "SMCI",
+          "ticker": "THC",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "VAL",
+          "ticker": "EIX",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "LMT",
+          "ticker": "SAIA",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "BTC-USD",
+          "ticker": "VIAV",
           "action": "BUY",
           "allocation": null
         },
         {
-          "ticker": "ETH-USD",
-          "action": "BUY",
-          "allocation": null
-        },
-        {
-          "ticker": "LINK-USD",
+          "ticker": "XRP-USD",
           "action": "BUY",
           "allocation": null
         }
       ],
-      "sells_executed": [
-        {
-          "ticker": "PINS",
-          "return_pct": -21.3
-        }
-      ],
+      "sells_executed": [],
       "notable_politician_trades": [
         {
-          "politician": "Dan Meuser",
+          "politician": "Markwayne Mullin",
           "party": "R",
-          "ticker": "NVDA",
-          "transaction_type": "Sale",
-          "amount": "$1K-$15K (2 transactions)",
-          "insight": "Selling NVDA despite positive news of Meta GPU expansion - possibly profit-taking or concerns about valuation"
-        },
-        {
-          "politician": "Rick Allen",
-          "party": "R",
-          "ticker": "SPGI",
+          "ticker": "MCK",
           "transaction_type": "Purchase",
           "amount": "$15K-$50K",
-          "insight": "Buying S&P Global - financial data provider benefits from market activity. Financials rotation play."
+          "insight": "Healthcare distribution play aligns with drug pricing complexity and GLP-1 distribution thesis - INCLUDED IN RECOMMENDATIONS"
         },
         {
-          "politician": "Gil Cisneros",
-          "party": "D",
-          "ticker": "AMZN",
+          "politician": "Markwayne Mullin",
+          "party": "R",
+          "ticker": "LRN",
           "transaction_type": "Purchase",
-          "amount": "$1K-$15K",
-          "insight": "Buying AMZN at oversold levels (RSI 19) while Berkshire sells - contrarian bet on e-commerce/cloud leader"
+          "amount": "$15K-$50K",
+          "insight": "Online education beneficiary - already in portfolio, confirms hold thesis"
+        },
+        {
+          "politician": "Markwayne Mullin",
+          "party": "R",
+          "ticker": "MPWR",
+          "transaction_type": "Purchase",
+          "amount": "$15K-$50K",
+          "insight": "Power management semiconductor with AI data center exposure - worth monitoring"
         }
       ]
     }
@@ -2641,9 +2938,9 @@
     }
   ],
   "performance_summary": {
-    "total_return_pct": 4.27,
-    "sp500_total_return_pct": -0.99,
-    "total_alpha_pct": 5.26,
+    "total_return_pct": 4.97,
+    "sp500_total_return_pct": -1.57,
+    "total_alpha_pct": 6.54,
     "win_count": 0,
     "loss_count": 2,
     "win_rate_pct": 0.0,
